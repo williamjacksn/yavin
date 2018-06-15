@@ -263,7 +263,7 @@ def main():
         _get_db().migrate()
     scheduler.add_job(library_sync)
     if c['UNIX_SOCKET']:
-        waitress.serve(app, unix_socket=c['UNIX_SOCKET'], url_prefix=c['URL_PREFIX'],
+        waitress.serve(app, unix_socket=c['UNIX_SOCKET'], unix_socket_perms='666', url_prefix=c['URL_PREFIX'],
                        url_scheme=c['GOOGLE_LOGIN_REDIRECT_SCHEME'])
     else:
         waitress.serve(app, port=c['PORT'], url_prefix=c['URL_PREFIX'], url_scheme=c['GOOGLE_LOGIN_REDIRECT_SCHEME'])
