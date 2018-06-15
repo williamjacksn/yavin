@@ -43,10 +43,15 @@ class YavinDatabase:
 
     def add_jar_entry(self, entry_date):
         last = self._q_one('SELECT MAX(id) id FROM jar_entries')
-        self._u('INSERT INTO jar_entries (id, entry_date) VALUES (%s, %s)', [last['id'] + 1, entry_date])
+        params = {
+            'id': last['id'] + 1,
+            'entry_date': entry_date
+        }
+        self._u('INSERT INTO jar_entries (id, entry_date) VALUES (%(id)s, %(entry_date)s)', params)
 
     def get_recent_jar_entries(self, limit=10):
-        yield from self._q('SELECT id, entry_date FROM jar_entries ORDER BY entry_date DESC LIMIT %s', [limit])
+        params = {'limit': limit}
+        yield from self._q('SELECT id, entry_date FROM jar_entries ORDER BY entry_date DESC LIMIT %(limit)s', params)
 
     # library
 
@@ -58,7 +63,7 @@ class YavinDatabase:
         ''', params)
 
     def get_library_credentials(self):
-        sql = 'SELECT id, library, username, password, display_name, balance FROM library_credentials ORDER BY display_name'
+        sql = 'SELECT id, library, username, password, display_name, balance FROM library_credentials'
         return list(self._q(sql))
 
     def delete_library_credential(self, params):
@@ -96,7 +101,6 @@ class YavinDatabase:
             SELECT display_name, title, due, renewable, item_id, medium
             FROM library_books
             JOIN library_credentials ON library_credentials.id = library_books.credential_id
-            ORDER BY due, title
         '''
         return self._q(sql)
 
@@ -128,7 +132,6 @@ class YavinDatabase:
             FROM movie_picks
             JOIN movie_people ON movie_people.id = movie_picks.person_id
             GROUP BY person, person_id
-            ORDER BY person
         '''
         return self._q(sql)
 
@@ -145,7 +148,6 @@ class YavinDatabase:
             SELECT movie_picks.id, pick_date, person_id, person, pick_text
             FROM movie_picks
             JOIN movie_people ON movie_picks.person_id = movie_people.id
-            ORDER BY pick_date DESC
         '''
         return self._q(sql)
 
