@@ -1,0 +1,27 @@
+{% extends 'index.html' %}
+
+{% block sign_in %}
+    <div class="btn-group btn-block">
+        <button type="button" class="btn btn-primary btn-block dropdown-toggle" data-toggle="dropdown">
+            <span class="glyphicon glyphicon-user"></span> <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right">
+            <li class="dropdown-header">{{ session.profile.email }}</li>
+            <li><a href="{{ url_for('sign_out') }}">Sign out</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="row bump-top-padding">
+        <div class="col-md-12">
+            <div class="list-group">
+                <a class="list-group-item" href="{{ url_for('electricity') }}">Electricity</a>
+                <a class="list-group-item" href="{{ url_for('jar') }}">Jar</a>
+                <a class="list-group-item" href="{{ url_for('library') }}">Library</a>
+                <a class="list-group-item" href="{{ url_for('movie_night') }}">Movie night</a>
+                <a class="list-group-item" href="{{ url_for('weight') }}">Weight</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

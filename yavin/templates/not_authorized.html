@@ -1,0 +1,17 @@
+{% extends 'signed_in.html' %}
+
+{% block title %}Yavin / Not authorized{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="active">Not authorized</li>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Not authorized</h1>
+            <p class="lead">You are not authorized to view this page.</p>
+        </div>
+    </div>
+{% endblock %}

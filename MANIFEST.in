@@ -1,0 +1,2 @@
+recursive-include yavin/static *
+recursive-include yavin/templates *

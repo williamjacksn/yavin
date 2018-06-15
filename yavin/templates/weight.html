@@ -1,0 +1,60 @@
+{% extends 'signed_in.html' %}
+
+{% block title %}Yavin / Weight{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="active">Weight</li>
+{% endblock %}
+
+{% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="row bump-top-padding">
+                <div class="col-md-12">
+                    {% for category, message in messages %}
+                        <div class="alert alert-dismissible {{ category }}">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="row bump-top-padding">
+        <div class="col-md-12">
+            <form class="form-inline" action="{{ url_for('weight_add') }}" method="post">
+                <div class="form-group">
+                    <input type="date" class="form-control" name="entry_date" value="{{ c.today }}" title="Entry date" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" class="form-control" name="weight" value="{{ c.default_weight }}" title="Weight" step="any" min="1" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row bump-top-padding">
+        <div class="col-md-12">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Weight</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for entry in c.weight_entries %}
+                    <tr>
+                        <td>{{ entry.entry_date }}</td>
+                        <td>{{ entry.weight }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

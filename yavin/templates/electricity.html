@@ -1,0 +1,60 @@
+{% extends 'signed_in.html' %}
+
+{% block title %}Yavin / Electricity{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="active">Electricity</li>
+{% endblock %}
+
+{% block content %}
+    <div class="row bump-top-padding">
+        <div class="col-md-12">
+            <form class="form-inline" action="{{ url_for('electricity_add') }}" method="post">
+                <div class="form-group">
+                    <label for="bill_date">When</label>
+                    <input class="form-control" type="date" name="bill_date" id="bill_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="kwh">kWh</label>
+                    <input class="form-control" type="number" name="kwh" id="kwh" step="1" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="charge">Charge</label>
+                    <input class="form-control" type="number" name="charge" id="charge" step="1" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="bill">Bill</label>
+                    <input class="form-control" type="number" name="bill" id="bill" step="1" min="0" required>
+                </div>
+                <button class="btn btn-success">Add</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row bump-top-padding">
+        <div class="col-md-12">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th class="text-right">kWh</th>
+                    <th class="text-right">Charge</th>
+                    <th class="text-right">Bill</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for record in c.records|sort(attribute='bill_date') %}
+                    <tr>
+                        <td>{{ record.bill_date }}</td>
+                        <td class="text-right">{{ record.kwh }}</td>
+                        <td class="text-right">{{ '$ %.2f'|format(record.charge / 100) }}</td>
+                        <td class="text-right">{{ '$ %.2f'|format(record.bill / 100) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}

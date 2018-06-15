@@ -1,0 +1,87 @@
+{% extends 'signed_in.html' %}
+
+{% block title %}Yavin / Library{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="active">Library</li>
+{% endblock %}
+
+{% block content %}
+    <div class="row bump-top-padding">
+        <div class="col-xs-12">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Library</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th>Balance</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for lib_cred in c.library_credentials %}
+                    <tr>
+                        <td>{{ lib_cred.display_name }}</td>
+                        <td>{{ lib_cred.library }}</td>
+                        <td>{{ lib_cred.username }}</td>
+                        <td>***</td>
+                        <td>{{ lib_cred.balance }}&cent;</td>
+                        <td>
+                            <form action="{{ url_for('library_delete') }}" method="post">
+                                <input type="hidden" name="id" value="{{ lib_cred.id }}">
+                                <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td>
+                        <form id="form-add-library" action="{{ url_for('library_add') }}" method="post">
+                            <input type="text" class="form-control" name="display_name" placeholder="Name" required autofocus>
+                        </form>
+                    </td>
+                    <td><input type="text" form="form-add-library" class="form-control" name="library" placeholder="Library" required></td>
+                    <td><input type="text" form="form-add-library" class="form-control" name="username" placeholder="Username" required></td>
+                    <td><input type="password" form="form-add-library" class="form-control" name="password" placeholder="Password" required></td>
+                    <td><button type="submit" form="form-add-library" class="btn btn-primary">Add</button></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row bump-top-padding">
+        <div class="col-xs-12">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Due</th>
+                    <th>Title</th>
+                    <th>Account</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for book in c.library_books %}
+                    <tr>
+                        <td>{{ book.due }}</td>
+                        <td><span class="badge">{{ book.medium }}</span> {{ book.title }}</td>
+                        <td>{{ book.display_name }}</td>
+                        <td>
+                        {% if book.renewable %}
+                            <form action="{{ url_for('library_renew') }}" method="post">
+                                <input type="hidden" name="item_id" value="{{ book.item_id }}">
+                                <button type="submit" class="btn btn-primary btn-xs">Renew</button>
+                            </form>
+                        {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
