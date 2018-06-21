@@ -143,17 +143,18 @@ def library_delete():
 def library_renew():
     item_id = flask.request.form.get('item_id')
     lib_cred = _get_db().get_book_credentials({'item_id': item_id})
+    lib_url = lib_cred['library']
     s = requests.Session()
-    login_url = f'https://{lib_cred["library"]}.biblionix.com/catalog/ajax_backend/login.xml.pl'
+    login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
     login_data = {'username': lib_cred['username'], 'password': lib_cred['password']}
     login = s.post(url=login_url, data=login_data)
     login_et = xml.etree.ElementTree.XML(login.text)
     session_key = login_et.get('session')
-    account_url = f'https://{lib_cred["library"]}.biblionix.com/catalog/ajax_backend/account.xml.pl'
+    account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
     account_data = {'session': session_key}
     s.post(url=account_url, data=account_data)
     requests.utils.add_dict_to_cookiejar(s.cookies, {'session': session_key})
-    renew_url = f'https://{lib_cred["library"]}.biblionix.com/catalog/ajax_backend/account_command.xml.pl'
+    renew_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account_command.xml.pl'
     renew_data = {'command': 'renew', 'checkout': item_id}
     renew = s.post(url=renew_url, data=renew_data)
     log.debug(renew.text)
@@ -226,13 +227,14 @@ def library_sync():
     with app.app_context():
         _get_db().clear_library_books()
         for lib_cred in _get_db().get_library_credentials():
+            lib_url = lib_cred['library']
             s = requests.Session()
-            login_url = f'https://{lib_cred["library"]}.biblionix.com/catalog/ajax_backend/login.xml.pl'
+            login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
             login_data = {'username': lib_cred['username'], 'password': lib_cred['password']}
             login = s.post(url=login_url, data=login_data)
             login_et = xml.etree.ElementTree.XML(login.text)
             session_key = login_et.get('session')
-            account_url = f'https://{lib_cred["library"]}.biblionix.com/catalog/ajax_backend/account.xml.pl'
+            account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
             account_data = {'session': session_key}
             account = s.post(url=account_url, data=account_data)
             log.debug(account.text)
