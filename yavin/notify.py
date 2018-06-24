@@ -1,5 +1,6 @@
 import datetime
 import email.message
+import inspect
 import logging
 import os
 import smtplib
@@ -30,14 +31,16 @@ def notify(config: Config):
     msg['Subject'] = 'Library alert'
     msg['From'] = config.admin_email
     msg['To'] = config.admin_email
-    msg.set_content(f'''Hello,
+    content = inspect.cleandoc(f'''
+        Hello,
 
-Something is due (or possible overdue) at the library today.
+        Something is due (or possibly overdue) at the library today.
 
-{config.site_url}/library
+        {config.site_url}/library
 
-(This is an automated message.)
-''')
+        (This is an automated message.)
+    ''')
+    msg.set_content(content)
     with smtplib.SMTP_SSL(host=config.smtp_host) as s:
         s.login(user=config.admin_email, password=config.smtp_password)
         s.send_message(msg)
@@ -53,3 +56,4 @@ def main():
         if book['due'] <= datetime.date.today():
             log.debug('** Due today or overdue')
             notify(config)
+            break
