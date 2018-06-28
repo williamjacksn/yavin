@@ -22,9 +22,9 @@ class YavinDatabase:
                     row = c.fetchone()
                 except psycopg2.ProgrammingError as e:
                     log.error(e)
-                    raise StopIteration
+                    return
                 if row is None:
-                    raise StopIteration
+                    return
                 yield row
 
     def _q_one(self, sql, args=None):
