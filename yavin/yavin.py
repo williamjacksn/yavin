@@ -241,11 +241,12 @@ def library_sync():
             account_et = xml.etree.ElementTree.XML(account.text)
             _get_db().update_balance({'id': lib_cred['id'], 'balance': 0})
             for alert in account_et.findall('alerts'):
-                params = {
-                    'id': lib_cred['id'],
-                    'balance': int(alert.get('balance'))
-                }
-                _get_db().update_balance(params)
+                if alert.get('balance'):
+                    params = {
+                        'id': lib_cred['id'],
+                        'balance': int(alert.get('balance'))
+                    }
+                    _get_db().update_balance(params)
             for item in account_et.findall('item'):
                 params = {
                     'credential_id': lib_cred['id'],
