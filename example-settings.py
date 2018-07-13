@@ -17,6 +17,7 @@ ADMIN_PASSWORD = 'secret'
 GOOGLE_LOGIN_CLIENT_ID = 'secret'
 GOOGLE_LOGIN_CLIENT_SECRET = 'secret'
 GOOGLE_LOGIN_REDIRECT_SCHEME = 'http'
+PREFERRED_URL_SCHEME = GOOGLE_LOGIN_REDIRECT_SCHEME
 
 # Must be PostgreSQL
 DATABASE_URL = 'postgresql://user:password@host:port/database'
