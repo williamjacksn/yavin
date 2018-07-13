@@ -1,46 +1,29 @@
 import apscheduler.schedulers.background
 import datetime
+import email.message
 import flask
 import flask_oauth2_login
 import flask_sslify
 import functools
+import inspect
 import logging
 import os
 import requests
+import smtplib
 import sys
 import waitress
 import xml.etree.ElementTree
 import yavin.db
 import yavin.util
 
-log = logging.getLogger(__name__)
-
 app = flask.Flask(__name__)
-
-DEFAULTS = {
-    'GOOGLE_LOGIN_REDIRECT_SCHEME': 'http',
-    'LOGLEVEL': 'DEBUG',
-    'PORT': 8080,
-    'URL_PREFIX': ''
-}
-
-for key in ['ADMIN_EMAIL', 'DATABASE_URL', 'GOOGLE_LOGIN_CLIENT_ID', 'GOOGLE_LOGIN_CLIENT_SECRET',
-            'GOOGLE_LOGIN_REDIRECT_SCHEME', 'LOGLEVEL', 'PORT', 'SECRET_KEY', 'UNIX_SOCKET', 'URL_PREFIX']:
-    app.config[key] = os.environ.get(key, DEFAULTS.get(key))
-
-if app.config['GOOGLE_LOGIN_REDIRECT_SCHEME'].lower() == 'https':
-    sslify = flask_sslify.SSLify(app)
-
-scheduler = apscheduler.schedulers.background.BackgroundScheduler()
-scheduler.start()
-
 google_login = flask_oauth2_login.GoogleLogin(app)
 
 
 @google_login.login_success
 def login_success(_, profile):
     flask.session['profile'] = profile
-    log.debug('Google login success, redirecting to: {}'.format(flask.url_for('index')))
+    app.logger.debug('Google login success, redirecting to: {}'.format(flask.url_for('index')))
     return flask.redirect(flask.url_for('index'))
 
 
@@ -101,7 +84,7 @@ def jar():
 @secure
 def jar_add():
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
-    log.debug('Adding new jar entry for {}'.format(entry_date))
+    app.logger.info('Adding new jar entry for {}'.format(entry_date))
     _get_db().add_jar_entry(entry_date)
     return flask.redirect(flask.url_for('jar'))
 
@@ -126,7 +109,7 @@ def library_add():
         'password': flask.request.form.get('password')
     }
     _get_db().add_library_credential(params)
-    scheduler.add_job(library_sync)
+    app.config['scheduler'].add_job(library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -134,7 +117,7 @@ def library_add():
 @secure
 def library_delete():
     _get_db().delete_library_credential(flask.request.form)
-    scheduler.add_job(library_sync)
+    app.config['scheduler'].add_job(library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -142,6 +125,7 @@ def library_delete():
 @secure
 def library_renew():
     item_id = flask.request.form.get('item_id')
+    app.logger.info(f'Attempting to renew item {item_id}')
     lib_cred = _get_db().get_book_credentials({'item_id': item_id})
     lib_url = lib_cred['library']
     s = requests.Session()
@@ -157,12 +141,28 @@ def library_renew():
     renew_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account_command.xml.pl'
     renew_data = {'command': 'renew', 'checkout': item_id}
     renew = s.post(url=renew_url, data=renew_data)
-    log.debug(renew.text)
+    app.logger.debug(renew.text)
     renew_et = xml.etree.ElementTree.XML(renew.text)
     if renew_et.get('success') == '1':
         item = renew_et.find('item')
         new_due = datetime.datetime.strptime(item.get('due'), '%m\u2011%d\u2011%Y').date()
         _get_db().update_due_date({'due': new_due, 'item_id': item_id})
+    return flask.redirect(flask.url_for('library'))
+
+
+@app.route('/library/notify_now')
+@secure
+def library_notify_now():
+    app.logger.info('Got library notification request')
+    app.config['scheduler'].add_job(library_notify)
+    return flask.redirect(flask.url_for('library'))
+
+
+@app.route('/library/sync_now')
+@secure
+def library_sync_now():
+    app.logger.info('Got library sync request')
+    app.config['scheduler'].add_job(library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -208,7 +208,7 @@ def weight():
 def weight_add():
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
     entry_weight = flask.request.form.get('weight')
-    log.debug('Attempting to add new weight entry for {}: {} lbs'.format(entry_date, entry_weight))
+    app.logger.info('Attempting to add new weight entry for {}: {} lbs'.format(entry_date, entry_weight))
     msg = _get_db().add_weight_entry(entry_date, entry_weight)
     if msg is not None:
         flask.flash(msg, 'alert-danger')
@@ -221,23 +221,26 @@ def sign_out():
     return flask.redirect(flask.url_for('index'))
 
 
-@scheduler.scheduled_job('interval', hours=24)
 def library_sync():
-    log.debug('Syncing library data')
+    app.logger.info('Syncing library data')
     with app.app_context():
         _get_db().clear_library_books()
         for lib_cred in _get_db().get_library_credentials():
+            app.logger.info(f'Syncing library data for {lib_cred["display_name"]}')
             lib_url = lib_cred['library']
             s = requests.Session()
             login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
             login_data = {'username': lib_cred['username'], 'password': lib_cred['password']}
             login = s.post(url=login_url, data=login_data)
+            app.logger.info(f'Received {len(login.content)} bytes from {login_url}')
+            app.logger.debug(login.text)
             login_et = xml.etree.ElementTree.XML(login.text)
             session_key = login_et.get('session')
             account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
             account_data = {'session': session_key}
             account = s.post(url=account_url, data=account_data)
-            log.debug(account.text)
+            app.logger.info(f'Received {len(account.content)} bytes from {account_url}')
+            app.logger.debug(account.text)
             account_et = xml.etree.ElementTree.XML(account.text)
             _get_db().update_balance({'id': lib_cred['id'], 'balance': 0})
             for alert in account_et.findall('alerts'):
@@ -259,14 +262,68 @@ def library_sync():
                 _get_db().add_library_book(params)
 
 
-def main():
-    c = app.config
-    logging.basicConfig(stream=sys.stdout, level=c['LOGLEVEL'])
+def library_notify():
+    app.logger.info('Checking for due library items')
     with app.app_context():
-        _get_db().migrate()
-    scheduler.add_job(library_sync)
-    if c['UNIX_SOCKET']:
-        waitress.serve(app, unix_socket=c['UNIX_SOCKET'], unix_socket_perms='666', url_prefix=c['URL_PREFIX'],
-                       url_scheme=c['GOOGLE_LOGIN_REDIRECT_SCHEME'])
+        for book in _get_db().get_library_books():
+            title = book['title']
+            due = book['due']
+            app.logger.debug(f'{title} is due on {due}')
+            if book['due'] <= datetime.date.today():
+                app.logger.info(f'** {title} is due today or overdue')
+                app.logger.info('Sending notification email')
+                msg = email.message.EmailMessage()
+                msg['Subject'] = 'Library alert'
+                msg['From'] = app.config['ADMIN_EMAIL']
+                msg['To'] = app.config['ADMIN_EMAIL']
+                content = inspect.cleandoc(f'''
+                    Hello,
+
+                    Something is due (or possibly overdue) at the library today.
+
+                    {app.config['GOOGLE_LOGIN_REDIRECT_SCHEME']}://{app.config['SERVER_NAME']}/library
+
+                    (This is an automated message.)
+                ''')
+                msg.set_content(content)
+                with smtplib.SMTP_SSL(host='smtp.gmail.com') as s:
+                    s.login(user=app.config['ADMIN_EMAIL'], password=app.config['ADMIN_PASSWORD'])
+                    s.send_message(msg)
+                break
+
+
+def main():
+    logging.basicConfig(format='%(levelname)s [%(name)s] %(message)s', level='DEBUG', stream=sys.stdout)
+
+    if 'YAVIN_SETTINGS_FILE' in os.environ:
+        app.logger.debug(f'Loading app settings from {os.environ.get("YAVIN_SETTINGS_FILE")}')
+
+        c = app.config
+        c.from_envvar('YAVIN_SETTINGS_FILE')
+        app.logger.debug(f'Changing log level to {c["LOGLEVEL"]}')
+        logging.getLogger().setLevel(c['LOGLEVEL'])
+
+        if c['GOOGLE_LOGIN_REDIRECT_SCHEME'].lower() == 'https':
+            flask_sslify.SSLify(app)
+
+        with app.app_context():
+            _get_db().migrate()
+
+        c['scheduler'] = apscheduler.schedulers.background.BackgroundScheduler()
+        c['scheduler'].start()
+
+        library_sync_start = datetime.datetime.now() + datetime.timedelta(minutes=2)
+        c['scheduler'].add_job(library_sync, 'interval', hours=6, start_date=library_sync_start)
+        c['scheduler'].add_job(library_notify, 'cron', day='*', hour='3')
+
+        url_prefix = c['APPLICATION_ROOT']
+        if url_prefix == '/':
+            url_prefix = ''
+        if c['UNIX_SOCKET']:
+            waitress.serve(app, unix_socket=c['UNIX_SOCKET'], unix_socket_perms='666', url_prefix=url_prefix,
+                           url_scheme=c['GOOGLE_LOGIN_REDIRECT_SCHEME'])
+        else:
+            waitress.serve(app, port=c['PORT'], url_prefix=url_prefix, url_scheme=c['GOOGLE_LOGIN_REDIRECT_SCHEME'])
     else:
-        waitress.serve(app, port=c['PORT'], url_prefix=c['URL_PREFIX'], url_scheme=c['GOOGLE_LOGIN_REDIRECT_SCHEME'])
+        logging.critical('Did not find environment variable YAVIN_SETTINGS_FILE')
+        logging.critical('Set YAVIN_SETTINGS_FILE to the path to your settings file')
