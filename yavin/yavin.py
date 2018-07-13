@@ -265,6 +265,7 @@ def library_sync():
 def library_notify():
     app.logger.info('Checking for due library items')
     with app.app_context():
+        app.logger.debug(f'url for library: {flask.url_for("library")}')
         for book in _get_db().get_library_books():
             title = book['title']
             due = book['due']
@@ -281,7 +282,7 @@ def library_notify():
 
                     Something is due (or possibly overdue) at the library today.
 
-                    {app.config['GOOGLE_LOGIN_REDIRECT_SCHEME']}://{app.config['SERVER_NAME']}/library
+                    {flask.url_for("library")}
 
                     (This is an automated message.)
                 ''')
