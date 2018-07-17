@@ -44,7 +44,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for record in c.records|sort(attribute='bill_date') %}
+                {% for record in g.records|sort(attribute='bill_date') %}
                     <tr>
                         <td>{{ record.bill_date }}</td>
                         <td class="text-right">{{ record.kwh }}</td>

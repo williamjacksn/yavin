@@ -17,17 +17,15 @@ import yavin.db
 import yavin.util
 
 app = flask.Flask(__name__)
-google_login = flask_oauth2_login.GoogleLogin(app)
 
 
-@google_login.login_success
 def login_success(_, profile):
     flask.session['profile'] = profile
-    app.logger.debug('Google login success, redirecting to: {}'.format(flask.url_for('index')))
-    return flask.redirect(flask.url_for('index'))
+    idx_url = flask.url_for('index')
+    app.logger.debug(f'Google login success, redirecting to: {idx_url}')
+    return flask.redirect(idx_url)
 
 
-@google_login.login_failure
 def login_failure(e):
     return flask.jsonify(errors=str(e))
 
@@ -56,15 +54,16 @@ def _get_db():
 def index():
     profile = flask.session.get('profile')
     if profile is None:
-        return flask.render_template('index.html', c={'sign_in_url': google_login.authorization_url()})
+        flask.g.auth_url = app.config['GOOGLE_LOGIN'].authorization_url()
+        return flask.render_template('index.html')
     return flask.render_template('signed_in.html')
 
 
 @app.route('/electricity')
 @secure
 def electricity():
-    c = {'records': _get_db().get_electricity()}
-    return flask.render_template('electricity.html', c=c)
+    flask.g.records = _get_db().get_electricity()
+    return flask.render_template('electricity.html')
 
 
 @app.route('/electricity/add', methods=['POST'])
@@ -76,15 +75,16 @@ def electricity_add():
 @app.route('/jar')
 @secure
 def jar():
-    c = {'today': yavin.util.today(), 'jar_entries': _get_db().get_recent_jar_entries()}
-    return flask.render_template('jar.html', c=c)
+    flask.g.today = yavin.util.today()
+    flask.g.jar_entries = _get_db().get_recent_jar_entries()
+    return flask.render_template('jar.html')
 
 
 @app.route('/jar/add', methods=['POST'])
 @secure
 def jar_add():
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
-    app.logger.info('Adding new jar entry for {}'.format(entry_date))
+    app.logger.info(f'Adding new jar entry for {entry_date}')
     _get_db().add_jar_entry(entry_date)
     return flask.redirect(flask.url_for('jar'))
 
@@ -92,11 +92,9 @@ def jar_add():
 @app.route('/library')
 @secure
 def library():
-    c = {
-        'library_credentials': _get_db().get_library_credentials(),
-        'library_books': _get_db().get_library_books()
-    }
-    return flask.render_template('library.html', c=c)
+    flask.g.library_credentials = _get_db().get_library_credentials()
+    flask.g.library_books = _get_db().get_library_books()
+    return flask.render_template('library.html')
 
 
 @app.route('/library/add', methods=['POST'])
@@ -169,9 +167,10 @@ def library_sync_now():
 @app.route('/movie_night')
 @secure
 def movie_night():
-    c = {'people': list(_get_db().get_movie_night_people()), 'picks': _get_db().get_movie_night_picks(),
-         'today': yavin.util.today()}
-    return flask.render_template('movie_night.html', c=c)
+    flask.g.people = list(_get_db().get_movie_night_people())
+    flask.g.picks = _get_db().get_movie_night_picks()
+    flask.g.today = yavin.util.today()
+    return flask.render_template('movie_night.html')
 
 
 @app.route('/movie_night/add_person', methods=['POST'])
@@ -197,10 +196,10 @@ def movie_night_add_pick():
 @app.route('/weight')
 @secure
 def weight():
-    _db = _get_db()
-    c = {'today': yavin.util.today(), 'default_weight': _db.get_weight_most_recent(),
-         'weight_entries': _db.get_recent_weight_entries()}
-    return flask.render_template('weight.html', c=c)
+    flask.g.today = yavin.util.today()
+    flask.g.default_weight = _get_db().get_weight_most_recent()
+    flask.g.weight_entries = _get_db().get_recent_weight_entries()
+    return flask.render_template('weight.html')
 
 
 @app.route('/weight/add', methods=['POST'])
@@ -208,7 +207,7 @@ def weight():
 def weight_add():
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
     entry_weight = flask.request.form.get('weight')
-    app.logger.info('Attempting to add new weight entry for {}: {} lbs'.format(entry_date, entry_weight))
+    app.logger.info(f'Attempting to add new weight entry for {entry_date}: {entry_weight} lbs')
     msg = _get_db().add_weight_entry(entry_date, entry_weight)
     if msg is not None:
         flask.flash(msg, 'alert-danger')
@@ -306,6 +305,11 @@ def main():
 
         if c['GOOGLE_LOGIN_REDIRECT_SCHEME'].lower() == 'https':
             flask_sslify.SSLify(app)
+
+        google_login = flask_oauth2_login.GoogleLogin(app)
+        google_login.login_success(login_success)
+        google_login.login_failure(login_failure)
+        c['GOOGLE_LOGIN'] = google_login
 
         with app.app_context():
             _get_db().migrate()

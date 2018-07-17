@@ -12,7 +12,7 @@
         <div class="col-md-12">
             <form class="form-inline" action="{{ url_for('jar_add') }}" method="post">
                 <div class="form-group">
-                    <input type="date" class="form-control" name="entry_date" value="{{ c.today }}" title="Entry date">
+                    <input type="date" class="form-control" name="entry_date" value="{{ g.today }}" title="Entry date">
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
             </form>
@@ -28,7 +28,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for entry in c.jar_entries %}
+                {% for entry in g.jar_entries %}
                     <tr>
                         <td>{{ entry.entry_date }}</td>
                     </tr>
