@@ -264,7 +264,8 @@ def library_sync():
 def library_notify():
     app.logger.info('Checking for due library items')
     with app.app_context():
-        app.logger.debug(f'url for library: {flask.url_for("library")}')
+        lib_url = flask.url_for('library')
+        app.logger.debug(f'url for library: {lib_url}')
         for book in _get_db().get_library_books():
             title = book['title']
             due = book['due']
@@ -281,7 +282,7 @@ def library_notify():
 
                     Something is due (or possibly overdue) at the library today.
 
-                    {flask.url_for("library")}
+                    {lib_url}
 
                     (This is an automated message.)
                 ''')
