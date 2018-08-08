@@ -1,12 +1,18 @@
 FROM python:3.7-alpine
 
+EXPOSE 8080
+
 ENV TZ UTC
 
 COPY requirements.txt /app/requirements.txt
 
-RUN apk --no-cache add gcc musl-dev postgresql-dev \
- && /usr/local/bin/pip install --no-cache-dir --requirement /app/requirements.txt
+RUN apk --no-cache add --virtual .deps gcc musl-dev postgresql-dev \
+ && apk --no-cache add libpq \
+ && /usr/local/bin/pip install --no-cache-dir --upgrade pip \
+ && /usr/local/bin/pip install --no-cache-dir --requirement /app/requirements.txt \
+ && apk del .deps
 
 COPY . /app
 
-CMD /usr/local/bin/python /app/run.py
+ENTRYPOINT ["/usr/local/bin/python"]
+CMD ["/app/run.py"]
