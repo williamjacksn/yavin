@@ -2,11 +2,5 @@ version: '3'
 
 services:
   yavin:
-    image: williamjackson/yavin
     build: .
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./settings.py:/etc/yavin
-    environment:
-      YAVIN_SETTINGS_FILE: /etc/yavin
+    image: williamjackson/yavin

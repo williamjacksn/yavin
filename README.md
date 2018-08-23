@@ -10,10 +10,4 @@ Install with `pip`:
 
 This will add the `yavin` command to your path.
 
-Copy `example-settings.py` to `settings.py` and edit for your environment. Set the environment variable
-`YAVIN_SETTINGS_FILE` to the path to `settings.py`, then launch with `yavin`.
-
-## Docker
-
-1. Copy `example-settings.py` to `settings.py` and edit for your environment; leave `PORT = 8080`
-2. Launch with `docker-compose up`
+Set the environment variables described in `yavin/config.py`, then launch with `yavin`.

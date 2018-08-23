@@ -1,0 +1,44 @@
+import os
+
+
+class Config:
+    admin_email: str
+    admin_password: str
+    application_root: str
+    dsn: str
+    google_login_client_id: str
+    google_login_client_secret: str
+    log_format: str
+    log_level: str
+    port: int
+    scheme: str
+    secret_key: str
+    server_name: str
+
+    def __init__(self):
+        """Instantiating a Config object will automatically read the following environment variables:
+
+        ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, GOOGLE_LOGIN_CLIENT_ID, GOOGLE_LOGIN_CLIENT_SECRET,
+        LOG_FORMAT, LOG_LEVEL, PORT, SCHEME, SECRET_KEY, SERVER_NAME
+
+        Some variables have defaults if they are not found in the environment:
+
+        APPLICATION_ROOT=/
+        LOG_FORMAT="%(levelname)s [%(name)s] %(message)s"
+        LOG_LEVEL=DEBUG
+        PORT=8080
+        SCHEME=http
+        SERVER_NAME=localhost"""
+
+        self.admin_email = os.getenv('ADMIN_EMAIL')
+        self.admin_password = os.getenv('ADMIN_PASSWORD')
+        self.application_root = os.getenv('APPLICATION_ROOT', '/')
+        self.dsn = os.getenv('DSN')
+        self.google_login_client_id = os.getenv('GOOGLE_LOGIN_CLIENT_ID')
+        self.google_login_client_secret = os.getenv('GOOGLE_LOGIN_CLIENT_SECRET')
+        self.log_format = os.getenv('LOG_FORMAT', '%(levelname)s [%(name)s] %(message)s')
+        self.log_level = os.getenv('LOG_LEVEL', 'DEBUG')
+        self.port = int(os.getenv('PORT', '8080'))
+        self.scheme = os.getenv('SCHEME', 'http')
+        self.secret_key = os.getenv('SECRET_KEY')
+        self.server_name = os.getenv('SERVER_NAME', 'localhost')

@@ -1,5 +1,4 @@
 import apscheduler.schedulers.background
-import datetime
 import email.message
 import flask
 import flask_oauth2_login
@@ -7,18 +6,35 @@ import flask_sslify
 import functools
 import inspect
 import logging
-import os
 import requests
 import smtplib
 import sys
 import waitress
 import xml.etree.ElementTree
+import yavin.config
 import yavin.db
 import yavin.util
 
+config = yavin.config.Config()
+scheduler = apscheduler.schedulers.background.BackgroundScheduler()
+
 app = flask.Flask(__name__)
 
+app.config['APPLICATION_ROOT'] = config.application_root
+app.config['GOOGLE_LOGIN_CLIENT_ID'] = config.google_login_client_id
+app.config['GOOGLE_LOGIN_CLIENT_SECRET'] = config.google_login_client_secret
+app.config['GOOGLE_LOGIN_REDIRECT_SCHEME'] = config.scheme
+app.config['PREFERRED_URL_SCHEME'] = config.scheme
+app.config['SECRET_KEY'] = config.secret_key
+app.config['SERVER_NAME'] = config.server_name
 
+if config.scheme.lower() == 'https':
+    flask_sslify.SSLify(app)
+
+google_login = flask_oauth2_login.GoogleLogin(app)
+
+
+@google_login.login_success
 def login_success(_, profile):
     flask.session['profile'] = profile
     idx_url = flask.url_for('index')
@@ -26,6 +42,7 @@ def login_success(_, profile):
     return flask.redirect(idx_url)
 
 
+@google_login.login_failure
 def login_failure(e):
     return flask.jsonify(errors=str(e))
 
@@ -36,7 +53,7 @@ def secure(f):
         profile = flask.session.get('profile')
         if profile is None:
             return flask.redirect(flask.url_for('index'))
-        if profile.get('email') == app.config['ADMIN_EMAIL']:
+        if profile.get('email') == config.admin_email:
             return f(*args, **kwargs)
         return flask.render_template('not_authorized.html')
     return decorated_function
@@ -45,7 +62,7 @@ def secure(f):
 def _get_db():
     _db = flask.g.get('_db')
     if _db is None:
-        _db = yavin.db.YavinDatabase(app.config['DATABASE_URL'])
+        _db = yavin.db.YavinDatabase(config.dsn)
         flask.g._db = _db
     return _db
 
@@ -54,7 +71,7 @@ def _get_db():
 def index():
     profile = flask.session.get('profile')
     if profile is None:
-        flask.g.auth_url = app.config['GOOGLE_LOGIN'].authorization_url()
+        flask.g.auth_url = google_login.authorization_url()
         return flask.render_template('index.html')
     return flask.render_template('signed_in.html')
 
@@ -107,7 +124,7 @@ def library_add():
         'password': flask.request.form.get('password')
     }
     _get_db().add_library_credential(params)
-    app.config['scheduler'].add_job(library_sync)
+    scheduler.add_job(library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -115,7 +132,7 @@ def library_add():
 @secure
 def library_delete():
     _get_db().delete_library_credential(flask.request.form)
-    app.config['scheduler'].add_job(library_sync)
+    scheduler.add_job(library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -143,7 +160,7 @@ def library_renew():
     renew_et = xml.etree.ElementTree.XML(renew.text)
     if renew_et.get('success') == '1':
         item = renew_et.find('item')
-        new_due = datetime.datetime.strptime(item.get('due'), '%m\u2011%d\u2011%Y').date()
+        new_due = yavin.util.clean_due_date(item.get('due'))
         _get_db().update_due_date({'due': new_due, 'item_id': item_id})
     return flask.redirect(flask.url_for('library'))
 
@@ -152,7 +169,7 @@ def library_renew():
 @secure
 def library_notify_now():
     app.logger.info('Got library notification request')
-    app.config['scheduler'].add_job(library_notify)
+    scheduler.add_job(library_notify)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -160,7 +177,7 @@ def library_notify_now():
 @secure
 def library_sync_now():
     app.logger.info('Got library sync request')
-    app.config['scheduler'].add_job(library_sync)
+    scheduler.add_job(library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -270,13 +287,13 @@ def library_notify():
             title = book['title']
             due = book['due']
             app.logger.debug(f'{title} is due on {due}')
-            if book['due'] <= datetime.date.today():
+            if book['due'] <= yavin.util.today():
                 app.logger.info(f'** {title} is due today or overdue')
                 app.logger.info('Sending notification email')
                 msg = email.message.EmailMessage()
                 msg['Subject'] = 'Library alert'
-                msg['From'] = app.config['ADMIN_EMAIL']
-                msg['To'] = app.config['ADMIN_EMAIL']
+                msg['From'] = config.admin_email
+                msg['To'] = config.admin_email
                 content = inspect.cleandoc(f'''
                     Hello,
 
@@ -288,48 +305,25 @@ def library_notify():
                 ''')
                 msg.set_content(content)
                 with smtplib.SMTP_SSL(host='smtp.gmail.com') as s:
-                    s.login(user=app.config['ADMIN_EMAIL'], password=app.config['ADMIN_PASSWORD'])
+                    s.login(user=config.admin_email, password=config.admin_password)
                     s.send_message(msg)
                 break
 
 
 def main():
-    logging.basicConfig(format='%(levelname)s [%(name)s] %(message)s', level='DEBUG', stream=sys.stdout)
+    logging.basicConfig(format=config.log_format, level='DEBUG', stream=sys.stdout)
+    app.logger.debug(f'Changing log level to {config.log_level}')
+    logging.getLogger().setLevel(config.log_level)
 
-    if 'YAVIN_SETTINGS_FILE' in os.environ:
-        app.logger.debug(f'Loading app settings from {os.environ.get("YAVIN_SETTINGS_FILE")}')
+    with app.app_context():
+        _get_db().migrate()
 
-        c = app.config
-        c.from_envvar('YAVIN_SETTINGS_FILE')
-        app.logger.debug(f'Changing log level to {c["LOGLEVEL"]}')
-        logging.getLogger().setLevel(c['LOGLEVEL'])
+    scheduler.start()
 
-        if c['GOOGLE_LOGIN_REDIRECT_SCHEME'].lower() == 'https':
-            flask_sslify.SSLify(app)
+    scheduler.add_job(library_sync, 'interval', hours=6, start_date=yavin.util.in_two_minutes())
+    scheduler.add_job(library_notify, 'cron', day='*', hour='3')
 
-        google_login = flask_oauth2_login.GoogleLogin(app)
-        google_login.login_success(login_success)
-        google_login.login_failure(login_failure)
-        c['GOOGLE_LOGIN'] = google_login
-
-        with app.app_context():
-            _get_db().migrate()
-
-        c['scheduler'] = apscheduler.schedulers.background.BackgroundScheduler()
-        c['scheduler'].start()
-
-        library_sync_start = datetime.datetime.now() + datetime.timedelta(minutes=2)
-        c['scheduler'].add_job(library_sync, 'interval', hours=6, start_date=library_sync_start)
-        c['scheduler'].add_job(library_notify, 'cron', day='*', hour='3')
-
-        url_prefix = c['APPLICATION_ROOT']
-        if url_prefix == '/':
-            url_prefix = ''
-        if c['UNIX_SOCKET']:
-            waitress.serve(app, unix_socket=c['UNIX_SOCKET'], unix_socket_perms='666', url_prefix=url_prefix,
-                           url_scheme=c['GOOGLE_LOGIN_REDIRECT_SCHEME'])
-        else:
-            waitress.serve(app, port=c['PORT'], url_prefix=url_prefix, url_scheme=c['GOOGLE_LOGIN_REDIRECT_SCHEME'])
-    else:
-        logging.critical('Did not find environment variable YAVIN_SETTINGS_FILE')
-        logging.critical('Set YAVIN_SETTINGS_FILE to the path to your settings file')
+    url_prefix = config.application_root
+    if url_prefix == '/':
+        url_prefix = ''
+    waitress.serve(app, port=config.port, url_prefix=url_prefix, url_scheme=config.scheme)
