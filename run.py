@@ -3,7 +3,7 @@ import signal
 import sys
 
 
-def handle_sigterm():
+def handle_sigterm(_signal, _frame):
     sys.exit()
 
 

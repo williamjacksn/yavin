@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='yavin',
-    version='2.0.0',
+    version='2.0.1',
     description='Some personal web-based tools',
     url='https://github.com/williamjacksn/yavin',
     author='William Jackson',
