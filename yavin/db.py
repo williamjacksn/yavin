@@ -9,7 +9,12 @@ psycopg2.extras.register_uuid()
 
 class YavinDatabase:
     def __init__(self, connection_string):
-        self.cnx = psycopg2.connect(connection_string, cursor_factory=psycopg2.extras.RealDictCursor)
+        log.debug('Connecting to database...')
+        try:
+            self.cnx = psycopg2.connect(connection_string, cursor_factory=psycopg2.extras.RealDictCursor)
+        except psycopg2.OperationalError:
+            log.critical('I could not connect to the database!')
+            raise
         self.cnx.autocommit = True
 
     def _q(self, sql, args=None):

@@ -36,6 +36,8 @@ google_login = flask_oauth2_login.GoogleLogin(app)
 
 @google_login.login_success
 def login_success(_, profile):
+    if config.permanent_sessions:
+        flask.session.permanent = True
     flask.session['profile'] = profile
     idx_url = flask.url_for('index')
     app.logger.debug(f'Google login success, redirecting to: {idx_url}')
@@ -312,18 +314,22 @@ def library_notify():
 
 def main():
     logging.basicConfig(format=config.log_format, level='DEBUG', stream=sys.stdout)
+    app.logger.debug(f'yavin {config.version}')
     app.logger.debug(f'Changing log level to {config.log_level}')
     logging.getLogger().setLevel(config.log_level)
 
-    with app.app_context():
-        _get_db().migrate()
+    if config.dsn is None:
+        app.logger.critical('Missing environment variable DSN; I cannot start without a database')
+    else:
+        with app.app_context():
+            _get_db().migrate()
 
-    scheduler.start()
+        scheduler.start()
 
-    scheduler.add_job(library_sync, 'interval', hours=6, start_date=yavin.util.in_two_minutes())
-    scheduler.add_job(library_notify, 'cron', day='*', hour='3')
+        scheduler.add_job(library_sync, 'interval', hours=6, start_date=yavin.util.in_two_minutes())
+        scheduler.add_job(library_notify, 'cron', day='*', hour='3')
 
-    url_prefix = config.application_root
-    if url_prefix == '/':
-        url_prefix = ''
-    waitress.serve(app, port=config.port, url_prefix=url_prefix, url_scheme=config.scheme)
+        url_prefix = config.application_root
+        if url_prefix == '/':
+            url_prefix = ''
+        waitress.serve(app, port=config.port, url_prefix=url_prefix, url_scheme=config.scheme)

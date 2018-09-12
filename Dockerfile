@@ -1,18 +1,17 @@
 FROM python:3.7.0-alpine3.8
 
-EXPOSE 8080
-
-ENV TZ UTC
-
-COPY requirements.txt /app/requirements.txt
+COPY requirements.txt /yavin/requirements.txt
 
 RUN /sbin/apk --no-cache add --virtual .deps gcc musl-dev postgresql-dev \
  && /sbin/apk --no-cache add libpq \
  && /usr/local/bin/pip install --no-cache-dir --upgrade pip setuptools \
- && /usr/local/bin/pip install --no-cache-dir --requirement /app/requirements.txt \
+ && /usr/local/bin/pip install --no-cache-dir --requirement /yavin/requirements.txt \
  && /sbin/apk del .deps
 
-COPY . /app
+COPY . /yavin
+
+ENV PYTHONUNBUFFERED 1
+ENV TZ UTC
 
 ENTRYPOINT ["/usr/local/bin/python"]
-CMD ["/app/run.py"]
+CMD ["/yavin/run.py"]
