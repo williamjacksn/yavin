@@ -36,8 +36,6 @@ google_login = flask_oauth2_login.GoogleLogin(app)
 
 @google_login.login_success
 def login_success(_, profile):
-    if config.permanent_sessions:
-        flask.session.permanent = True
     flask.session['profile'] = profile
     idx_url = flask.url_for('index')
     app.logger.debug(f'Google login success, redirecting to: {idx_url}')
@@ -67,6 +65,12 @@ def _get_db():
         _db = yavin.db.YavinDatabase(config.dsn)
         flask.g._db = _db
     return _db
+
+
+@app.before_request
+def make_session_permanent():
+    if config.permanent_sessions:
+        flask.session.permanent = True
 
 
 @app.route('/')

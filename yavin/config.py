@@ -15,7 +15,7 @@ class Config:
     scheme: str
     secret_key: str
     server_name: str
-    version: str = '2.1.0'
+    version: str = '2.1.1'
 
     def __init__(self):
         """Instantiating a Config object will automatically read the following environment variables:
