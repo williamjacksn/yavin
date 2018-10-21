@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 
 class Config:
@@ -15,7 +16,6 @@ class Config:
     scheme: str
     secret_key: str
     server_name: str
-    version: str = '2.1.1'
 
     def __init__(self):
         """Instantiating a Config object will automatically read the following environment variables:
@@ -46,3 +46,13 @@ class Config:
         self.scheme = os.getenv('SCHEME', 'http')
         self.secret_key = os.getenv('SECRET_KEY')
         self.server_name = os.getenv('SERVER_NAME', 'localhost')
+
+    @property
+    def version(self) -> str:
+        """Read version from Dockerfile"""
+        dockerfile = pathlib.Path(__file__).resolve().parent.parent / 'Dockerfile'
+        with open(dockerfile) as f:
+            for line in f:
+                if 'org.label-schema.version' in line:
+                    return line.strip().split('=', maxsplit=1)[1]
+        return 'unknown'
