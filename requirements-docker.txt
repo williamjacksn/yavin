@@ -2,6 +2,9 @@ APScheduler==3.5.3
 Flask==1.0.2
 Flask-OAuth2-Login==0.0.9
 Flask-SSLify==0.1.5
+pip==18.1
 psycopg2==2.7.5
-requests==2.19.1
+requests==2.20.0
+setuptools==40.4.3
 waitress==1.1.0
+wheel==0.32.2
