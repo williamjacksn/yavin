@@ -307,11 +307,17 @@ class YavinDatabase:
                     log_text TEXT NOT NULL
                 )
             ''')
+            self._delete_flag('db_version')
             self._add_schema_version(11)
 
     def _insert_flag(self, flag_name: str, flag_value: str):
         sql = 'INSERT INTO flags (flag_name, flag_value) VALUES (%(flag_name)s, %(flag_value)s)'
         params = {'flag_name': flag_name, 'flag_value': flag_value}
+        self._u(sql, params)
+
+    def _delete_flag(self, flag_name: str):
+        sql = 'DELETE FROM flags WHERE flag_name = %(flag_name)s'
+        params = {'flag_name': flag_name}
         self._u(sql, params)
 
     def _update_flag(self, flag_name: str, flag_value: str):
