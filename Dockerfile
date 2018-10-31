@@ -17,4 +17,4 @@ CMD ["/yavin/run.py"]
 
 LABEL maintainer=william@subtlecoolness.com \
       org.label-schema.schema-version=1.0 \
-      org.label-schema.version=2.1.1
+      org.label-schema.version=2.2.0
