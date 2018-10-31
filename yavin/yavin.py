@@ -82,6 +82,25 @@ def index():
     return flask.render_template('signed_in.html')
 
 
+@app.route('/captains-log')
+@secure
+def captains_log():
+    flask.g.records = _get_db().get_captains_log_entries()
+    return flask.render_template('captains-log.html')
+
+
+@app.route('/captains-log/incoming', methods=['POST'])
+def captains_log_incoming():
+    app.logger.debug(f'json: {flask.request.json}')
+    auth_phrase: str = flask.request.json['auth-phrase']
+    if auth_phrase.lower() == config.admin_auth_phrase:
+        app.logger.debug('Authorization accepted')
+        log_text = flask.request.json['log-text']
+        _get_db().add_captains_log_entry(log_text)
+        return 'Log recorded.'
+    return 'Authorization failure.'
+
+
 @app.route('/electricity')
 @secure
 def electricity():

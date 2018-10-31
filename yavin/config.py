@@ -3,6 +3,7 @@ import pathlib
 
 
 class Config:
+    admin_auth_phrase: str
     admin_email: str
     admin_password: str
     application_root: str
@@ -20,8 +21,8 @@ class Config:
     def __init__(self):
         """Instantiating a Config object will automatically read the following environment variables:
 
-        ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, GOOGLE_LOGIN_CLIENT_ID, GOOGLE_LOGIN_CLIENT_SECRET,
-        LOG_FORMAT, LOG_LEVEL, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, GOOGLE_LOGIN_CLIENT_ID,
+        GOOGLE_LOGIN_CLIENT_SECRET, LOG_FORMAT, LOG_LEVEL, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME
 
         Some variables have defaults if they are not found in the environment:
 
@@ -33,6 +34,7 @@ class Config:
         SCHEME=http
         SERVER_NAME=localhost"""
 
+        self.admin_auth_phrase = os.getenv('ADMIN_AUTH_PHRASE', '').lower()
         self.admin_email = os.getenv('ADMIN_EMAIL')
         self.admin_password = os.getenv('ADMIN_PASSWORD')
         self.application_root = os.getenv('APPLICATION_ROOT', '/')

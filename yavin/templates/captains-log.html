@@ -1,0 +1,31 @@
+{% extends 'signed_in.html' %}
+
+{% block title %}Yavin / Captain&#x02bc;s log{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="active">Captain&#x02bc;s log</li>
+{% endblock %}
+
+{% block content %}
+    <div class="row bump-top-padding">
+        <div class="col-md-12">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Log</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for record in g.records|sort(attribute='log_timestamp', reverse=True) %}
+                    <tr>
+                        <td>{{ record.log_timestamp }}</td>
+                        <td>{{ record.log_text }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

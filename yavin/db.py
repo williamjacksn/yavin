@@ -1,83 +1,94 @@
+import datetime
 import logging
 import psycopg2
 import psycopg2.extras
 import uuid
+
+from typing import Dict, List, Optional
 
 log = logging.getLogger(__name__)
 psycopg2.extras.register_uuid()
 
 
 class YavinDatabase:
-    def __init__(self, connection_string):
+    def __init__(self, dsn: str):
         log.debug('Connecting to database...')
         try:
-            self.cnx = psycopg2.connect(connection_string, cursor_factory=psycopg2.extras.RealDictCursor)
+            self.cnx = psycopg2.connect(dsn=dsn, cursor_factory=psycopg2.extras.RealDictCursor)
         except psycopg2.OperationalError:
             log.critical('I could not connect to the database!')
             raise
         self.cnx.autocommit = True
 
-    def _q(self, sql, args=None):
+    def _q(self, sql: str, args: Dict = None) -> List[Dict]:
         if args is None:
-            args = []
+            args = {}
         with self.cnx.cursor() as c:
             c.execute(sql, args)
-            while True:
-                try:
-                    row = c.fetchone()
-                except psycopg2.ProgrammingError as e:
-                    log.error(e)
-                    return
-                if row is None:
-                    return
-                yield row
+            return c.fetchall()
 
-    def _q_one(self, sql, args=None):
+    def _q_one(self, sql: str, args: Dict = None) -> Optional[Dict]:
         for row in self._q(sql, args):
             return row
         return None
 
-    def _u(self, sql, args=None):
+    def _u(self, sql: str, args: Dict = None) -> int:
         if args is None:
-            args = []
+            args = {}
         with self.cnx.cursor() as c:
             c.execute(sql, args)
             return c.rowcount
 
+    # captain's log
+
+    def add_captains_log_entry(self, log_text: str):
+        params = {
+            'id': uuid.uuid4(),
+            'log_timestamp': datetime.datetime.utcnow(),
+            'log_text': log_text
+        }
+        self._u('''
+            INSERT INTO captains_log (id, log_timestamp, log_text)
+            VALUES (%(id)s, %(log_timestamp)s, %(log_text)s)
+        ''', params)
+
+    def get_captains_log_entries(self) -> List[Dict]:
+        sql = 'SELECT id, log_timestamp, log_text FROM captains_log'
+        return self._q(sql)
+
     # jar
 
-    def add_jar_entry(self, entry_date):
-        last = self._q_one('SELECT MAX(id) id FROM jar_entries')
+    def add_jar_entry(self, entry_date: datetime.date):
+        last = self._q_one('SELECT max(id) id FROM jar_entries')
         params = {
             'id': last['id'] + 1,
             'entry_date': entry_date
         }
         self._u('INSERT INTO jar_entries (id, entry_date) VALUES (%(id)s, %(entry_date)s)', params)
 
-    def get_recent_jar_entries(self, limit=10):
+    def get_recent_jar_entries(self, limit: int = 10) -> List[Dict]:
         params = {'limit': limit}
-        yield from self._q('SELECT id, entry_date FROM jar_entries ORDER BY entry_date DESC LIMIT %(limit)s', params)
+        return self._q('SELECT id, entry_date FROM jar_entries ORDER BY entry_date DESC LIMIT %(limit)s', params)
 
     # library
 
-    def add_library_credential(self, params):
+    def add_library_credential(self, params: Dict):
         params['id'] = uuid.uuid4()
         self._u('''
             INSERT INTO library_credentials (id, library, username, password, display_name)
             VALUES (%(id)s, %(library)s, %(username)s, %(password)s, %(display_name)s)
         ''', params)
 
-    def get_library_credentials(self):
-        sql = 'SELECT id, library, username, password, display_name, balance FROM library_credentials'
-        return list(self._q(sql))
+    def get_library_credentials(self) -> List[Dict]:
+        return self._q('SELECT id, library, username, password, display_name, balance FROM library_credentials')
 
-    def delete_library_credential(self, params):
+    def delete_library_credential(self, params: Dict):
         self._u('DELETE FROM library_credentials WHERE id = %(id)s', params)
 
-    def update_balance(self, params):
+    def update_balance(self, params: Dict):
         self._u('UPDATE library_credentials SET balance = %(balance)s WHERE id = %(id)s', params)
 
-    def add_library_book(self, params):
+    def add_library_book(self, params: Dict):
         params['id'] = uuid.uuid4()
         sql = '''
             INSERT INTO library_books (id, credential_id, title, due, renewable, item_id, medium)
@@ -85,14 +96,14 @@ class YavinDatabase:
         '''
         self._u(sql, params)
 
-    def update_due_date(self, params):
+    def update_due_date(self, params: Dict):
         sql = 'UPDATE library_books SET due = %(due)s WHERE item_id = %(item_id)s'
         return self._u(sql, params)
 
     def clear_library_books(self):
         self._u('DELETE FROM library_books')
 
-    def get_book_credentials(self, params):
+    def get_book_credentials(self, params: Dict):
         sql = '''
             SELECT library, username, password
             FROM library_books
@@ -111,22 +122,26 @@ class YavinDatabase:
 
     # weight
 
-    def add_weight_entry(self, entry_date, weight):
+    def add_weight_entry(self, entry_date: datetime.date, weight: float):
+        params = {'entry_date': entry_date, 'weight': weight}
         try:
-            self._u('INSERT INTO weight_entries (entry_date, weight) VALUES (%s, %s)', [entry_date, weight])
+            self._u('INSERT INTO weight_entries (entry_date, weight) VALUES (%(entry_date)s, %(weight)s)', params)
         except psycopg2.IntegrityError:
-            return 'There is already a weight entry for {}.'.format(entry_date)
+            return f'There is already a weight entry for {entry_date}.'
 
-    def get_recent_weight_entries(self, limit=10):
-        yield from self._q('SELECT entry_date, weight FROM weight_entries ORDER BY entry_date DESC LIMIT %s', [limit])
+    def get_recent_weight_entries(self, limit: int = 10) -> List[Dict]:
+        params = {'limit': limit}
+        return self._q('SELECT entry_date, weight FROM weight_entries ORDER BY entry_date DESC LIMIT %(limit)s', params)
 
-    def get_weight_most_recent(self):
+    def get_weight_most_recent(self) -> float:
         row = self._q_one('SELECT weight FROM weight_entries ORDER BY entry_date DESC')
+        if row is None:
+            return 0
         return row['weight']
 
     # movie night
 
-    def add_movie_night_person(self, params):
+    def add_movie_night_person(self, params: Dict):
         params['id'] = uuid.uuid4()
         sql = 'INSERT INTO movie_people (id, person) VALUES (%(id)s, %(person)s)'
         self._u(sql, params)
@@ -140,7 +155,7 @@ class YavinDatabase:
         '''
         return self._q(sql)
 
-    def add_movie_night_pick(self, params):
+    def add_movie_night_pick(self, params: Dict):
         params['id'] = uuid.uuid4()
         sql = '''
             INSERT INTO movie_picks (id, pick_date, person_id, pick_text)
@@ -158,7 +173,7 @@ class YavinDatabase:
 
     # electricity
 
-    def add_electricity(self, params):
+    def add_electricity(self, params: Dict):
         sql = '''
             INSERT INTO electricity (bill_date, kwh, charge, bill)
             VALUES (%(bill_date)s, %(kwh)s, %(charge)s, %(bill)s)
@@ -170,6 +185,7 @@ class YavinDatabase:
         return self._q(sql)
 
     def migrate(self):
+        log.debug(f'The database is at schema version {self.version}')
         log.debug('Checking for database migrations')
         if self.version == 0:
             log.debug('Migrating from version 0 to version 1')
@@ -179,7 +195,7 @@ class YavinDatabase:
                     flag_value TEXT NOT NULL
                 )
             ''')
-            self._u('INSERT INTO flags (flag_name, flag_value) VALUES (%s, %s)', ['db_version', '1'])
+            self._insert_flag('db_version', '1')
         if self.version == 1:
             log.debug('Migrating from version 1 to version 2')
             self._u('''
@@ -195,7 +211,7 @@ class YavinDatabase:
                     weight NUMERIC NOT NULL CHECK (weight > 0)
                 )
             ''')
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['2', 'db_version'])
+            self._update_flag('db_version', '2')
         if self.version == 2:
             log.debug('Migrating from version 2 to version 3')
             self._u('''
@@ -207,7 +223,7 @@ class YavinDatabase:
                     display_name TEXT NOT NULL
                 )
             ''')
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['3', 'db_version'])
+            self._update_flag('db_version', '3')
         if self.version == 3:
             log.debug('Migrating from version 3 to version 4')
             self._u('''
@@ -219,15 +235,15 @@ class YavinDatabase:
                     renewable BOOLEAN NOT NULL
                 )
             ''')
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['4', 'db_version'])
+            self._update_flag('db_version', '4')
         if self.version == 4:
             log.debug('Migrating from version 4 to version 5')
             self._u("ALTER TABLE library_books ADD COLUMN item_id TEXT NOT NULL DEFAULT ''")
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['5', 'db_version'])
+            self._update_flag('db_version', '5')
         if self.version == 5:
             log.debug('Migrating from version 5 to version 6')
             self._u("ALTER TABLE library_books ADD COLUMN medium TEXT NOT NULL DEFAULT ''")
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['6', 'db_version'])
+            self._update_flag('db_version', '6')
         if self.version == 6:
             log.debug('Migrating from version 6 to version 7')
             self._u('''
@@ -244,7 +260,7 @@ class YavinDatabase:
                     pick_text TEXT NOT NULL
                 )
             ''')
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['7', 'db_version'])
+            self._update_flag('db_version', '7')
         if self.version == 7:
             log.debug('Migrating from version 7 to version 8')
             self._u('''
@@ -255,7 +271,7 @@ class YavinDatabase:
                     bill INTEGER NOT NULL
                 )
             ''')
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['8', 'db_version'])
+            self._update_flag('db_version', '8')
         if self.version == 8:
             log.debug('Migrating from version 8 to version 9')
             self._u('''
@@ -268,21 +284,63 @@ class YavinDatabase:
                     tags TEXT
                 )
             ''')
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['9', 'db_version'])
+            self._update_flag('db_version', '9')
         if self.version == 9:
             log.debug('Migrating from version 9 to version 10')
             self._u('''
                 ALTER TABLE library_credentials
                 ADD COLUMN balance INTEGER NOT NULL DEFAULT 0
             ''')
-            self._u('UPDATE flags SET flag_value = %s WHERE flag_name = %s', ['10', 'db_version'])
+            self._update_flag('db_version', '10')
+        if self.version == 10:
+            log.debug('Migrating from version 10 to version 11')
+            self._u('''
+                CREATE TABLE schema_versions (
+                    schema_version INTEGER PRIMARY KEY,
+                    migration_date TIMESTAMP NOT NULL
+                )
+            ''')
+            self._u('''
+                CREATE TABLE captains_log (
+                    id UUID PRIMARY KEY,
+                    log_timestamp TIMESTAMP NOT NULL,
+                    log_text TEXT NOT NULL
+                )
+            ''')
+            self._add_schema_version(11)
+
+    def _insert_flag(self, flag_name: str, flag_value: str):
+        sql = 'INSERT INTO flags (flag_name, flag_value) VALUES (%(flag_name)s, %(flag_value)s)'
+        params = {'flag_name': flag_name, 'flag_value': flag_value}
+        self._u(sql, params)
+
+    def _update_flag(self, flag_name: str, flag_value: str):
+        sql = 'UPDATE flags SET flag_value = %(flag_value)s WHERE flag_name = %(flag_name)s'
+        params = {'flag_name': flag_name, 'flag_value': flag_value}
+        self._u(sql, params)
+
+    def _add_schema_version(self, schema_version: int):
+        sql = '''
+            INSERT INTO schema_versions (schema_version, migration_date)
+            VALUES (%(schema_version)s, %(migration_date)s)
+        '''
+        self._u(sql, {'schema_version': schema_version, 'migration_date': datetime.datetime.utcnow()})
+
+    def _table_exists(self, table_name: str) -> bool:
+        sql = 'SELECT count(*) table_count FROM information_schema.tables WHERE table_name = %(table_name)s'
+        for record in self._q(sql, {'table_name': table_name}):
+            if record['table_count'] == 0:
+                return False
+        return True
 
     @property
     def version(self):
-        try:
-            row = self._q_one('SELECT flag_value FROM flags WHERE flag_name = %s', ['db_version'])
-        except psycopg2.ProgrammingError as e:
-            if e.diag.message_primary == 'relation "flags" does not exist':
-                return 0
-            raise
-        return int(row['flag_value'])
+        if self._table_exists('schema_versions'):
+            sql = 'SELECT max(schema_version) current_version FROM schema_versions'
+            for record in self._q(sql):
+                return record['current_version']
+        if self._table_exists('flags'):
+            sql = 'SELECT flag_value FROM flags WHERE flag_name = %(flag_name)s'
+            for record in self._q(sql, {'flag_name': 'db_version'}):
+                return int(record['flag_value'])
+        return 0
