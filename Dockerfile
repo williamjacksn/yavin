@@ -1,11 +1,11 @@
 FROM python:3.7.1-alpine3.8
 
-COPY requirements-docker.txt /yavin/requirements-docker.txt
+COPY requirements.txt /yavin/requirements.txt
 
-RUN /sbin/apk --no-cache add --virtual .deps gcc musl-dev postgresql-dev \
- && /sbin/apk --no-cache add libpq \
- && /usr/local/bin/pip install --no-cache-dir --requirement /yavin/requirements-docker.txt \
- && /sbin/apk del .deps
+RUN /sbin/apk add --no-cache --virtual .deps gcc musl-dev postgresql-dev \
+ && /sbin/apk add --no-cache libpq \
+ && /usr/local/bin/pip install --no-cache-dir --requirement /yavin/requirements.txt \
+ && /sbin/apk del --no-cache .deps
 
 COPY . /yavin
 
