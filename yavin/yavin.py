@@ -68,6 +68,11 @@ def _get_db():
 
 
 @app.before_request
+def log_request():
+    app.logger.debug(f'{flask.request.method} {flask.request.path}')
+
+
+@app.before_request
 def make_session_permanent():
     if config.permanent_sessions:
         flask.session.permanent = True
@@ -99,6 +104,14 @@ def captains_log_incoming():
         _get_db().add_captains_log_entry(log_text)
         return 'Log recorded.'
     return 'Authorization failure.'
+
+@app.route('/captains-log/update', methods=['POST'])
+@secure
+def captains_log_update():
+    id_ = flask.request.form.get('id')
+    log_text = flask.request.form.get('log_text')
+    _get_db().update_captains_log_entry(id_, log_text)
+    return flask.redirect(flask.url_for('captains_log'))
 
 
 @app.route('/electricity')

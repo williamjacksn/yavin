@@ -53,9 +53,9 @@ class YavinDatabase:
         params = {'limit': limit}
         return self._q(sql, params)
 
-    def update_captains_log_entry(self, id_: uuid.UUID, log_text: str):
+    def update_captains_log_entry(self, id_: str, log_text: str):
         sql = 'UPDATE captains_log SET log_text = %(log_text)s WHERE id = %(id)s'
-        params = {'id': id_, 'log_text': log_text}
+        params = {'id': uuid.UUID(hex=id_), 'log_text': log_text}
         self._u(sql, params)
 
     # jar
