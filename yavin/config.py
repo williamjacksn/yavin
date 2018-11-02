@@ -32,7 +32,7 @@ class Config:
         PERMANENT_SESSIONS=False
         PORT=8080
         SCHEME=http
-        SERVER_NAME=localhost"""
+        SERVER_NAME=localhost:8080"""
 
         self.admin_auth_phrase = os.getenv('ADMIN_AUTH_PHRASE', '').lower()
         self.admin_email = os.getenv('ADMIN_EMAIL')
@@ -47,7 +47,7 @@ class Config:
         self.port = int(os.getenv('PORT', '8080'))
         self.scheme = os.getenv('SCHEME', 'http')
         self.secret_key = os.getenv('SECRET_KEY')
-        self.server_name = os.getenv('SERVER_NAME', 'localhost')
+        self.server_name = os.getenv('SERVER_NAME', 'localhost:8080')
 
     @property
     def version(self) -> str:
