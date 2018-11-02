@@ -42,19 +42,23 @@ class YavinDatabase:
     # captain's log
 
     def add_captains_log_entry(self, log_text: str):
+        sql = 'INSERT INTO captains_log (id, log_timestamp, log_text) VALUES (%(id)s, %(log_timestamp)s, %(log_text)s)'
         params = {
             'id': uuid.uuid4(),
             'log_timestamp': datetime.datetime.utcnow(),
             'log_text': log_text
         }
-        self._u('''
-            INSERT INTO captains_log (id, log_timestamp, log_text)
-            VALUES (%(id)s, %(log_timestamp)s, %(log_text)s)
-        ''', params)
+        self._u(sql, params)
 
-    def get_captains_log_entries(self) -> List[Dict]:
-        sql = 'SELECT id, log_timestamp, log_text FROM captains_log'
-        return self._q(sql)
+    def get_captains_log_entries(self, limit: int = 20) -> List[Dict]:
+        sql = 'SELECT id, log_timestamp, log_text FROM captains_log ORDER BY log_timestamp DESC LIMIT %(limit)s'
+        params = {'limit': limit}
+        return self._q(sql, params)
+
+    def update_captains_log_entry(self, id_: uuid.UUID, log_text: str):
+        sql = 'UPDATE captains_log SET log_text = %(log_text)s WHERE id = %(id)s'
+        params = {'id': id_, 'log_text': log_text}
+        self._u(sql, params)
 
     # jar
 
