@@ -41,11 +41,13 @@ class YavinDatabase:
 
     # captain's log
 
-    def add_captains_log_entry(self, log_text: str):
+    def add_captains_log_entry(self, log_text: str, log_timestamp: datetime.datetime = None):
         sql = 'INSERT INTO captains_log (id, log_timestamp, log_text) VALUES (%(id)s, %(log_timestamp)s, %(log_text)s)'
+        if log_timestamp is None:
+            log_timestamp = datetime.datetime.utcnow()
         params = {
             'id': uuid.uuid4(),
-            'log_timestamp': datetime.datetime.utcnow(),
+            'log_timestamp': log_timestamp,
             'log_text': log_text
         }
         self._u(sql, params)
