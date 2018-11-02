@@ -2,5 +2,5 @@ version: '3'
 
 services:
   yavin:
-    build: .
     image: williamjackson/yavin
+    build: .
