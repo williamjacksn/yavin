@@ -94,6 +94,13 @@ def captains_log():
     return flask.render_template('captains-log.html')
 
 
+@app.route('/captains-log/delete', methods=['POST'])
+@secure
+def captains_log_delete():
+    id_ = flask.request.form.get('id')
+    _get_db().delete_captains_log_entry(id_)
+    return flask.redirect(flask.url_for('captains_log'))
+
 @app.route('/captains-log/incoming', methods=['POST'])
 def captains_log_incoming():
     app.logger.debug(f'json: {flask.request.json}')
