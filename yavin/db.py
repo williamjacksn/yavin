@@ -12,7 +12,7 @@ psycopg2.extras.register_uuid()
 
 class YavinDatabase:
     def __init__(self, dsn: str):
-        log.debug('Connecting to database...')
+        log.debug('Connecting to database ...')
         try:
             self.cnx = psycopg2.connect(dsn=dsn, cursor_factory=psycopg2.extras.RealDictCursor)
         except psycopg2.OperationalError:
@@ -193,7 +193,7 @@ class YavinDatabase:
 
     def migrate(self):
         log.debug(f'The database is at schema version {self.version}')
-        log.debug('Checking for database migrations')
+        log.debug('Checking for database migrations ...')
         if self.version == 0:
             log.debug('Migrating from version 0 to version 1')
             self._u('''
