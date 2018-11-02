@@ -48,6 +48,11 @@ class YavinDatabase:
         params = {'id': uuid.uuid4(), 'log_text': log_text, 'log_timestamp': log_timestamp}
         self._u(sql, params)
 
+    def delete_captains_log_entry(self, id_: str):
+        sql = 'DELETE FROM captains_log WHERE id = %(id)s'
+        params = {'id': uuid.UUID(hex=id_)}
+        self._u(sql, params)
+
     def get_captains_log_entries(self, limit: int = 20) -> List[Dict]:
         sql = 'SELECT id, log_timestamp, log_text FROM captains_log ORDER BY log_timestamp DESC LIMIT %(limit)s'
         params = {'limit': limit}
