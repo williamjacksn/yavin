@@ -45,11 +45,7 @@ class YavinDatabase:
         sql = 'INSERT INTO captains_log (id, log_timestamp, log_text) VALUES (%(id)s, %(log_timestamp)s, %(log_text)s)'
         if log_timestamp is None:
             log_timestamp = datetime.datetime.utcnow()
-        params = {
-            'id': uuid.uuid4(),
-            'log_timestamp': log_timestamp,
-            'log_text': log_text
-        }
+        params = {'id': uuid.uuid4(), 'log_text': log_text, 'log_timestamp': log_timestamp}
         self._u(sql, params)
 
     def get_captains_log_entries(self, limit: int = 20) -> List[Dict]:
