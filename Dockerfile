@@ -7,8 +7,6 @@ RUN /sbin/apk add --no-cache --virtual .deps gcc musl-dev postgresql-dev \
  && /usr/local/bin/pip install --no-cache-dir --requirement /yavin/requirements.txt \
  && /sbin/apk del --no-cache .deps
 
-COPY . /yavin
-
 ENV PYTHONUNBUFFERED 1
 ENV TZ UTC
 
@@ -18,3 +16,5 @@ CMD ["/yavin/run.py"]
 LABEL maintainer=william@subtlecoolness.com \
       org.label-schema.schema-version=1.0 \
       org.label-schema.version=2.2.0
+
+COPY . /yavin
