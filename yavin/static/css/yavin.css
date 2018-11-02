@@ -6,3 +6,11 @@
 .bump-top-padding {
     padding-top: 10px;
 }
+
+.captains-log-button-col {
+    min-width: 120px;
+}
+
+.captains-log-date-col {
+    min-width: 165px;
+}

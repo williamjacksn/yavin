@@ -13,19 +13,20 @@
             <table class="table">
                 <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Log</th>
-                    <th></th>
+                    <th class="captains-log-date-col">Log date</th>
+                    <th>Log text</th>
+                    <th class="captains-log-button-col"></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for record in g.records|sort(attribute='log_timestamp', reverse=True) %}
                     <tr>
-                        <td>{{ record.log_timestamp }}</td>
+                        <td>{{ record.log_timestamp|datetime }} UTC</td>
                         <td>{{ record.log_text }}</td>
-                        <td>
+                        <td class="text-right">
                             <form action="{{ url_for('captains_log_delete') }}" method="post">
                                 <input type="hidden" name="id" value="{{ record.id }}">
+                                <button type="button" class="btn btn-xs btn-primary" data-toggle="modal" data-target="#modal-update-{{ record.id }}">Update</button>
                                 <button type="submit" class="btn btn-xs btn-danger">Delete</button>
                             </form>
                         </td>
@@ -35,4 +36,30 @@
             </table>
         </div>
     </div>
+
+    {% for record in g.records %}
+        <div class="modal fade" id="modal-update-{{ record.id }}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">{{ record.log_timestamp|datetime }} UTC</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form id="form-update-{{ record.id }}" action="{{ url_for('captains_log_update') }}" method="post">
+                            <input type="hidden" name="id" value="{{ record.id }}">
+                            <div class="form-group">
+                                <label for="text-{{ record.id }}">Log text</label>
+                                <textarea id="text-{{ record.id }}" class="form-control" name="log_text" rows="5">{{ record.log_text }}</textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="submit" form="form-update-{{ record.id }}" class="btn btn-primary">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}

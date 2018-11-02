@@ -28,6 +28,8 @@ app.config['PREFERRED_URL_SCHEME'] = config.scheme
 app.config['SECRET_KEY'] = config.secret_key
 app.config['SERVER_NAME'] = config.server_name
 
+app.jinja_env.filters['datetime'] = yavin.util.clean_datetime
+
 if config.scheme.lower() == 'https':
     flask_sslify.SSLify(app)
 
