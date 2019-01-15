@@ -316,6 +316,20 @@ class YavinDatabase:
             ''')
             self._delete_flag('db_version')
             self._add_schema_version(11)
+        if self.version == 11:
+            log.debug('Migrating from version 11 to version 12')
+            self._u('''
+                CREATE TABLE gas_prices (
+                    id UUID PRIMARY KEY,
+                    price_date DATE NOT NULL,
+                    price NUMERIC NOT NULL,
+                    gallons NUMERIC,
+                    location TEXT,
+                    vehicle TEXT,
+                    miles_driven NUMERIC
+                )
+            ''')
+            self._add_schema_version(12)
 
     def _insert_flag(self, flag_name: str, flag_value: str):
         sql = 'INSERT INTO flags (flag_name, flag_value) VALUES (%(flag_name)s, %(flag_value)s)'
