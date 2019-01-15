@@ -216,7 +216,7 @@ class YavinDatabase:
         self._u(sql, params)
 
     def get_electricity(self):
-        sql = 'SELECT bill_date, kwh, charge, bill FROM electricity'
+        sql = 'SELECT bill_date, kwh, charge, bill FROM electricity ORDER BY bill_date DESC'
         return self._q(sql)
 
     def migrate(self):
