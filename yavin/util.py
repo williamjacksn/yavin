@@ -4,6 +4,7 @@ import datetime
 def clean_datetime(d: datetime.datetime) -> str:
     return d.strftime('%Y-%m-%d %H:%M')
 
+
 def clean_due_date(due: str) -> datetime.date:
     return datetime.datetime.strptime(due, '%m\u2011%d\u2011%Y').date()
 
