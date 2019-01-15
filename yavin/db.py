@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import logging
 import psycopg2
 import psycopg2.extras
@@ -62,6 +63,33 @@ class YavinDatabase:
         sql = 'UPDATE captains_log SET log_text = %(log_text)s WHERE id = %(id)s'
         params = {'id': uuid.UUID(hex=id_), 'log_text': log_text}
         self._u(sql, params)
+
+    # gas prices
+
+    def add_gas_price_entry(self, price_date: datetime.date, price: decimal.Decimal, gallons: decimal.Decimal = None,
+                            location: str = None, vehicle: str = None, miles_driven: decimal.Decimal = None):
+        sql = '''
+            INSERT INTO gas_prices (id, price_date, price, gallons, location, vehicle, miles_driven)
+            VALUES (%(id)s, %(price_date)s, %(price)s, %(gallons)s, %(location)s, %(vehicle)s, %(miles_driven)s)
+        '''
+        params = {'id': uuid.uuid4(), 'price_date': price_date, 'price': price, 'gallons': gallons,
+                  'location': location, 'vehicle': vehicle, 'miles_driven': miles_driven}
+        self._u(sql, params)
+
+    def delete_gas_price_entry(self, id_: str):
+        sql = 'DELETE FROM gas_prices WHERE id = %(id)s'
+        params = {'id': id_}
+        self._u(sql, params)
+
+    def get_gas_price_entries(self, limit: int = 20) -> List[Dict]:
+        sql = '''
+            SELECT id, price_date, price, gallons, location, vehicle, miles_driven
+            FROM gas_prices
+            ORDER BY price_date DESC
+            LIMIT %(limit)s
+        '''
+        params = {'limit': limit}
+        return self._q(sql, params)
 
     # jar
 
