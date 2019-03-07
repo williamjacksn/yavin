@@ -103,6 +103,7 @@ def captains_log_delete():
     _get_db().delete_captains_log_entry(id_)
     return flask.redirect(flask.url_for('captains_log'))
 
+
 @app.route('/captains-log/incoming', methods=['POST'])
 def captains_log_incoming():
     app.logger.debug(f'json: {flask.request.json}')
@@ -113,6 +114,7 @@ def captains_log_incoming():
         _get_db().add_captains_log_entry(log_text)
         return 'Log recorded.'
     return 'Authorization failure.'
+
 
 @app.route('/captains-log/update', methods=['POST'])
 @secure
@@ -212,7 +214,7 @@ def library_renew():
     return flask.redirect(flask.url_for('library'))
 
 
-@app.route('/library/notify_now')
+@app.route('/library/notify-now')
 @secure
 def library_notify_now():
     app.logger.info('Got library notification request')
@@ -220,7 +222,7 @@ def library_notify_now():
     return flask.redirect(flask.url_for('library'))
 
 
-@app.route('/library/sync_now')
+@app.route('/library/sync-now')
 @secure
 def library_sync_now():
     app.logger.info('Got library sync request')
@@ -228,7 +230,7 @@ def library_sync_now():
     return flask.redirect(flask.url_for('library'))
 
 
-@app.route('/movie_night')
+@app.route('/movie-night')
 @secure
 def movie_night():
     flask.g.people = list(_get_db().get_movie_night_people())
@@ -237,7 +239,7 @@ def movie_night():
     return flask.render_template('movie_night.html')
 
 
-@app.route('/movie_night/add_person', methods=['POST'])
+@app.route('/movie-night/add-person', methods=['POST'])
 @secure
 def movie_night_add_person():
     params = {'person': flask.request.form.get('person')}
@@ -245,7 +247,7 @@ def movie_night_add_person():
     return flask.redirect(flask.url_for('movie_night'))
 
 
-@app.route('/movie_night/add_pick', methods=['POST'])
+@app.route('/movie-night/add-pick', methods=['POST'])
 @secure
 def movie_night_add_pick():
     params = {
@@ -278,7 +280,7 @@ def weight_add():
     return flask.redirect(flask.url_for('weight'))
 
 
-@app.route('/sign_out')
+@app.route('/sign-out')
 def sign_out():
     flask.session.pop('profile', None)
     return flask.redirect(flask.url_for('index'))
