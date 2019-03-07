@@ -183,10 +183,10 @@ class YavinDatabase:
 
     def get_movie_night_people(self):
         sql = '''
-            SELECT person_id id, person, row_number() OVER (ORDER BY MAX(pick_date)) pick_order
-            FROM movie_picks
-            JOIN movie_people ON movie_people.id = movie_picks.person_id
-            GROUP BY person, person_id
+            SELECT movie_people.id id, person, row_number() OVER (ORDER BY MAX(pick_date)) pick_order
+            FROM movie_people
+            LEFT JOIN movie_picks ON movie_people.id = movie_picks.person_id
+            GROUP BY person, movie_people.id
         '''
         return self._q(sql)
 
