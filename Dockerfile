@@ -17,6 +17,6 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.description="Personal web tools" \
       org.opencontainers.image.source="https://github.com/williamjacksn/yavin/" \
       org.opencontainers.image.title="Yavin" \
-      org.opencontainers.image.version=2.3.5
+      org.opencontainers.image.version=2.3.6
 
 COPY . /yavin
