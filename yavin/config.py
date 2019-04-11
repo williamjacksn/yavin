@@ -45,7 +45,7 @@ class Config:
         self.log_level = os.getenv('LOG_LEVEL', 'DEBUG')
         self.permanent_sessions = (os.getenv('PERMANENT_SESSIONS', 'False') == 'True')
         self.port = int(os.getenv('PORT', '8080'))
-        self.scheme = os.getenv('SCHEME', 'http')
+        self.scheme = os.getenv('SCHEME', 'http').lower()
         self.secret_key = os.getenv('SECRET_KEY')
         self.server_name = os.getenv('SERVER_NAME', 'localhost:8080')
 

@@ -2,7 +2,6 @@ import apscheduler.schedulers.background
 import email.message
 import flask
 import flask_oauth2_login
-import flask_sslify
 import functools
 import inspect
 import logging
@@ -10,6 +9,7 @@ import requests
 import smtplib
 import sys
 import waitress
+import werkzeug.middleware.proxy_fix
 import xml.etree.ElementTree
 import yavin.config
 import yavin.db
@@ -19,6 +19,7 @@ config = yavin.config.Config()
 scheduler = apscheduler.schedulers.background.BackgroundScheduler()
 
 app = flask.Flask(__name__)
+app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_port=1)
 
 app.config['APPLICATION_ROOT'] = config.application_root
 app.config['GOOGLE_LOGIN_CLIENT_ID'] = config.google_login_client_id
@@ -28,10 +29,10 @@ app.config['PREFERRED_URL_SCHEME'] = config.scheme
 app.config['SECRET_KEY'] = config.secret_key
 app.config['SERVER_NAME'] = config.server_name
 
-app.jinja_env.filters['datetime'] = yavin.util.clean_datetime
+if config.scheme == 'https':
+    app.config['SESSION_COOKIE_SECURE'] = True
 
-if config.scheme.lower() == 'https':
-    flask_sslify.SSLify(app)
+app.jinja_env.filters['datetime'] = yavin.util.clean_datetime
 
 google_login = flask_oauth2_login.GoogleLogin(app)
 
