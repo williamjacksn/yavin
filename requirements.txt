@@ -2,6 +2,6 @@ APScheduler==3.6.0
 Flask==1.0.2
 Flask-OAuth2-Login==0.0.9
 Werkzeug==0.15.2
-psycopg2==2.8.1
+psycopg2==2.8.2
 requests==2.21.0
 waitress==1.2.1
