@@ -10,31 +10,8 @@
 {% block content %}
     <div class="row bump-top-padding">
         <div class="col-md-12">
+            <button class="btn btn-default" data-toggle="modal" data-target="#modal-add-pick">Add pick</button>
             <button class="btn btn-default" data-toggle="modal" data-target="#modal-manage-people">Manage people</button>
-        </div>
-    </div>
-
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
-            <form class="form-inline" action="{{ url_for('movie_night_add_pick') }}" method="post">
-                <div class="form-group">
-                    <label for="pick_date">When</label>
-                    <input class="form-control" type="date" name="pick_date" id="pick_date" value="{{ g.today }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="person_id">Who</label>
-                    <select class="form-control" name="person_id" id="person_id" required>
-                        {% for person in g.people|sort(attribute='person') %}
-                            <option value="{{ person.id }}"{% if person.pick_order == 1 %} selected{% endif %}>{{ person.person }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="pick_text">What</label>
-                    <input class="form-control" type="text" name="pick_text" id="pick_text" required>
-                </div>
-                <button class="btn btn-success">Add</button>
-            </form>
         </div>
     </div>
 
@@ -46,6 +23,7 @@
                     <th>When</th>
                     <th>Who</th>
                     <th>What</th>
+                    <th class="text-right"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -53,11 +31,102 @@
                     <tr>
                         <td>{{ pick.pick_date }}</td>
                         <td>{{ pick.person }}</td>
-                        <td>{{ pick.pick_text }}</td>
+                        <td>
+                            {% if pick.pick_url is none %}
+                                {{ pick.pick_text }}
+                            {% else %}
+                                <a href="{{ pick.pick_url }}" target="_blank">{{ pick.pick_text }}</a>
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            <button class="btn btn-xs btn-default" data-toggle="modal" data-target="#modal-edit-{{ pick.id }}">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                            </button>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    {% for pick in g.picks %}
+    <div class="modal fade" id="modal-edit-{{ pick.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Edit this movie pick</h4>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('movie_night_edit_pick') }}" method="post" id="form-edit-{{ pick.id }}">
+                        <input type="hidden" name="id" value="{{ pick.id }}">
+                        <div class="form-group">
+                            <label for="pick-date-{{ pick.id }}">When</label>
+                            <input class="form-control" type="date" name="pick_date" id="pick-date-{{ pick.id }}" value="{{ pick.pick_date }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="person-id-{{ pick.id }}">Who</label>
+                            <select class="form-control" name="person_id" id="person-id-{{ pick.id }}" required>
+                                {% for person in g.people|sort(attribute='person') %}
+                                    <option value="{{ person.id }}"{% if person.id == pick.person_id %} selected{% endif %}>{{ person.person }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pick-text-{{ pick.id }}">What</label>
+                            <input class="form-control" type="text" name="pick_text" id="pick-text-{{ pick.id }}" value="{{ pick.pick_text }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pick-url-{{ pick.id }}">URL</label>
+                            <input class="form-control" type="text" name="pick_url" id="pick-url-{{ pick.id }}" value="{{ pick.pick_url if pick.pick_url is not none }}">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" formaction="{{ url_for('movie_night_delete_pick') }}" form="form-edit-{{ pick.id }}">Delete</button>
+                    <button class="btn btn-success" form="form-edit-{{ pick.id }}">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="modal fade" id="modal-add-pick" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Add a movie pick</h4>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('movie_night_add_pick') }}" method="post" id="form-add-pick">
+                        <div class="form-group">
+                            <label for="pick_date">When</label>
+                            <input class="form-control" type="date" name="pick_date" id="pick_date" value="{{ g.today }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="person_id">Who</label>
+                            <select class="form-control" name="person_id" id="person_id" required>
+                                {% for person in g.people|sort(attribute='person') %}
+                                    <option value="{{ person.id }}"{% if person.pick_order == 1 %} selected{% endif %}>{{ person.person }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pick_text">What</label>
+                            <input class="form-control" type="text" name="pick_text" id="pick_text" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pick_url">URL</label>
+                            <input class="form-control" type="text" name="pick_url" id="pick_url">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-success" form="form-add-pick">Add pick</button>
+                </div>
+            </div>
         </div>
     </div>
 

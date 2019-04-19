@@ -254,9 +254,35 @@ def movie_night_add_pick():
     params = {
         'pick_date': flask.request.form.get('pick_date'),
         'person_id': flask.request.form.get('person_id'),
-        'pick_text': flask.request.form.get('pick_text')
+        'pick_text': flask.request.form.get('pick_text'),
+        'pick_url': flask.request.form.get('pick_url')
     }
+    app.logger.debug(params)
     _get_db().add_movie_night_pick(params)
+    return flask.redirect(flask.url_for('movie_night'))
+
+
+@app.route('/movie-night/delete-pick', methods=['POST'])
+@secure
+def movie_night_delete_pick():
+    params = {
+        'id': flask.request.form.get('id')
+    }
+    _get_db().delete_movie_night_pick(params)
+    return flask.redirect(flask.url_for('movie_night'))
+
+
+@app.route('/movie-night/edit-pick', methods=['POST'])
+@secure
+def movie_night_edit_pick():
+    params = {
+        'id': flask.request.form.get('id'),
+        'pick_date': flask.request.form.get('pick_date'),
+        'person_id': flask.request.form.get('person_id'),
+        'pick_text': flask.request.form.get('pick_text'),
+        'pick_url': flask.request.form.get('pick_url'),
+    }
+    _get_db().edit_movie_night_pick(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 

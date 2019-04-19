@@ -136,7 +136,7 @@ class YavinDatabase:
         return self._u(sql, params)
 
     def clear_library_books(self):
-        self._u('DELETE FROM library_books')
+        self._u('TRUNCATE TABLE library_books')
 
     def get_book_credentials(self, params: Dict):
         sql = '''
@@ -192,15 +192,31 @@ class YavinDatabase:
 
     def add_movie_night_pick(self, params: Dict):
         params['id'] = uuid.uuid4()
+        if params['pick_url'] == '':
+            params['pick_url'] = None
         sql = '''
-            INSERT INTO movie_picks (id, pick_date, person_id, pick_text)
-            VALUES (%(id)s, %(pick_date)s, %(person_id)s, %(pick_text)s)
+            INSERT INTO movie_picks (id, pick_date, person_id, pick_text, pick_url)
+            VALUES (%(id)s, %(pick_date)s, %(person_id)s, %(pick_text)s, %(pick_url)s)
+        '''
+        self._u(sql, params)
+
+    def delete_movie_night_pick(self, params: Dict):
+        sql = 'DELETE FROM movie_picks WHERE id = %(id)s'
+        self._u(sql, params)
+
+    def edit_movie_night_pick(self, params: Dict):
+        if params['pick_url'] == '':
+            params['pick_url'] = None
+        sql = '''
+            UPDATE movie_picks
+            SET pick_date = %(pick_date)s, person_id = %(person_id)s, pick_text = %(pick_text)s, pick_url = %(pick_url)s
+            WHERE id = %(id)s
         '''
         self._u(sql, params)
 
     def get_movie_night_picks(self):
         sql = '''
-            SELECT movie_picks.id, pick_date, person_id, person, pick_text
+            SELECT movie_picks.id, pick_date, person_id, person, pick_text, pick_url
             FROM movie_picks
             JOIN movie_people ON movie_picks.person_id = movie_people.id
         '''
@@ -358,6 +374,13 @@ class YavinDatabase:
                 )
             ''')
             self._add_schema_version(12)
+        if self.version == 12:
+            log.debug('Migrating from version 12 to version 13')
+            self._u('''
+                ALTER TABLE movie_picks
+                ADD COLUMN pick_url TEXT
+            ''')
+            self._add_schema_version(13)
 
     def _insert_flag(self, flag_name: str, flag_value: str):
         sql = 'INSERT INTO flags (flag_name, flag_value) VALUES (%(flag_name)s, %(flag_value)s)'
