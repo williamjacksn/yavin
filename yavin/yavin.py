@@ -406,4 +406,4 @@ def main():
         url_prefix = config.application_root
         if url_prefix == '/':
             url_prefix = ''
-        waitress.serve(app, port=config.port, url_prefix=url_prefix, url_scheme=config.scheme)
+        waitress.serve(app, port=config.port, url_prefix=url_prefix, url_scheme=config.scheme, ident=None)
