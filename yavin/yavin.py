@@ -2,7 +2,6 @@ import apscheduler.schedulers.background
 import email.message
 import flask
 import functools
-import inspect
 import jwt
 import logging
 import requests
@@ -24,9 +23,6 @@ app = flask.Flask(__name__)
 app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_port=1)
 
 app.config['APPLICATION_ROOT'] = config.application_root
-app.config['GOOGLE_LOGIN_CLIENT_ID'] = config.google_login_client_id
-app.config['GOOGLE_LOGIN_CLIENT_SECRET'] = config.google_login_client_secret
-app.config['GOOGLE_LOGIN_REDIRECT_SCHEME'] = config.scheme
 app.config['PREFERRED_URL_SCHEME'] = config.scheme
 app.config['SECRET_KEY'] = config.secret_key
 app.config['SERVER_NAME'] = config.server_name
@@ -45,27 +41,16 @@ def secure(f):
             return flask.redirect(flask.url_for('index'))
         if session_email == config.admin_email:
             return f(*args, **kwargs)
-        return flask.render_template('not_authorized.html')
+        return flask.render_template('not-authorized.html')
     return decorated_function
 
 
-def _get_db():
-    _db = flask.g.get('_db')
-    if _db is None:
-        _db = yavin.db.YavinDatabase(config.dsn)
-        flask.g._db = _db
-    return _db
-
-
 @app.before_request
-def log_request():
+def before_request():
     app.logger.debug(f'{flask.request.method} {flask.request.path}')
-
-
-@app.before_request
-def make_session_permanent():
     if config.permanent_sessions:
         flask.session.permanent = True
+    flask.g.db = yavin.db.YavinDatabase(config.dsn)
 
 
 @app.route('/')
@@ -73,32 +58,34 @@ def index():
     session_email = flask.session.get('email')
     if session_email is None:
         return flask.render_template('index.html')
-    return flask.render_template('signed_in.html')
+    return flask.render_template('signed-in.html')
 
 
 @app.route('/captains-log')
 @secure
 def captains_log():
-    flask.g.records = _get_db().get_captains_log_entries()
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.records = db.get_captains_log_entries()
     return flask.render_template('captains-log.html')
 
 
 @app.route('/captains-log/delete', methods=['POST'])
 @secure
 def captains_log_delete():
-    id_ = flask.request.form.get('id')
-    _get_db().delete_captains_log_entry(id_)
+    db: yavin.db.YavinDatabase = flask.g.db
+    db.delete_captains_log_entry(flask.request.form.get('id'))
     return flask.redirect(flask.url_for('captains_log'))
 
 
 @app.route('/captains-log/incoming', methods=['POST'])
 def captains_log_incoming():
+    db: yavin.db.YavinDatabase = flask.g.db
     app.logger.debug(f'json: {flask.request.json}')
     auth_phrase: str = flask.request.json['auth-phrase']
     if auth_phrase.lower() == config.admin_auth_phrase:
         app.logger.debug('Authorization accepted')
         log_text = flask.request.json['log-text']
-        _get_db().add_captains_log_entry(log_text)
+        db.add_captains_log_entry(log_text)
         return 'Log recorded.'
     return 'Authorization failure.'
 
@@ -106,60 +93,66 @@ def captains_log_incoming():
 @app.route('/captains-log/update', methods=['POST'])
 @secure
 def captains_log_update():
-    id_ = flask.request.form.get('id')
+    db: yavin.db.YavinDatabase = flask.g.db
     log_text = flask.request.form.get('log_text')
-    _get_db().update_captains_log_entry(id_, log_text)
+    db.update_captains_log_entry(flask.request.form.get('id'), log_text)
     return flask.redirect(flask.url_for('captains_log'))
 
 
 @app.route('/electricity')
 @secure
 def electricity():
-    flask.g.records = _get_db().get_electricity()
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.records = db.get_electricity()
     return flask.render_template('electricity.html')
 
 
 @app.route('/electricity/add', methods=['POST'])
 def electricity_add():
-    _get_db().add_electricity(flask.request.form)
+    db: yavin.db.YavinDatabase = flask.g.db
+    db.add_electricity(flask.request.form)
     return flask.redirect(flask.url_for('electricity'))
 
 
 @app.route('/jar')
 @secure
 def jar():
+    db: yavin.db.YavinDatabase = flask.g.db
     flask.g.today = yavin.util.today()
-    flask.g.jar_entries = _get_db().get_recent_jar_entries()
+    flask.g.jar_entries = db.get_recent_jar_entries()
     return flask.render_template('jar.html')
 
 
 @app.route('/jar/add', methods=['POST'])
 @secure
 def jar_add():
+    db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
     app.logger.info(f'Adding new jar entry for {entry_date}')
-    _get_db().add_jar_entry(entry_date)
+    db.add_jar_entry(entry_date)
     return flask.redirect(flask.url_for('jar'))
 
 
 @app.route('/library')
 @secure
 def library():
-    flask.g.library_credentials = _get_db().get_library_credentials()
-    flask.g.library_books = _get_db().get_library_books()
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.library_credentials = db.get_library_credentials()
+    flask.g.library_books = db.get_library_books()
     return flask.render_template('library.html')
 
 
 @app.route('/library/add', methods=['POST'])
 @secure
 def library_add():
+    db: yavin.db.YavinDatabase = flask.g.db
     params = {
         'display_name': flask.request.form.get('display_name'),
         'library': flask.request.form.get('library'),
         'username': flask.request.form.get('username'),
         'password': flask.request.form.get('password')
     }
-    _get_db().add_library_credential(params)
+    db.add_library_credential(params)
     scheduler.add_job(library_sync)
     return flask.redirect(flask.url_for('library'))
 
@@ -167,7 +160,8 @@ def library_add():
 @app.route('/library/delete', methods=['POST'])
 @secure
 def library_delete():
-    _get_db().delete_library_credential(flask.request.form)
+    db: yavin.db.YavinDatabase = flask.g.db
+    db.delete_library_credential(flask.request.form)
     scheduler.add_job(library_sync)
     return flask.redirect(flask.url_for('library'))
 
@@ -175,9 +169,10 @@ def library_delete():
 @app.route('/library/renew', methods=['POST'])
 @secure
 def library_renew():
+    db: yavin.db.YavinDatabase = flask.g.db
     item_id = flask.request.form.get('item_id')
     app.logger.info(f'Attempting to renew item {item_id}')
-    lib_cred = _get_db().get_book_credentials({'item_id': item_id})
+    lib_cred = db.get_book_credentials({'item_id': item_id})
     lib_url = lib_cred['library']
     s = requests.Session()
     login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
@@ -197,7 +192,7 @@ def library_renew():
     if renew_et.get('success') == '1':
         item = renew_et.find('item')
         new_due = yavin.util.clean_due_date(item.get('due'))
-        _get_db().update_due_date({'due': new_due, 'item_id': item_id})
+        db.update_due_date({'due': new_due, 'item_id': item_id})
     return flask.redirect(flask.url_for('library'))
 
 
@@ -220,23 +215,26 @@ def library_sync_now():
 @app.route('/movie-night')
 @secure
 def movie_night():
-    flask.g.people = list(_get_db().get_movie_night_people())
-    flask.g.picks = _get_db().get_movie_night_picks()
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.people = db.get_movie_night_people()
+    flask.g.picks = db.get_movie_night_picks()
     flask.g.today = yavin.util.today()
-    return flask.render_template('movie_night.html')
+    return flask.render_template('movie-night.html')
 
 
 @app.route('/movie-night/add-person', methods=['POST'])
 @secure
 def movie_night_add_person():
+    db: yavin.db.YavinDatabase = flask.g.db
     params = {'person': flask.request.form.get('person')}
-    _get_db().add_movie_night_person(params)
+    db.add_movie_night_person(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 
 @app.route('/movie-night/add-pick', methods=['POST'])
 @secure
 def movie_night_add_pick():
+    db: yavin.db.YavinDatabase = flask.g.db
     params = {
         'pick_date': flask.request.form.get('pick_date'),
         'person_id': flask.request.form.get('person_id'),
@@ -244,23 +242,25 @@ def movie_night_add_pick():
         'pick_url': flask.request.form.get('pick_url')
     }
     app.logger.debug(params)
-    _get_db().add_movie_night_pick(params)
+    db.add_movie_night_pick(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 
 @app.route('/movie-night/delete-pick', methods=['POST'])
 @secure
 def movie_night_delete_pick():
+    db: yavin.db.YavinDatabase = flask.g.db
     params = {
         'id': flask.request.form.get('id')
     }
-    _get_db().delete_movie_night_pick(params)
+    db.delete_movie_night_pick(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 
 @app.route('/movie-night/edit-pick', methods=['POST'])
 @secure
 def movie_night_edit_pick():
+    db: yavin.db.YavinDatabase = flask.g.db
     params = {
         'id': flask.request.form.get('id'),
         'pick_date': flask.request.form.get('pick_date'),
@@ -268,32 +268,34 @@ def movie_night_edit_pick():
         'pick_text': flask.request.form.get('pick_text'),
         'pick_url': flask.request.form.get('pick_url'),
     }
-    _get_db().edit_movie_night_pick(params)
+    db.edit_movie_night_pick(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 
 @app.route('/weight')
 @secure
 def weight():
+    db: yavin.db.YavinDatabase = flask.g.db
     flask.g.today = yavin.util.today()
-    flask.g.default_weight = _get_db().get_weight_most_recent()
-    flask.g.weight_entries = _get_db().get_recent_weight_entries()
+    flask.g.default_weight = db.get_weight_most_recent()
+    flask.g.weight_entries = db.get_recent_weight_entries()
     return flask.render_template('weight.html')
 
 
 @app.route('/weight/add', methods=['POST'])
 @secure
 def weight_add():
+    db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
     entry_weight = flask.request.form.get('weight')
     app.logger.info(f'Attempting to add new weight entry for {entry_date}: {entry_weight} lbs')
-    msg = _get_db().add_weight_entry(entry_date, entry_weight)
+    msg = db.add_weight_entry(entry_date, entry_weight)
     if msg is not None:
         flask.flash(msg, 'alert-danger')
     return flask.redirect(flask.url_for('weight'))
 
 
-@app.route('/login/google')
+@app.route('/authorize')
 def authorize():
     for key, value in flask.request.values.items():
         app.logger.debug(f'{key}: {value}')
@@ -343,8 +345,9 @@ def sign_out():
 def library_sync():
     app.logger.info('Syncing library data')
     with app.app_context():
-        _get_db().clear_library_books()
-        for lib_cred in _get_db().get_library_credentials():
+        db = yavin.db.YavinDatabase(config.dsn)
+        db.clear_library_books()
+        for lib_cred in db.get_library_credentials():
             app.logger.info(f'Syncing library data for {lib_cred["display_name"]}')
             lib_url = lib_cred['library']
             s = requests.Session()
@@ -361,14 +364,14 @@ def library_sync():
             app.logger.info(f'Received {len(account.content)} bytes from {account_url}')
             app.logger.debug(account.text)
             account_et = xml.etree.ElementTree.XML(account.text)
-            _get_db().update_balance({'id': lib_cred['id'], 'balance': 0})
+            db.update_balance({'id': lib_cred['id'], 'balance': 0})
             for alert in account_et.findall('alerts'):
                 if alert.get('balance'):
                     params = {
                         'id': lib_cred['id'],
                         'balance': int(alert.get('balance'))
                     }
-                    _get_db().update_balance(params)
+                    db.update_balance(params)
             for item in account_et.findall('item'):
                 params = {
                     'credential_id': lib_cred['id'],
@@ -378,15 +381,16 @@ def library_sync():
                     'item_id': item.get('id'),
                     'medium': item.get('medium').replace('\xad', '')
                 }
-                _get_db().add_library_book(params)
+                db.add_library_book(params)
 
 
 def library_notify():
     app.logger.info('Checking for due library items')
     with app.app_context():
+        db = yavin.db.YavinDatabase(config.dsn)
         lib_url = flask.url_for('library')
         app.logger.debug(f'url for library: {lib_url}')
-        for book in _get_db().get_library_books():
+        for book in db.get_library_books():
             title = book['title']
             due = book['due']
             app.logger.debug(f'{title} is due on {due}')
@@ -397,15 +401,7 @@ def library_notify():
                 msg['Subject'] = 'Library alert'
                 msg['From'] = config.admin_email
                 msg['To'] = config.admin_email
-                content = inspect.cleandoc(f'''
-                    Hello,
-
-                    Something is due (or possibly overdue) at the library today.
-
-                    {lib_url}
-
-                    (This is an automated message.)
-                ''')
+                content = flask.render_template('email-library-item-due.jinja2', lib_url=lib_url)
                 msg.set_content(content)
                 with smtplib.SMTP_SSL(host='smtp.gmail.com') as s:
                     s.login(user=config.admin_email, password=config.admin_password)
@@ -422,11 +418,10 @@ def main():
     if config.dsn is None:
         app.logger.critical('Missing environment variable DSN; I cannot start without a database')
     else:
-        with app.app_context():
-            _get_db().migrate()
+        db = yavin.db.YavinDatabase(config.dsn)
+        db.migrate()
 
         scheduler.start()
-
         scheduler.add_job(library_sync, 'interval', hours=6, start_date=yavin.util.in_two_minutes())
         scheduler.add_job(library_notify, 'cron', day='*', hour='3')
 
