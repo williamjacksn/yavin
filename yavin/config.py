@@ -8,10 +8,10 @@ class Config:
     admin_password: str
     application_root: str
     dsn: str
-    google_login_client_id: str
-    google_login_client_secret: str
     log_format: str
     log_level: str
+    openid_client_id: str
+    openid_client_secret: str
     openid_discovery_document: str
     permanent_sessions: bool
     port: int
@@ -22,33 +22,34 @@ class Config:
     def __init__(self):
         """Instantiating a Config object will automatically read the following environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, GOOGLE_LOGIN_CLIENT_ID,
-        GOOGLE_LOGIN_CLIENT_SECRET, LOG_FORMAT, LOG_LEVEL, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME,
-        SECRET_KEY, SERVER_NAME
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, LOG_FORMAT, LOG_LEVEL, OPENID_CLIENT_ID,
+        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME
 
         Some variables have defaults if they are not found in the environment:
 
-        APPLICATION_ROOT=/
+        APPLICATION_ROOT="/"
         LOG_FORMAT="%(levelname)s [%(name)s] %(message)s"
-        LOG_LEVEL=DEBUG
+        LOG_LEVEL="DEBUG"
         OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration"
-        PERMANENT_SESSIONS=False
-        PORT=8080
-        SCHEME=http
-        SERVER_NAME=localhost:8080"""
+        PERMANENT_SESSIONS="False"
+        PORT="8080"
+        SCHEME="http"
+        SERVER_NAME="localhost:8080"
+        """
 
+        _true_values = ('true', '1', 'yes', 'on')
         self.admin_auth_phrase = os.getenv('ADMIN_AUTH_PHRASE', '').lower()
         self.admin_email = os.getenv('ADMIN_EMAIL')
         self.admin_password = os.getenv('ADMIN_PASSWORD')
         self.application_root = os.getenv('APPLICATION_ROOT', '/')
         self.dsn = os.getenv('DSN')
-        self.google_login_client_id = os.getenv('GOOGLE_LOGIN_CLIENT_ID')
-        self.google_login_client_secret = os.getenv('GOOGLE_LOGIN_CLIENT_SECRET')
         self.log_format = os.getenv('LOG_FORMAT', '%(levelname)s [%(name)s] %(message)s')
         self.log_level = os.getenv('LOG_LEVEL', 'DEBUG')
+        self.openid_client_id = os.getenv('OPENID_CLIENT_ID')
+        self.openid_client_secret = os.getenv('OPENID_CLIENT_SECRET')
         self.openid_discovery_document = os.getenv('OPENID_DISCOVERY_DOCUMENT',
                                                    'https://accounts.google.com/.well-known/openid-configuration')
-        self.permanent_sessions = (os.getenv('PERMANENT_SESSIONS', 'False') == 'True')
+        self.permanent_sessions = os.getenv('PERMANENT_SESSIONS', 'false').lower() in _true_values
         self.port = int(os.getenv('PORT', '8080'))
         self.scheme = os.getenv('SCHEME', 'http').lower()
         self.secret_key = os.getenv('SECRET_KEY')

@@ -305,8 +305,8 @@ def authorize():
     token_endpoint = discovery_document.get('token_endpoint')
     data = {
         'code': flask.request.values.get('code'),
-        'client_id': config.google_login_client_id,
-        'client_secret': config.google_login_client_secret,
+        'client_id': config.openid_client_id,
+        'client_secret': config.openid_client_secret,
         'redirect_uri': flask.url_for('authorize', _external=True),
         'grant_type': 'authorization_code'
     }
@@ -324,7 +324,7 @@ def sign_in():
     flask.session['state'] = state
     redirect_uri = flask.url_for('authorize', _external=True)
     query = {
-        'client_id': config.google_login_client_id,
+        'client_id': config.openid_client_id,
         'response_type': 'code',
         'scope': 'openid email profile',
         'redirect_uri': redirect_uri,
