@@ -12,6 +12,7 @@ class Config:
     google_login_client_secret: str
     log_format: str
     log_level: str
+    openid_discovery_document: str
     permanent_sessions: bool
     port: int
     scheme: str
@@ -22,13 +23,15 @@ class Config:
         """Instantiating a Config object will automatically read the following environment variables:
 
         ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, GOOGLE_LOGIN_CLIENT_ID,
-        GOOGLE_LOGIN_CLIENT_SECRET, LOG_FORMAT, LOG_LEVEL, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME
+        GOOGLE_LOGIN_CLIENT_SECRET, LOG_FORMAT, LOG_LEVEL, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME,
+        SECRET_KEY, SERVER_NAME
 
         Some variables have defaults if they are not found in the environment:
 
         APPLICATION_ROOT=/
         LOG_FORMAT="%(levelname)s [%(name)s] %(message)s"
         LOG_LEVEL=DEBUG
+        OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration"
         PERMANENT_SESSIONS=False
         PORT=8080
         SCHEME=http
@@ -43,6 +46,8 @@ class Config:
         self.google_login_client_secret = os.getenv('GOOGLE_LOGIN_CLIENT_SECRET')
         self.log_format = os.getenv('LOG_FORMAT', '%(levelname)s [%(name)s] %(message)s')
         self.log_level = os.getenv('LOG_LEVEL', 'DEBUG')
+        self.openid_discovery_document = os.getenv('OPENID_DISCOVERY_DOCUMENT',
+                                                   'https://accounts.google.com/.well-known/openid-configuration')
         self.permanent_sessions = (os.getenv('PERMANENT_SESSIONS', 'False') == 'True')
         self.port = int(os.getenv('PORT', '8080'))
         self.scheme = os.getenv('SCHEME', 'http').lower()

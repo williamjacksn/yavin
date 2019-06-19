@@ -1,13 +1,15 @@
 import apscheduler.schedulers.background
 import email.message
 import flask
-import flask_oauth2_login
 import functools
 import inspect
+import jwt
 import logging
 import requests
 import smtplib
 import sys
+import urllib.parse
+import uuid
 import waitress
 import werkzeug.middleware.proxy_fix
 import xml.etree.ElementTree
@@ -34,29 +36,14 @@ if config.scheme == 'https':
 
 app.jinja_env.filters['datetime'] = yavin.util.clean_datetime
 
-google_login = flask_oauth2_login.GoogleLogin(app)
-
-
-@google_login.login_success
-def login_success(_, profile):
-    flask.session['profile'] = profile
-    idx_url = flask.url_for('index')
-    app.logger.debug(f'Google login success, redirecting to: {idx_url}')
-    return flask.redirect(idx_url)
-
-
-@google_login.login_failure
-def login_failure(e):
-    return flask.jsonify(errors=str(e))
-
 
 def secure(f):
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
-        profile = flask.session.get('profile')
-        if profile is None:
+        session_email = flask.session.get('email')
+        if session_email is None:
             return flask.redirect(flask.url_for('index'))
-        if profile.get('email') == config.admin_email:
+        if session_email == config.admin_email:
             return f(*args, **kwargs)
         return flask.render_template('not_authorized.html')
     return decorated_function
@@ -83,9 +70,8 @@ def make_session_permanent():
 
 @app.route('/')
 def index():
-    profile = flask.session.get('profile')
-    if profile is None:
-        flask.g.auth_url = google_login.authorization_url()
+    session_email = flask.session.get('email')
+    if session_email is None:
         return flask.render_template('index.html')
     return flask.render_template('signed_in.html')
 
@@ -307,9 +293,50 @@ def weight_add():
     return flask.redirect(flask.url_for('weight'))
 
 
+@app.route('/login/google')
+def authorize():
+    for key, value in flask.request.values.items():
+        app.logger.debug(f'{key}: {value}')
+    if flask.session.get('state') != flask.request.values.get('state'):
+        return 'State mismatch', 401
+    discovery_document = requests.get(config.openid_discovery_document).json()
+    token_endpoint = discovery_document.get('token_endpoint')
+    data = {
+        'code': flask.request.values.get('code'),
+        'client_id': config.google_login_client_id,
+        'client_secret': config.google_login_client_secret,
+        'redirect_uri': flask.url_for('authorize', _external=True),
+        'grant_type': 'authorization_code'
+    }
+    resp = requests.post(token_endpoint, data=data).json()
+    id_token = resp.get('id_token')
+    algorithms = discovery_document.get('id_token_signing_alg_values_supported')
+    claim = jwt.decode(id_token, verify=False, algorithms=algorithms)
+    flask.session['email'] = claim.get('email')
+    return flask.redirect(flask.url_for('index'))
+
+
+@app.route('/sign-in')
+def sign_in():
+    state = str(uuid.uuid4())
+    flask.session['state'] = state
+    redirect_uri = flask.url_for('authorize', _external=True)
+    query = {
+        'client_id': config.google_login_client_id,
+        'response_type': 'code',
+        'scope': 'openid email profile',
+        'redirect_uri': redirect_uri,
+        'state': state
+    }
+    discovery_document = requests.get(config.openid_discovery_document).json()
+    auth_endpoint = discovery_document.get('authorization_endpoint')
+    auth_url = f'{auth_endpoint}?{urllib.parse.urlencode(query)}'
+    return flask.redirect(auth_url, 307)
+
+
 @app.route('/sign-out')
 def sign_out():
-    flask.session.pop('profile', None)
+    flask.session.pop('email', None)
     return flask.redirect(flask.url_for('index'))
 
 
