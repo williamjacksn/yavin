@@ -3,16 +3,14 @@ import decimal
 import fort
 import logging
 import psycopg2
-import psycopg2.extras
 import uuid
 
 from typing import Dict, List
 
 log = logging.getLogger(__name__)
-psycopg2.extras.register_uuid()
 
 
-class YavinDatabase(fort.PGDatabase):
+class YavinDatabase(fort.PostgresDatabase):
 
     # captain's log
 
@@ -68,14 +66,11 @@ class YavinDatabase(fort.PGDatabase):
     # jar
 
     def add_jar_entry(self, entry_date: datetime.date):
-        last = self.q_one('SELECT max(id) id FROM jar_entries')
-        log.debug(f'last: {last}')
-        if last is None or last['id'] is None:
-            last_id = 0
-        else:
-            last_id = last['id']
+        last: int = self.q_val('SELECT max(id) id FROM jar_entries')
+        if last is None:
+            last = 0
         params = {
-            'id': last_id + 1,
+            'id': last + 1,
             'entry_date': entry_date
         }
         self.u('INSERT INTO jar_entries (id, entry_date) VALUES (%(id)s, %(entry_date)s)', params)
