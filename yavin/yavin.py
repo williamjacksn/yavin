@@ -1,4 +1,5 @@
 import apscheduler.schedulers.background
+import decimal
 import email.message
 import flask
 import functools
@@ -110,7 +111,11 @@ def electricity():
 @app.route('/electricity/add', methods=['POST'])
 def electricity_add():
     db: yavin.db.YavinDatabase = flask.g.db
-    db.add_electricity(flask.request.form)
+    bill_date = yavin.util.str_to_date(flask.request.form.get('bill_date'))
+    kwh = int(flask.request.form.get('kwh'))
+    charge = decimal.Decimal(flask.request.form.get('charge'))
+    bill = decimal.Decimal(flask.request.form.get('bill'))
+    db.add_electricity(bill_date, kwh, charge, bill)
     return flask.redirect(flask.url_for('electricity'))
 
 
