@@ -29,7 +29,7 @@ class Config:
 
         APPLICATION_ROOT="/"
         LOG_FORMAT="%(levelname)s [%(name)s] %(message)s"
-        LOG_LEVEL="DEBUG"
+        LOG_LEVEL="INFO"
         OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration"
         PERMANENT_SESSIONS="False"
         PORT="8080"
@@ -44,7 +44,7 @@ class Config:
         self.application_root = os.getenv('APPLICATION_ROOT', '/')
         self.dsn = os.getenv('DSN')
         self.log_format = os.getenv('LOG_FORMAT', '%(levelname)s [%(name)s] %(message)s')
-        self.log_level = os.getenv('LOG_LEVEL', 'DEBUG')
+        self.log_level = os.getenv('LOG_LEVEL', 'INFO')
         self.openid_client_id = os.getenv('OPENID_CLIENT_ID')
         self.openid_client_secret = os.getenv('OPENID_CLIENT_SECRET')
         self.openid_discovery_document = os.getenv('OPENID_DISCOVERY_DOCUMENT',
