@@ -69,8 +69,13 @@ class YavinDatabase(fort.PGDatabase):
 
     def add_jar_entry(self, entry_date: datetime.date):
         last = self.q_one('SELECT max(id) id FROM jar_entries')
+        log.debug(f'last: {last}')
+        if last is None or last['id'] is None:
+            last_id = 0
+        else:
+            last_id = last['id']
         params = {
-            'id': last['id'] + 1,
+            'id': last_id + 1,
             'entry_date': entry_date
         }
         self.u('INSERT INTO jar_entries (id, entry_date) VALUES (%(id)s, %(entry_date)s)', params)
