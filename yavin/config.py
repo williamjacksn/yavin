@@ -1,5 +1,4 @@
 import os
-import pathlib
 
 
 class Config:
@@ -18,12 +17,14 @@ class Config:
     scheme: str
     secret_key: str
     server_name: str
+    version: str
 
     def __init__(self):
         """Instantiating a Config object will automatically read the following environment variables:
 
         ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, LOG_FORMAT, LOG_LEVEL, OPENID_CLIENT_ID,
-        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME
+        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME,
+        YAVIN_VERSION
 
         Some variables have defaults if they are not found in the environment:
 
@@ -54,13 +55,4 @@ class Config:
         self.scheme = os.getenv('SCHEME', 'http').lower()
         self.secret_key = os.getenv('SECRET_KEY')
         self.server_name = os.getenv('SERVER_NAME', 'localhost:8080')
-
-    @property
-    def version(self) -> str:
-        """Read version from Dockerfile"""
-        dockerfile = pathlib.Path(__file__).resolve().parent.parent / 'Dockerfile'
-        with open(dockerfile) as f:
-            for line in f:
-                if 'org.opencontainers.image.version' in line:
-                    return line.strip().split('=', maxsplit=1)[1]
-        return 'unknown'
+        self.version = os.getenv('YAVIN_VERSION', 'unknown')
