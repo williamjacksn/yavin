@@ -1,13 +1,10 @@
 import datetime
 import decimal
 import fort
-import logging
 import psycopg2
 import uuid
 
 from typing import Dict, List
-
-log = logging.getLogger(__name__)
 
 
 class YavinDatabase(fort.PostgresDatabase):
@@ -211,10 +208,10 @@ class YavinDatabase(fort.PostgresDatabase):
         return self.q(sql)
 
     def migrate(self):
-        log.debug(f'The database is at schema version {self.version}')
-        log.debug('Checking for database migrations ...')
+        self.log.debug(f'The database is at schema version {self.version}')
+        self.log.debug('Checking for database migrations ...')
         if self.version == 0:
-            log.debug('Migrating from version 0 to version 1')
+            self.log.debug('Migrating from version 0 to version 1')
             self.u('''
                 CREATE TABLE flags (
                     flag_name TEXT PRIMARY KEY,
@@ -223,7 +220,7 @@ class YavinDatabase(fort.PostgresDatabase):
             ''')
             self._insert_flag('db_version', '1')
         if self.version == 1:
-            log.debug('Migrating from version 1 to version 2')
+            self.log.debug('Migrating from version 1 to version 2')
             self.u('''
                 CREATE TABLE jar_entries (
                     id INTEGER PRIMARY KEY,
@@ -239,7 +236,7 @@ class YavinDatabase(fort.PostgresDatabase):
             ''')
             self._update_flag('db_version', '2')
         if self.version == 2:
-            log.debug('Migrating from version 2 to version 3')
+            self.log.debug('Migrating from version 2 to version 3')
             self.u('''
                 CREATE TABLE library_credentials (
                     id UUID PRIMARY KEY,
@@ -251,7 +248,7 @@ class YavinDatabase(fort.PostgresDatabase):
             ''')
             self._update_flag('db_version', '3')
         if self.version == 3:
-            log.debug('Migrating from version 3 to version 4')
+            self.log.debug('Migrating from version 3 to version 4')
             self.u('''
                 CREATE TABLE library_books (
                     id UUID PRIMARY KEY,
@@ -263,15 +260,15 @@ class YavinDatabase(fort.PostgresDatabase):
             ''')
             self._update_flag('db_version', '4')
         if self.version == 4:
-            log.debug('Migrating from version 4 to version 5')
+            self.log.debug('Migrating from version 4 to version 5')
             self.u("ALTER TABLE library_books ADD COLUMN item_id TEXT NOT NULL DEFAULT ''")
             self._update_flag('db_version', '5')
         if self.version == 5:
-            log.debug('Migrating from version 5 to version 6')
+            self.log.debug('Migrating from version 5 to version 6')
             self.u("ALTER TABLE library_books ADD COLUMN medium TEXT NOT NULL DEFAULT ''")
             self._update_flag('db_version', '6')
         if self.version == 6:
-            log.debug('Migrating from version 6 to version 7')
+            self.log.debug('Migrating from version 6 to version 7')
             self.u('''
                 CREATE TABLE movie_people (
                     id UUID PRIMARY KEY,
@@ -288,7 +285,7 @@ class YavinDatabase(fort.PostgresDatabase):
             ''')
             self._update_flag('db_version', '7')
         if self.version == 7:
-            log.debug('Migrating from version 7 to version 8')
+            self.log.debug('Migrating from version 7 to version 8')
             self.u('''
                 CREATE TABLE electricity (
                     bill_date DATE PRIMARY KEY,
@@ -299,7 +296,7 @@ class YavinDatabase(fort.PostgresDatabase):
             ''')
             self._update_flag('db_version', '8')
         if self.version == 8:
-            log.debug('Migrating from version 8 to version 9')
+            self.log.debug('Migrating from version 8 to version 9')
             self.u('''
                 CREATE TABLE timeline_entries (
                     id UUID PRIMARY KEY,
@@ -312,14 +309,14 @@ class YavinDatabase(fort.PostgresDatabase):
             ''')
             self._update_flag('db_version', '9')
         if self.version == 9:
-            log.debug('Migrating from version 9 to version 10')
+            self.log.debug('Migrating from version 9 to version 10')
             self.u('''
                 ALTER TABLE library_credentials
                 ADD COLUMN balance INTEGER NOT NULL DEFAULT 0
             ''')
             self._update_flag('db_version', '10')
         if self.version == 10:
-            log.debug('Migrating from version 10 to version 11')
+            self.log.debug('Migrating from version 10 to version 11')
             self.u('''
                 CREATE TABLE schema_versions (
                     schema_version INTEGER PRIMARY KEY,
@@ -336,7 +333,7 @@ class YavinDatabase(fort.PostgresDatabase):
             self._delete_flag('db_version')
             self._add_schema_version(11)
         if self.version == 11:
-            log.debug('Migrating from version 11 to version 12')
+            self.log.debug('Migrating from version 11 to version 12')
             self.u('''
                 CREATE TABLE gas_prices (
                     id UUID PRIMARY KEY,
@@ -350,14 +347,14 @@ class YavinDatabase(fort.PostgresDatabase):
             ''')
             self._add_schema_version(12)
         if self.version == 12:
-            log.debug('Migrating from version 12 to version 13')
+            self.log.debug('Migrating from version 12 to version 13')
             self.u('''
                 ALTER TABLE movie_picks
                 ADD COLUMN pick_url TEXT
             ''')
             self._add_schema_version(13)
         if self.version == 13:
-            log.debug('Migrating from version 13 to version 14')
+            self.log.debug('Migrating from version 13 to version 14')
             self.u('''
                 ALTER TABLE electricity
                 ALTER COLUMN charge TYPE numeric(10, 2) USING (charge / 100.0),
