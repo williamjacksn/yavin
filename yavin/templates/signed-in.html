@@ -16,12 +16,9 @@
     <div class="row bump-top-padding">
         <div class="col-md-12">
             <div class="list-group">
-                <a class="list-group-item" href="{{ url_for('captains_log') }}">Captain&#x02bc;s log</a>
-                <a class="list-group-item" href="{{ url_for('electricity') }}">Electricity</a>
-                <a class="list-group-item" href="{{ url_for('jar') }}">Jar</a>
-                <a class="list-group-item" href="{{ url_for('library') }}">Library</a>
-                <a class="list-group-item" href="{{ url_for('movie_night') }}">Movie night</a>
-                <a class="list-group-item" href="{{ url_for('weight') }}">Weight</a>
+            {% for view, title in g.pages.items() %}
+                <a class="list-group-item" href="{{ url_for(view) }}">{{ title }}</a>
+            {% endfor %}
             </div>
         </div>
     </div>

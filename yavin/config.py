@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 
 class Config:
@@ -7,6 +8,7 @@ class Config:
     admin_password: str
     application_root: str
     dsn: str
+    file_upload_dir: pathlib.Path
     log_format: str
     log_level: str
     openid_client_id: str
@@ -22,9 +24,9 @@ class Config:
     def __init__(self):
         """Instantiating a Config object will automatically read the following environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, LOG_FORMAT, LOG_LEVEL, OPENID_CLIENT_ID,
-        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME,
-        YAVIN_VERSION
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, FILE_UPLOAD_DIR, LOG_FORMAT, LOG_LEVEL,
+        OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY,
+        SERVER_NAME, YAVIN_VERSION
 
         Some variables have defaults if they are not found in the environment:
 
@@ -44,6 +46,7 @@ class Config:
         self.admin_password = os.getenv('ADMIN_PASSWORD')
         self.application_root = os.getenv('APPLICATION_ROOT', '/')
         self.dsn = os.getenv('DSN')
+        self.file_upload_dir = pathlib.Path(os.getenv('FILE_UPLOAD_DIR')).resolve()
         self.log_format = os.getenv('LOG_FORMAT', '%(levelname)s [%(name)s] %(message)s')
         self.log_level = os.getenv('LOG_LEVEL', 'INFO')
         self.openid_client_id = os.getenv('OPENID_CLIENT_ID')
