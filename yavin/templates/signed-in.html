@@ -17,7 +17,7 @@
         <div class="col-md-12">
             <div class="list-group">
             {% for view, title in g.pages.items() %}
-                <a class="list-group-item" href="{{ url_for(view) }}">{{ title }}</a>
+                <a class="list-group-item" href="{{ url_for(view) }}">{{ title|safe }}</a>
             {% endfor %}
             </div>
         </div>
