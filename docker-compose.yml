@@ -5,11 +5,11 @@ services:
     image: williamjackson/yavin
     build: .
     environment:
-      DSN: postgresql://postgres:blahblahblah@postgres/postgres
+      DSN: postgres://postgres:postgres@postgres/postgres
       PORT: 8080
       SERVER_NAME: localhost:8080
 
   postgres:
-    image: postgres:11.3-alpine
+    image: postgres:11.5-alpine
     environment:
-      POSTGRES_PASSWORD: blahblahblah
+      POSTGRES_PASSWORD: postgres
