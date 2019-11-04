@@ -63,7 +63,6 @@ def index():
     flask.g.pages = {
         'captains_log': 'Captain&#x02bc;s log',
         'electricity': 'Electricity',
-        'files': 'Files',
         'jar': 'Jar',
         'library': 'Library',
         'movie_night': 'Movie night',
@@ -127,22 +126,6 @@ def electricity_add():
     bill = decimal.Decimal(flask.request.form.get('bill'))
     db.add_electricity(bill_date, kwh, charge, bill)
     return flask.redirect(flask.url_for('electricity'))
-
-
-@app.route('/files')
-@secure
-def files():
-    return flask.render_template('files.html')
-
-
-@app.route('/files/upload', methods=['POST'])
-@secure
-def files_upload():
-    app.logger.debug(f'files: {flask.request.files}')
-    file = flask.request.files.get('file')
-    filename = werkzeug.utils.secure_filename(file.filename)
-    file.save(str(config.file_upload_dir / filename))
-    return flask.redirect(flask.url_for('files'))
 
 
 @app.route('/jar')
