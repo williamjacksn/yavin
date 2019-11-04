@@ -10,7 +10,7 @@ RUN /sbin/apk add --no-cache --virtual .deps gcc musl-dev postgresql-dev \
 ENV OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration" \
     PYTHONUNBUFFERED="1" \
     TZ="Etc/UTC" \
-    YAVIN_VERSION="2019.1"
+    YAVIN_VERSION="2019.2"
 
 ENTRYPOINT ["/usr/local/bin/python"]
 CMD ["/yavin/run.py"]
