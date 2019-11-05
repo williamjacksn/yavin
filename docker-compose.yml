@@ -1,8 +1,8 @@
-version: '3'
+version: '3.7'
 
 services:
   yavin:
-    image: williamjackson/yavin
+    image: docker.pkg.github.com/williamjacksn/yavin/yavin
     build: .
     environment:
       DSN: postgres://postgres:postgres@postgres/postgres
