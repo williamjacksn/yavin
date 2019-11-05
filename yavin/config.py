@@ -1,5 +1,4 @@
 import os
-import pathlib
 
 
 class Config:
@@ -23,9 +22,9 @@ class Config:
     def __init__(self):
         """Instantiating a Config object will automatically read the following environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APPLICATION_ROOT, DSN, LOG_FORMAT, LOG_LEVEL, OPENID_CLIENT_ID,
-        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME,
-        YAVIN_VERSION
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APP_VERSION, APPLICATION_ROOT, DSN, LOG_FORMAT, LOG_LEVEL,
+        OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY,
+        SERVER_NAME
 
         Some variables have defaults if they are not found in the environment:
 
@@ -56,4 +55,4 @@ class Config:
         self.scheme = os.getenv('SCHEME', 'http').lower()
         self.secret_key = os.getenv('SECRET_KEY')
         self.server_name = os.getenv('SERVER_NAME', 'localhost:8080')
-        self.version = os.getenv('YAVIN_VERSION', 'unknown')
+        self.version = os.getenv('APP_VERSION', 'unknown')

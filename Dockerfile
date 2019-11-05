@@ -7,10 +7,10 @@ RUN /sbin/apk add --no-cache --virtual .deps gcc musl-dev postgresql-dev \
  && /usr/local/bin/pip install --no-cache-dir --requirement /yavin/requirements.txt \
  && /sbin/apk del --no-cache .deps
 
-ENV OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration" \
+ENV APP_VERSION="2019.3" \
+    OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration" \
     PYTHONUNBUFFERED="1" \
-    TZ="Etc/UTC" \
-    YAVIN_VERSION="2019.2"
+    TZ="Etc/UTC"
 
 ENTRYPOINT ["/usr/local/bin/python"]
 CMD ["/yavin/run.py"]
@@ -19,6 +19,6 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.description="Personal web tools" \
       org.opencontainers.image.source="https://github.com/williamjacksn/yavin/" \
       org.opencontainers.image.title="Yavin" \
-      org.opencontainers.image.version="${YAVIN_VERSION}"
+      org.opencontainers.image.version="${APP_VERSION}"
 
 COPY . /yavin
