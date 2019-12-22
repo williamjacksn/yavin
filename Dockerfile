@@ -7,7 +7,7 @@ RUN /sbin/apk add --no-cache --virtual .deps gcc musl-dev postgresql-dev \
  && /usr/local/bin/pip install --no-cache-dir --requirement /yavin/requirements.txt \
  && /sbin/apk del --no-cache .deps
 
-ENV APP_VERSION="2019.3" \
+ENV APP_VERSION="2019.4" \
     OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration" \
     PYTHONUNBUFFERED="1" \
     TZ="Etc/UTC"
