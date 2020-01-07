@@ -14,11 +14,11 @@ import waitress
 import werkzeug.middleware.proxy_fix
 import werkzeug.utils
 import xml.etree.ElementTree
-import yavin.config
+import yavin.settings
 import yavin.db
 import yavin.util
 
-config = yavin.config.Config()
+config = yavin.settings.Config()
 scheduler = apscheduler.schedulers.background.BackgroundScheduler()
 
 app = flask.Flask(__name__)
