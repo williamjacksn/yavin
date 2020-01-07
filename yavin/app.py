@@ -14,8 +14,8 @@ import waitress
 import werkzeug.middleware.proxy_fix
 import werkzeug.utils
 import xml.etree.ElementTree
-import yavin.settings
 import yavin.db
+import yavin.settings
 import yavin.util
 
 settings = yavin.settings.Settings()

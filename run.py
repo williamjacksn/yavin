@@ -1,4 +1,4 @@
-import yavin.yavin
+import yavin.app
 import signal
 import sys
 
@@ -8,4 +8,4 @@ def handle_sigterm(_signal, _frame):
 
 
 signal.signal(signal.SIGTERM, handle_sigterm)
-yavin.yavin.main()
+yavin.app.main()
