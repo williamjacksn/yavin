@@ -13,7 +13,7 @@ ENV APP_VERSION="2020.1" \
 
 ENTRYPOINT ["/usr/local/bin/python"]
 CMD ["/yavin/run.py"]
-HEALTHCHECK CMD ["/groupmemail/docker-healthcheck.sh"]
+HEALTHCHECK CMD ["/yavin/docker-healthcheck.sh"]
 
 LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.com>" \
       org.opencontainers.image.description="Personal web tools" \
@@ -22,4 +22,4 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.version="${APP_VERSION}"
 
 COPY . /yavin
-RUN chmod +x /groupmemail/docker-healthcheck.sh
+RUN chmod +x /yavin/docker-healthcheck.sh
