@@ -8,7 +8,6 @@ RUN /sbin/apk add --no-cache --virtual .deps gcc musl-dev postgresql-dev \
  && /sbin/apk del --no-cache .deps
 
 ENV APP_VERSION="2020.1" \
-    OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration" \
     PYTHONUNBUFFERED="1" \
     TZ="Etc/UTC"
 
