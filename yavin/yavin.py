@@ -18,18 +18,18 @@ import yavin.settings
 import yavin.db
 import yavin.util
 
-config = yavin.settings.Settings()
+settings = yavin.settings.Settings()
 scheduler = apscheduler.schedulers.background.BackgroundScheduler()
 
 app = flask.Flask(__name__)
 app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_port=1)
 
-app.config['APPLICATION_ROOT'] = config.application_root
-app.config['PREFERRED_URL_SCHEME'] = config.scheme
-app.config['SECRET_KEY'] = config.secret_key
-app.config['SERVER_NAME'] = config.server_name
+app.config['APPLICATION_ROOT'] = settings.application_root
+app.config['PREFERRED_URL_SCHEME'] = settings.scheme
+app.config['SECRET_KEY'] = settings.secret_key
+app.config['SERVER_NAME'] = settings.server_name
 
-if config.scheme == 'https':
+if settings.scheme == 'https':
     app.config['SESSION_COOKIE_SECURE'] = True
 
 app.jinja_env.filters['datetime'] = yavin.util.clean_datetime
@@ -41,7 +41,7 @@ def secure(f):
         session_email = flask.session.get('email')
         if session_email is None:
             return flask.redirect(flask.url_for('index'))
-        if session_email == config.admin_email:
+        if session_email == settings.admin_email:
             return f(*args, **kwargs)
         return flask.render_template('not-authorized.html')
     return decorated_function
@@ -50,9 +50,9 @@ def secure(f):
 @app.before_request
 def before_request():
     app.logger.debug(f'{flask.request.method} {flask.request.path}')
-    if config.permanent_sessions:
+    if settings.permanent_sessions:
         flask.session.permanent = True
-    flask.g.db = yavin.db.YavinDatabase(config.dsn)
+    flask.g.db = yavin.db.YavinDatabase(settings.dsn)
 
 
 @app.route('/')
@@ -92,7 +92,7 @@ def captains_log_incoming():
     db: yavin.db.YavinDatabase = flask.g.db
     app.logger.debug(f'json: {flask.request.json}')
     auth_phrase: str = flask.request.json['auth-phrase']
-    if auth_phrase.lower() == config.admin_auth_phrase:
+    if auth_phrase.lower() == settings.admin_auth_phrase:
         app.logger.debug('Authorization accepted')
         log_text = flask.request.json['log-text']
         db.add_captains_log_entry(log_text)
@@ -315,12 +315,12 @@ def authorize():
         app.logger.debug(f'{key}: {value}')
     if flask.session.get('state') != flask.request.values.get('state'):
         return 'State mismatch', 401
-    discovery_document = requests.get(config.openid_discovery_document).json()
+    discovery_document = requests.get(settings.openid_discovery_document).json()
     token_endpoint = discovery_document.get('token_endpoint')
     data = {
         'code': flask.request.values.get('code'),
-        'client_id': config.openid_client_id,
-        'client_secret': config.openid_client_secret,
+        'client_id': settings.openid_client_id,
+        'client_secret': settings.openid_client_secret,
         'redirect_uri': flask.url_for('authorize', _external=True),
         'grant_type': 'authorization_code'
     }
@@ -338,13 +338,13 @@ def sign_in():
     flask.session['state'] = state
     redirect_uri = flask.url_for('authorize', _external=True)
     query = {
-        'client_id': config.openid_client_id,
+        'client_id': settings.openid_client_id,
         'response_type': 'code',
         'scope': 'openid email profile',
         'redirect_uri': redirect_uri,
         'state': state
     }
-    discovery_document = requests.get(config.openid_discovery_document).json()
+    discovery_document = requests.get(settings.openid_discovery_document).json()
     auth_endpoint = discovery_document.get('authorization_endpoint')
     auth_url = f'{auth_endpoint}?{urllib.parse.urlencode(query)}'
     return flask.redirect(auth_url, 307)
@@ -359,7 +359,7 @@ def sign_out():
 def library_sync():
     app.logger.info('Syncing library data')
     with app.app_context():
-        db = yavin.db.YavinDatabase(config.dsn)
+        db = yavin.db.YavinDatabase(settings.dsn)
         db.clear_library_books()
         for lib_cred in db.get_library_credentials():
             app.logger.info(f'Syncing library data for {lib_cred["display_name"]}')
@@ -401,7 +401,7 @@ def library_sync():
 def library_notify():
     app.logger.info('Checking for due library items')
     with app.app_context():
-        db = yavin.db.YavinDatabase(config.dsn)
+        db = yavin.db.YavinDatabase(settings.dsn)
         lib_url = flask.url_for('library')
         app.logger.debug(f'url for library: {lib_url}')
         for book in db.get_library_books():
@@ -413,33 +413,33 @@ def library_notify():
                 app.logger.info('Sending notification email')
                 msg = email.message.EmailMessage()
                 msg['Subject'] = 'Library alert'
-                msg['From'] = config.admin_email
-                msg['To'] = config.admin_email
+                msg['From'] = settings.admin_email
+                msg['To'] = settings.admin_email
                 content = flask.render_template('email-library-item-due.jinja2', lib_url=lib_url)
                 msg.set_content(content)
                 with smtplib.SMTP_SSL(host='smtp.gmail.com') as s:
-                    s.login(user=config.admin_email, password=config.admin_password)
+                    s.login(user=settings.admin_email, password=settings.admin_password)
                     s.send_message(msg)
                 break
 
 
 def main():
-    logging.basicConfig(format=config.log_format, level='DEBUG', stream=sys.stdout)
-    app.logger.debug(f'yavin {config.version}')
-    app.logger.debug(f'Changing log level to {config.log_level}')
-    logging.getLogger().setLevel(config.log_level)
+    logging.basicConfig(format=settings.log_format, level='DEBUG', stream=sys.stdout)
+    app.logger.debug(f'yavin {settings.version}')
+    app.logger.debug(f'Changing log level to {settings.log_level}')
+    logging.getLogger().setLevel(settings.log_level)
 
-    if config.dsn is None:
+    if settings.dsn is None:
         app.logger.critical('Missing environment variable DSN; I cannot start without a database')
     else:
-        db = yavin.db.YavinDatabase(config.dsn)
+        db = yavin.db.YavinDatabase(settings.dsn)
         db.migrate()
 
         scheduler.start()
         scheduler.add_job(library_sync, 'interval', hours=6, start_date=yavin.util.in_two_minutes())
         scheduler.add_job(library_notify, 'cron', day='*', hour='3')
 
-        url_prefix = config.application_root
+        url_prefix = settings.application_root
         if url_prefix == '/':
             url_prefix = ''
-        waitress.serve(app, port=config.port, url_prefix=url_prefix, url_scheme=config.scheme, ident=None)
+        waitress.serve(app, port=settings.port, url_prefix=url_prefix, url_scheme=settings.scheme, ident=None)
