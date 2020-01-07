@@ -1,7 +1,7 @@
 import os
 
 
-class Config:
+class Settings:
     admin_auth_phrase: str
     admin_email: str
     admin_password: str
@@ -20,7 +20,7 @@ class Config:
     version: str
 
     def __init__(self):
-        """Instantiating a Config object will automatically read the following environment variables:
+        """Instantiating a Settings object will automatically read the following environment variables:
 
         ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APP_VERSION, APPLICATION_ROOT, DSN, LOG_FORMAT, LOG_LEVEL,
         OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY,

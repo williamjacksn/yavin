@@ -18,7 +18,7 @@ import yavin.settings
 import yavin.db
 import yavin.util
 
-config = yavin.settings.Config()
+config = yavin.settings.Settings()
 scheduler = apscheduler.schedulers.background.BackgroundScheduler()
 
 app = flask.Flask(__name__)
