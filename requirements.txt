@@ -5,4 +5,4 @@ Werkzeug==1.0.1
 fort==0.0.8
 psycopg2==2.8.4
 requests==2.24.0
-waitress==1.4.3
+waitress==1.4.4
