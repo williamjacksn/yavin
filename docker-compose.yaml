@@ -9,6 +9,6 @@ services:
       SERVER_NAME: localhost:8080
 
   postgres:
-    image: postgres:11.10-alpine
+    image: postgres:11.11-alpine
     environment:
       POSTGRES_PASSWORD: postgres
