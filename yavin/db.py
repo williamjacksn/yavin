@@ -63,7 +63,7 @@ class YavinDatabase(fort.PostgresDatabase):
     # jar
 
     def add_jar_entry(self, entry_date: datetime.date):
-        last: int = self.q_val('SELECT max(id) id FROM jar_entries')
+        last: int = self.q_val('SELECT max(id) max_id FROM jar_entries')
         if last is None:
             last = 0
         params = {
@@ -154,7 +154,7 @@ class YavinDatabase(fort.PostgresDatabase):
 
     def get_movie_night_people(self):
         sql = '''
-            SELECT movie_people.id id, person, row_number() OVER (ORDER BY MAX(pick_date) NULLS FIRST) pick_order
+            SELECT movie_people.id, person, row_number() OVER (ORDER BY MAX(pick_date) NULLS FIRST) pick_order
             FROM movie_people
             LEFT JOIN movie_picks ON movie_people.id = movie_picks.person_id
             GROUP BY person, movie_people.id
