@@ -6,6 +6,7 @@ import functools
 import jwt
 import logging
 import requests
+import requests.utils
 import smtplib
 import sys
 import urllib.parse
@@ -66,6 +67,7 @@ def index():
         'jar': 'Jar',
         'library': 'Library',
         'movie_night': 'Movie night',
+        'phone': 'Phone usage',
         'weight': 'Weight'
     }
     return flask.render_template('signed-in.html')
@@ -285,6 +287,22 @@ def movie_night_edit_pick():
     db.edit_movie_night_pick(params)
     return flask.redirect(flask.url_for('movie_night'))
 
+
+@app.route('/phone')
+@secure
+def phone():
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.records = db.get_phone_usage()
+    return flask.render_template('phone.html')
+
+
+@app.route('/phone/add', methods=['POST'])
+@secure
+def phone_add():
+    db: yavin.db.YavinDatabase = flask.g.db
+    v = flask.request.values
+    db.add_phone_usage(v.get('start-date'), v.get('end-date'), v.get('minutes'), v.get('messages'), v.get('megabytes'))
+    return flask.redirect(flask.url_for('phone'))
 
 @app.route('/weight')
 @secure

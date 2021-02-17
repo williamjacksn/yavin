@@ -1,0 +1,81 @@
+{% extends 'signed-in.html' %}
+
+{% block title %}{{ super() }} / Phone usage{% endblock %}
+
+{% block breadcrumb %}
+    <li><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="active">Phone usage</li>
+{% endblock %}
+
+{% block content %}
+    <div class="row bump-top-padding">
+        <div class="col-md-12">
+            <button class="btn btn-default" data-toggle="modal" data-target="#modal-add-phone-usage">Add usage</button>
+        </div>
+    </div>
+
+    <div class="row bump-top-padding">
+        <div class="col-md-12">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Start date</th>
+                    <th>End date</th>
+                    <th>Minutes</th>
+                    <th>Messages</th>
+                    <th>Megabytes</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for record in g.records %}
+                    <tr>
+                        <td>{{ record.start_date }}</td>
+                        <td>{{ record.end_date }}</td>
+                        <td>{{ record.minutes }}</td>
+                        <td>{{ record.messages }}</td>
+                        <td>{{ record.megabytes }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-add-phone-usage" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Add phone usage</h4>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('phone_add') }}" method="post" id="form-add-phone-usage">
+                        <div class="form-group">
+                            <label for="start-date">Start date</label>
+                            <input class="form-control" type="date" name="start-date" id="start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date">End date</label>
+                            <input class="form-control" type="date" name="end-date" id="end-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="minutes">Minutes</label>
+                            <input class="form-control" type="number" name="minutes" id="minutes" step="1" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="messages">Messages</label>
+                            <input class="form-control" type="number" name="messages" id="messages" step="1" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="megabytes">Megabytes</label>
+                            <input class="form-control" type="number" name="megabytes" id="megabytes" step="1" min="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" form="form-add-phone-usage">Add usage</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

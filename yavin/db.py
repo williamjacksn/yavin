@@ -207,6 +207,34 @@ class YavinDatabase(fort.PostgresDatabase):
         sql = 'select bill_date, kwh, charge, bill from electricity order by bill_date desc'
         return self.q(sql)
 
+    # phone usage
+
+    def add_phone_usage(self, start_date: datetime.date, end_date: datetime.date,
+                        minutes: int, messages: int, megabytes: int):
+        sql = '''
+            insert into phone_usage (id, start_date, end_date, minutes, messages, megabytes)
+            values (%(id)s, %(start_date)s, %(end_date)s, %(minutes)s, %(messages)s, %(megabytes)s)
+        '''
+        params = {
+            'id': uuid.uuid4(),
+            'start_date': start_date,
+            'end_date': end_date,
+            'minutes': minutes,
+            'messages': messages,
+            'megabytes': megabytes
+        }
+        self.u(sql, params)
+
+    def get_phone_usage(self) -> list[dict]:
+        sql = '''
+            select id, start_date, end_date, minutes, messages, megabytes
+            from phone_usage
+            order by end_date desc
+        '''
+        return self.q(sql)
+
+    # migrations and metadata
+
     def migrate(self):
         self.log.debug(f'The database is at schema version {self.version}')
         self.log.debug('Checking for database migrations ...')
@@ -361,6 +389,19 @@ class YavinDatabase(fort.PostgresDatabase):
                 alter column bill type numeric(10, 2) using (bill / 100.0)
             ''')
             self._add_schema_version(14)
+        if self.version < 15:
+            self.log.debug('Migrating from version 14 to version 15')
+            self.u('''
+                create table phone_usage (
+                    id uuid primary key,
+                    start_date date not null,
+                    end_date date not null,
+                    minutes int not null,
+                    messages int not null,
+                    megabytes int not null
+                )
+            ''')
+            self._add_schema_version(15)
 
     def _insert_flag(self, flag_name: str, flag_value: str):
         sql = 'insert into flags (flag_name, flag_value) values (%(flag_name)s, %(flag_value)s)'
