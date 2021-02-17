@@ -402,6 +402,13 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             ''')
             self._add_schema_version(15)
+        if self.version < 16:
+            self.log.debug('Migrating from version 15 to version 16')
+            self.u('''
+                alter table phone_usage
+                alter column id set default gen_random_uuid()
+            ''')
+            self._add_schema_version(16)
 
     def _insert_flag(self, flag_name: str, flag_value: str):
         sql = 'insert into flags (flag_name, flag_value) values (%(flag_name)s, %(flag_value)s)'
