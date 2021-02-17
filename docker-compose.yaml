@@ -4,9 +4,15 @@ services:
   yavin:
     image: ghcr.io/williamjacksn/yavin
     environment:
+      ADMIN_EMAIL: (set in docker-compose.override.yaml)
       DSN: postgres://postgres:postgres@postgres/postgres
+      OPENID_CLIENT_ID: (set in docker-compose.override.yaml)
+      OPENID_CLIENT_SECRET: (set in docker-compose.override.yaml)
       PORT: 8080
+      SECRET_KEY: (set in docker-compose.override.yaml)
       SERVER_NAME: localhost:8080
+    ports:
+      - 8080:8080
 
   postgres:
     image: postgres:11.11-alpine
