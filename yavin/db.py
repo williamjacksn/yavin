@@ -405,6 +405,9 @@ class YavinDatabase(fort.PostgresDatabase):
         if self.version < 16:
             self.log.debug('Migrating from version 15 to version 16')
             self.u('''
+                create extension if not exists pgcrypto
+            ''')
+            self.u('''
                 alter table phone_usage
                 alter column id set default gen_random_uuid()
             ''')
