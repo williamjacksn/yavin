@@ -3,43 +3,51 @@
 {% block title %}Yavin / Electricity{% endblock %}
 
 {% block breadcrumb %}
-    <li><a href="{{ url_for('index') }}">Yavin</a></li>
-    <li class="active">Electricity</li>
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="breadcrumb-item active">Electricity</li>
 {% endblock %}
 
 {% block content %}
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
-            <form class="form-inline" action="{{ url_for('electricity_add') }}" method="post">
-                <div class="form-group">
-                    <label for="bill_date">When</label>
-                    <input class="form-control" type="date" name="bill_date" id="bill_date" required>
-                </div>
-                <div class="form-group">
-                    <label for="kwh">kWh</label>
-                    <input class="form-control" type="number" name="kwh" id="kwh" step="1" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label for="charge">Charge</label>
-                    <div class="input-group">
-                        <div class="input-group-addon">$</div>
-                        <input class="form-control" type="number" name="charge" id="charge" step="0.01" min="0" required>
+    <div class="row pt-3">
+        <div class="col">
+            <form action="{{ url_for('electricity_add') }}" method="post">
+                <div class="form-row align-items-center">
+                    <div class="col-auto">
+                        <label for="bill-date" class="sr-only">When</label>
+                        <input class="form-control mb-2" type="date" name="bill_date" id="bill-date" required>
+                    </div>
+                    <div class="col-auto">
+                        <label for="kwh" class="sr-only">kWh</label>
+                        <input class="form-control mb-2" type="number" name="kwh" id="kwh" step="1" min="0" placeholder="kWh" required>
+                    </div>
+                    <div class="col-auto">
+                        <label for="charge" class="sr-only">Charge</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">$</div>
+                            </div>
+                            <input class="form-control" type="number" name="charge" id="charge" step="0.01" min="0" placeholder="Charge" required>
+                        </div>
+                    </div>    
+                    <div class="col-auto">
+                        <label for="bill" class="sr-only">Bill</label>
+                        <div class="input-group mb-2">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">$</div>
+                            </div>
+                            <input class="form-control" type="number" name="bill" id="bill" step="0.01" min="0" placeholder="Bill" required>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-success mb-2">Add</button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="bill">Bill</label>
-                    <div class="input-group">
-                        <div class="input-group-addon">$</div>
-                        <input class="form-control" type="number" name="bill" id="bill" step="0.01" min="0" required>
-                    </div>
-                </div>
-                <button class="btn btn-success">Add</button>
             </form>
         </div>
     </div>
 
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
+    <div class="row pt-3">
+        <div class="col">
             <table class="table">
                 <thead>
                 <tr>

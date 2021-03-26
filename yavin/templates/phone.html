@@ -3,19 +3,19 @@
 {% block title %}{{ super() }} / Phone usage{% endblock %}
 
 {% block breadcrumb %}
-    <li><a href="{{ url_for('index') }}">Yavin</a></li>
-    <li class="active">Phone usage</li>
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="breadcrumb-item active">Phone usage</li>
 {% endblock %}
 
 {% block content %}
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
-            <button class="btn btn-default" data-toggle="modal" data-target="#modal-add-phone-usage">Add usage</button>
+    <div class="row pt-3">
+        <div class="col">
+            <button class="btn btn-primary" data-toggle="modal" data-target="#modal-add-phone-usage">Add usage</button>
         </div>
     </div>
 
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
+    <div class="row pt-3">
+        <div class="col">
             <table class="table">
                 <thead>
                 <tr>
@@ -45,7 +45,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4>Add phone usage</h4>
+                    <h5 class="modal-title">Add phone usage</h5>
                 </div>
                 <div class="modal-body">
                     <form action="{{ url_for('phone_add') }}" method="post" id="form-add-phone-usage">
@@ -71,8 +71,8 @@
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success" form="form-add-phone-usage">Add usage</button>
                 </div>
             </div>
