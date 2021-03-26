@@ -3,13 +3,13 @@
 {% block title %}Yavin / Library{% endblock %}
 
 {% block breadcrumb %}
-    <li><a href="{{ url_for('index') }}">Yavin</a></li>
-    <li class="active">Library</li>
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="breadcrumb-item active">Library</li>
 {% endblock %}
 
 {% block content %}
-    <div class="row bump-top-padding">
-        <div class="col-xs-12">
+    <div class="row pt-3">
+        <div class="col">
             <table class="table">
                 <thead>
                 <tr>
@@ -32,7 +32,7 @@
                         <td>
                             <form action="{{ url_for('library_delete') }}" method="post">
                                 <input type="hidden" name="id" value="{{ lib_cred.id }}">
-                                <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                             </form>
                         </td>
                     </tr>
@@ -47,15 +47,15 @@
                     <td><input type="text" form="form-add-library" class="form-control" name="username" placeholder="Username" required></td>
                     <td><input type="password" form="form-add-library" class="form-control" name="password" placeholder="Password" required></td>
                     <td></td>
-                    <td><button type="submit" form="form-add-library" class="btn btn-primary">Add</button></td>
+                    <td><button type="submit" form="form-add-library" class="btn btn-success">Add</button></td>
                 </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div class="row bump-top-padding">
-        <div class="col-xs-12">
+    <div class="row pt-3">
+        <div class="col">
             <table class="table">
                 <thead>
                 <tr>
@@ -75,7 +75,7 @@
                         {% if book.renewable %}
                             <form action="{{ url_for('library_renew') }}" method="post">
                                 <input type="hidden" name="item_id" value="{{ book.item_id }}">
-                                <button type="submit" class="btn btn-primary btn-xs">Renew</button>
+                                <button type="submit" class="btn btn-primary btn-sm">Renew</button>
                             </form>
                         {% endif %}
                         </td>

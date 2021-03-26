@@ -5,29 +5,48 @@
     <meta http-equiv="X-UA-COMPATIBLE" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Yavin{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-3.4.1.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-4.6.0.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-icons-1.4.0.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/yavin.css') }}">
     {% block end_of_head %}{% endblock %}
 </head>
 <body>
-<div class="container-fluid container-top">
+<div class="container-fluid">
 
-    <div class="row">
-        <div class="col-xs-9 col-sm-10 col-md-11 col-lg-11">
-            <ol class="breadcrumb">
-            {% block breadcrumb %}
-                <li class="active">Yavin</li>
-            {% endblock %}
-            </ol>
+    <div class="row pt-3">
+        <div class="col-9 col-sm-10 col-xl-11">
+            <nav>
+                <ol class="breadcrumb">
+                    {% block breadcrumb %}
+                        <li class="breadcrumb-item active">Yavin</li>
+                    {% endblock %}
+                </ol>
+            </nav>
         </div>
-        <div class="col-xs-3 col-sm-2 col-md-1 col-lg-1">{% block sign_in %}{% endblock %}</div>
+        <div class="col-3 col-sm-2 col-xl-1">{% block sign_in %}{% endblock %}</div>
     </div>
 
     {% block content %}{% endblock %}
 
+    <div class="row pt-3 pb-2">
+        <div class="col">
+            <hr class="border-light">
+            <small class="text-muted">
+                {{ g.settings.version }}
+                {% if g.settings.debug_layout %}
+                    <span class="d-inline d-sm-none">xs</span>
+                    <span class="d-none d-sm-inline d-md-none">sm</span>
+                    <span class="d-none d-md-inline d-lg-none">md</span>
+                    <span class="d-none d-lg-inline d-xl-none">lg</span>
+                    <span class="d-none d-xl-inline">xl</span>
+                {% endif %}
+            </small>
+        </div>
+    </div>
+
 </div>
 <script src="{{ url_for('static', filename='js/jquery-3.6.0.js') }}"></script>
-<script src="{{ url_for('static', filename='js/bootstrap-3.4.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap-4.6.0.bundle.min.js') }}"></script>
 {% block end_of_body %}{% endblock %}
 </body>
 </html>

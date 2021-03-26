@@ -54,6 +54,7 @@ def before_request():
     if settings.permanent_sessions:
         flask.session.permanent = True
     flask.g.db = yavin.db.YavinDatabase(settings.dsn)
+    flask.g.settings = settings
 
 
 @app.route('/')

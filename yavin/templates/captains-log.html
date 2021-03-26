@@ -3,13 +3,13 @@
 {% block title %}Yavin / Captain&#x02bc;s log{% endblock %}
 
 {% block breadcrumb %}
-    <li><a href="{{ url_for('index') }}">Yavin</a></li>
-    <li class="active">Captain&#x02bc;s log</li>
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="breadcrumb-item active">Captain&#x02bc;s log</li>
 {% endblock %}
 
 {% block content %}
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
+    <div class="row pt-3">
+        <div class="col">
             <table class="table">
                 <thead>
                 <tr>
@@ -42,8 +42,8 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
+                        <h5 class="modal-title">{{ record.log_timestamp|datetime }} UTC</h4>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h4 class="modal-title">{{ record.log_timestamp|datetime }} UTC</h4>
                     </div>
                     <div class="modal-body">
                         <form id="form-update-{{ record.id }}" action="{{ url_for('captains_log_update') }}" method="post">
@@ -54,9 +54,9 @@
                             </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                        <button type="submit" form="form-update-{{ record.id }}" class="btn btn-primary">Update</button>
+                    <div class="modal-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" form="form-update-{{ record.id }}" class="btn btn-success">Update</button>
                     </div>
                 </div>
             </div>

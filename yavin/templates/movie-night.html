@@ -3,20 +3,20 @@
 {% block title %}Yavin / Movie night{% endblock %}
 
 {% block breadcrumb %}
-    <li><a href="{{ url_for('index') }}">Yavin</a></li>
-    <li class="active">Movie night</li>
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Yavin</a></li>
+    <li class="breadcrumb-item active">Movie night</li>
 {% endblock %}
 
 {% block content %}
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
-            <button class="btn btn-default" data-toggle="modal" data-target="#modal-add-pick">Add pick</button>
-            <button class="btn btn-default" data-toggle="modal" data-target="#modal-manage-people">Manage people</button>
+    <div class="row pt-3">
+        <div class="col">
+            <button class="btn btn-primary" data-toggle="modal" data-target="#modal-add-pick">Add pick</button>
+            <button class="btn btn-primary" data-toggle="modal" data-target="#modal-manage-people">Manage people</button>
         </div>
     </div>
 
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
+    <div class="row pt-3">
+        <div class="col">
             <table class="table">
                 <thead>
                 <tr>
@@ -39,8 +39,8 @@
                             {% endif %}
                         </td>
                         <td class="text-right">
-                            <button class="btn btn-xs btn-default" data-toggle="modal" data-target="#modal-edit-{{ pick.id }}">
-                                <span class="glyphicon glyphicon-pencil"></span>
+                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#modal-edit-{{ pick.id }}">
+                                <i class="bi-pencil-fill"></i>
                             </button>
                         </td>
                     </tr>
@@ -55,7 +55,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4>Edit this movie pick</h4>
+                    <h5 class="modal-title">Edit this movie pick</h5>
                 </div>
                 <div class="modal-body">
                     <form action="{{ url_for('movie_night_edit_pick') }}" method="post" id="form-edit-{{ pick.id }}">
@@ -82,8 +82,8 @@
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button class="btn btn-danger" formaction="{{ url_for('movie_night_delete_pick') }}" form="form-edit-{{ pick.id }}">Delete</button>
                     <button class="btn btn-success" form="form-edit-{{ pick.id }}">Save</button>
                 </div>
@@ -96,7 +96,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4>Add a movie pick</h4>
+                    <h5 class="modal-title">Add a movie pick</h5>
                 </div>
                 <div class="modal-body">
                     <form action="{{ url_for('movie_night_add_pick') }}" method="post" id="form-add-pick">
@@ -122,8 +122,8 @@
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button class="btn btn-success" form="form-add-pick">Add pick</button>
                 </div>
             </div>
@@ -134,7 +134,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4>People</h4>
+                    <h5 class="modal-title">People</h5>
                 </div>
                 <div class="modal-body">
                     <table class="table">
@@ -157,13 +157,13 @@
                                     <input class="form-control" name="person" placeholder="Name" data-modal-focus required>
                                 </form>
                             </td>
-                            <td><button class="btn btn-primary btn-block" form="form-add-person">Add</button></td>
+                            <td><button class="btn btn-success btn-block" form="form-add-person">Add</button></td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

@@ -6,6 +6,7 @@ class Settings:
     admin_email: str
     admin_password: str
     application_root: str
+    debug_layout: bool
     dsn: str
     log_format: str
     log_level: str
@@ -22,13 +23,14 @@ class Settings:
     def __init__(self):
         """Instantiating a Settings object will automatically read the following environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APP_VERSION, APPLICATION_ROOT, DSN, LOG_FORMAT, LOG_LEVEL,
-        OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY,
-        SERVER_NAME
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APP_VERSION, APPLICATION_ROOT, DEBUG_LAYOUT, DSN, LOG_FORMAT,
+        LOG_LEVEL, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME,
+        SECRET_KEY, SERVER_NAME
 
         Some variables have defaults if they are not found in the environment:
 
         APPLICATION_ROOT="/"
+        DEBUG_LAYOUT="False"
         LOG_FORMAT="%(levelname)s [%(name)s] %(message)s"
         LOG_LEVEL="INFO"
         OPENID_DISCOVERY_DOCUMENT="https://accounts.google.com/.well-known/openid-configuration"
@@ -43,6 +45,7 @@ class Settings:
         self.admin_email = os.getenv('ADMIN_EMAIL')
         self.admin_password = os.getenv('ADMIN_PASSWORD')
         self.application_root = os.getenv('APPLICATION_ROOT', '/')
+        self.debug_layout = os.getenv('DEBUG_LAYOUT', 'false').lower() in _true_values
         self.dsn = os.getenv('DSN')
         self.log_format = os.getenv('LOG_FORMAT', '%(levelname)s [%(name)s] %(message)s')
         self.log_level = os.getenv('LOG_LEVEL', 'INFO')

@@ -1,23 +1,23 @@
 {% extends 'index.html' %}
 
 {% block sign_in %}
-    <div class="btn-group btn-block">
+    <div class="dropdown">
         <button type="button" class="btn btn-primary btn-block dropdown-toggle" data-toggle="dropdown">
-            <span class="glyphicon glyphicon-user"></span> <span class="caret"></span>
+            <i class="bi-person-fill"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-right">
-            <li class="dropdown-header">{{ session.email }}</li>
-            <li><a href="{{ url_for('sign_out') }}">Sign out</a></li>
-        </ul>
+        <div class="dropdown-menu dropdown-menu-right">
+            <h6 class="dropdown-header">{{ session.email }}</h6>
+            <a class="dropdown-item" href="{{ url_for('sign_out') }}">Sign out</a>
+        </div>
     </div>
 {% endblock %}
 
 {% block content %}
-    <div class="row bump-top-padding">
-        <div class="col-md-12">
+    <div class="row pt-3">
+        <div class="col">
             <div class="list-group">
             {% for view, title in g.pages.items() %}
-                <a class="list-group-item" href="{{ url_for(view) }}">{{ title|safe }}</a>
+                <a class="list-group-item list-group-item-action" href="{{ url_for(view) }}">{{ title|safe }}</a>
             {% endfor %}
             </div>
         </div>

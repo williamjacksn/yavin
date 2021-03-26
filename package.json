@@ -4,7 +4,8 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "bootstrap": "3.4.1",
+    "bootstrap": "4.6.0",
+    "bootstrap-icons": "1.4.0",
     "jquery": "3.6.0"
   }
 }
