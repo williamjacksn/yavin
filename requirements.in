@@ -1,0 +1,7 @@
+APScheduler
+Flask
+PyJWT
+fort
+psycopg2
+requests
+waitress
