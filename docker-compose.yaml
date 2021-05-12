@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   yavin:
+    build: .
     image: ghcr.io/williamjacksn/yavin
+    init: true
     environment:
       ADMIN_EMAIL: (set in docker-compose.override.yaml)
       DSN: postgres://postgres:postgres@postgres/postgres
