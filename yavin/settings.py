@@ -19,13 +19,14 @@ class Settings:
     secret_key: str
     server_name: str
     version: str
+    web_server_threads: int
 
     def __init__(self):
         """Instantiating a Settings object will automatically read the following environment variables:
 
         ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APP_VERSION, APPLICATION_ROOT, DEBUG_LAYOUT, DSN, LOG_FORMAT,
         LOG_LEVEL, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME,
-        SECRET_KEY, SERVER_NAME
+        SECRET_KEY, SERVER_NAME, WEB_SERVER_THREADS
 
         Some variables have defaults if they are not found in the environment:
 
@@ -38,6 +39,7 @@ class Settings:
         PORT="8080"
         SCHEME="http"
         SERVER_NAME="localhost:8080"
+        WEB_SERVER_THREADS="4"
         """
 
         _true_values = ('true', '1', 'yes', 'on')
@@ -59,3 +61,4 @@ class Settings:
         self.secret_key = os.getenv('SECRET_KEY')
         self.server_name = os.getenv('SERVER_NAME', 'localhost:8080')
         self.version = os.getenv('APP_VERSION', 'unknown')
+        self.web_server_threads = int(os.getenv('WEB_SERVER_THREADS', '4'))

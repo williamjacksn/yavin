@@ -461,4 +461,5 @@ def main():
         url_prefix = settings.application_root
         if url_prefix == '/':
             url_prefix = ''
-        waitress.serve(app, port=settings.port, url_prefix=url_prefix, url_scheme=settings.scheme, ident=None)
+        waitress.serve(app, port=settings.port, threads=settings.web_server_threads, url_prefix=url_prefix,
+                       url_scheme=settings.scheme, ident=None)
