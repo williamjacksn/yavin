@@ -1,16 +1,19 @@
 {% extends 'signed-in.html' %}
 
-{% block title %}Yavin / Library{% endblock %}
+{% set title = 'Library' %}
+
+{% block title %}{{ super() }} / {{ title }}{% endblock %}
 
 {% block breadcrumb %}
-    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Yavin</a></li>
-    <li class="breadcrumb-item active">Library</li>
+    {% include '_back_to_home.html' %}
 {% endblock %}
 
 {% block content %}
+    {% include '_page_title_h1.html' %}
+
     <div class="row pt-3">
         <div class="col">
-            <table class="table">
+            <table class="table d-block">
                 <thead>
                 <tr>
                     <th>Name</th>
@@ -18,11 +21,11 @@
                     <th>Username</th>
                     <th>Password</th>
                     <th>Balance</th>
-                    <th></th>
+                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for lib_cred in g.library_credentials|sort(attribute='display_name') %}
+                {% for lib_cred in g.library_credentials | sort(attribute='display_name') %}
                     <tr>
                         <td>{{ lib_cred.display_name }}</td>
                         <td>{{ lib_cred.library }}</td>
@@ -32,7 +35,9 @@
                         <td>
                             <form action="{{ url_for('library_delete') }}" method="post">
                                 <input type="hidden" name="id" value="{{ lib_cred.id }}">
-                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="bi-trash-fill"></i>
+                                </button>
                             </form>
                         </td>
                     </tr>
@@ -40,14 +45,28 @@
                 <tr>
                     <td>
                         <form id="form-add-library" action="{{ url_for('library_add') }}" method="post">
-                            <input type="text" class="form-control" name="display_name" placeholder="Name" required autofocus>
+                            <input type="text" class="form-control" name="display_name" placeholder="Name"
+                                   aria-label="Name" required>
                         </form>
                     </td>
-                    <td><input type="text" form="form-add-library" class="form-control" name="library" placeholder="Library" required></td>
-                    <td><input type="text" form="form-add-library" class="form-control" name="username" placeholder="Username" required></td>
-                    <td><input type="password" form="form-add-library" class="form-control" name="password" placeholder="Password" required></td>
+                    <td>
+                        <input type="text" class="form-control" form="form-add-library" name="library"
+                               placeholder="Library" aria-label="Library" required>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" form="form-add-library" name="username"
+                               placeholder="Username" aria-label="Username" required>
+                    </td>
+                    <td>
+                        <input type="password" class="form-control" form="form-add-library" name="password"
+                               placeholder="Password" aria-label="Password" required>
+                    </td>
                     <td></td>
-                    <td><button type="submit" form="form-add-library" class="btn btn-success">Add</button></td>
+                    <td>
+                        <button type="submit" form="form-add-library" class="btn btn-success">
+                            <i class="bi-plus-circle-fill"></i>
+                        </button>
+                    </td>
                 </tr>
                 </tbody>
             </table>
@@ -56,17 +75,17 @@
 
     <div class="row pt-3">
         <div class="col">
-            <table class="table">
+            <table class="table d-block">
                 <thead>
                 <tr>
                     <th>Due</th>
                     <th>Title</th>
                     <th>Account</th>
-                    <th></th>
+                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for book in g.library_books|sort(attribute='title')|sort(attribute='due') %}
+                {% for book in g.library_books | sort(attribute='title') | sort(attribute='due') %}
                     <tr>
                         <td>{{ book.due }}</td>
                         <td><span class="badge">{{ book.medium }}</span> {{ book.title }}</td>
@@ -75,7 +94,9 @@
                         {% if book.renewable %}
                             <form action="{{ url_for('library_renew') }}" method="post">
                                 <input type="hidden" name="item_id" value="{{ book.item_id }}">
-                                <button type="submit" class="btn btn-primary btn-sm">Renew</button>
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi-arrow-repeat"></i>
+                                </button>
                             </form>
                         {% endif %}
                         </td>

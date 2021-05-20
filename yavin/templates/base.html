@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}Yavin{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-4.6.0.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-5.0.1.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-icons-1.5.0.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='yavin.css') }}">
     {% block end_of_head %}{% endblock %}
@@ -13,16 +13,15 @@
 <div class="container-fluid">
 
     <div class="row pt-3">
-        <div class="col-9 col-sm-10 col-xl-11">
-            <nav>
-                <ol class="breadcrumb">
-                    {% block breadcrumb %}
-                        <li class="breadcrumb-item active">Yavin</li>
-                    {% endblock %}
-                </ol>
-            </nav>
+        <div class="col">
+            {% block breadcrumb %}
+                <a class="btn btn-outline-dark" href="#">
+                    <i class="bi-house-fill"></i>
+                    Yavin
+                </a>
+            {% endblock %}
         </div>
-        <div class="col-3 col-sm-2 col-xl-1">{% block sign_in %}{% endblock %}</div>
+        <div class="col">{% block sign_in %}{% endblock %}</div>
     </div>
 
     {% block content %}{% endblock %}
@@ -37,15 +36,15 @@
                     <span class="d-none d-sm-inline d-md-none">sm</span>
                     <span class="d-none d-md-inline d-lg-none">md</span>
                     <span class="d-none d-lg-inline d-xl-none">lg</span>
-                    <span class="d-none d-xl-inline">xl</span>
+                    <span class="d-none d-xl-inline d-xxl-none">xl</span>
+                    <span class="d-none d-xxl-inline">xxl</span>
                 {% endif %}
             </small>
         </div>
     </div>
 
 </div>
-<script src="{{ url_for('static', filename='jquery-3.6.0.js') }}"></script>
-<script src="{{ url_for('static', filename='bootstrap-4.6.0.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='bootstrap-5.0.1.bundle.js') }}"></script>
 {% block end_of_body %}{% endblock %}
 </body>
 </html>

@@ -1,22 +1,25 @@
 {% extends 'signed-in.html' %}
 
-{% block title %}{{ super() }} / Phone usage{% endblock %}
+{% set title = 'Phone usage' %}
+
+{% block title %}{{ super() }} / {{ title }}{% endblock %}
 
 {% block breadcrumb %}
-    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Yavin</a></li>
-    <li class="breadcrumb-item active">Phone usage</li>
+    {% include '_back_to_home.html' %}
 {% endblock %}
 
 {% block content %}
+    {% include '_page_title_h1.html' %}
+
     <div class="row pt-3">
         <div class="col">
-            <button class="btn btn-primary" data-toggle="modal" data-target="#modal-add-phone-usage">Add usage</button>
+            <a class="btn btn-primary" href="#modal-add-phone-usage" data-bs-toggle="modal">Add usage</a>
         </div>
     </div>
 
     <div class="row pt-3">
         <div class="col">
-            <table class="table">
+            <table class="table d-block">
                 <thead>
                 <tr>
                     <th>Start date</th>
@@ -41,7 +44,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modal-add-phone-usage" tabindex="-1">
+    <div class="modal" id="modal-add-phone-usage">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -49,30 +52,33 @@
                 </div>
                 <div class="modal-body">
                     <form action="{{ url_for('phone_add') }}" method="post" id="form-add-phone-usage">
-                        <div class="form-group">
-                            <label for="start-date">Start date</label>
+                        <div class="mb-3">
+                            <label for="start-date" class="form-label">Start date</label>
                             <input class="form-control" type="date" name="start-date" id="start-date" required>
                         </div>
-                        <div class="form-group">
-                            <label for="end-date">End date</label>
+                        <div class="mb-3">
+                            <label for="end-date" class="form-label">End date</label>
                             <input class="form-control" type="date" name="end-date" id="end-date" required>
                         </div>
-                        <div class="form-group">
-                            <label for="minutes">Minutes</label>
-                            <input class="form-control" type="number" name="minutes" id="minutes" step="1" min="0" required>
+                        <div class="mb-3">
+                            <label for="minutes" class="form-label">Minutes</label>
+                            <input class="form-control" type="number" name="minutes" id="minutes" step="1" min="0"
+                                   required>
                         </div>
-                        <div class="form-group">
-                            <label for="messages">Messages</label>
-                            <input class="form-control" type="number" name="messages" id="messages" step="1" min="0" required>
+                        <div class="mb-3">
+                            <label for="messages" class="form-label">Messages</label>
+                            <input class="form-control" type="number" name="messages" id="messages" step="1" min="0"
+                                   required>
                         </div>
-                        <div class="form-group">
-                            <label for="megabytes">Megabytes</label>
-                            <input class="form-control" type="number" name="megabytes" id="megabytes" step="1" min="0" required>
+                        <div class="mb-3">
+                            <label for="megabytes" class="form-label">Megabytes</label>
+                            <input class="form-control" type="number" name="megabytes" id="megabytes" step="1" min="0"
+                                   required>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer d-flex justify-content-between">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success" form="form-add-phone-usage">Add usage</button>
                 </div>
             </div>
