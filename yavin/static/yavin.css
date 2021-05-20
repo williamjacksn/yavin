@@ -1,12 +1,7 @@
-.captains-log-button-col {
-    min-width: 120px;
+.col-captains-log-actions {
+    min-width: 90px;
 }
 
-.captains-log-date-col {
-    min-width: 165px;
-}
-
-.btn-sign-in {
-    padding-top: 11px;
-    padding-bottom: 11px;
+.col-captains-log-date {
+    min-width: 180px;
 }

@@ -1,45 +1,43 @@
 {% extends 'signed-in.html' %}
 
-{% block title %}Yavin / Electricity{% endblock %}
+{% set title = 'Electricity' %}
+
+{% block title %}{{ super() }} / {{ title }}{% endblock %}
 
 {% block breadcrumb %}
-    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Yavin</a></li>
-    <li class="breadcrumb-item active">Electricity</li>
+    {% include '_back_to_home.html' %}
 {% endblock %}
 
 {% block content %}
+    {% include '_page_title_h1.html' %}
+
     <div class="row pt-3">
         <div class="col">
             <form action="{{ url_for('electricity_add') }}" method="post">
-                <div class="form-row align-items-center">
+                <div class="row g-1">
                     <div class="col-auto">
-                        <label for="bill-date" class="sr-only">When</label>
-                        <input class="form-control mb-2" type="date" name="bill_date" id="bill-date" required>
+                        <input class="form-control" type="date" name="bill_date" aria-label="When" required>
                     </div>
                     <div class="col-auto">
-                        <label for="kwh" class="sr-only">kWh</label>
-                        <input class="form-control mb-2" type="number" name="kwh" id="kwh" step="1" min="0" placeholder="kWh" required>
+                        <input class="form-control" type="number" name="kwh" step="1" min="0" placeholder="kWh"
+                               aria-label="kWh" required>
                     </div>
                     <div class="col-auto">
-                        <label for="charge" class="sr-only">Charge</label>
-                        <div class="input-group mb-2">
-                            <div class="input-group-prepend">
-                                <div class="input-group-text">$</div>
-                            </div>
-                            <input class="form-control" type="number" name="charge" id="charge" step="0.01" min="0" placeholder="Charge" required>
-                        </div>
-                    </div>    
-                    <div class="col-auto">
-                        <label for="bill" class="sr-only">Bill</label>
-                        <div class="input-group mb-2">
-                            <div class="input-group-prepend">
-                                <div class="input-group-text">$</div>
-                            </div>
-                            <input class="form-control" type="number" name="bill" id="bill" step="0.01" min="0" placeholder="Bill" required>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input class="form-control" type="number" name="charge" step="0.01" min="0"
+                                   placeholder="Charge" aria-label="Charge" required>
                         </div>
                     </div>
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-success mb-2">Add</button>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input class="form-control" type="number" name="bill" step="0.01" min="0" placeholder="Bill"
+                                   aria-label="Bill" required>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-success">Add</button>
                     </div>
                 </div>
             </form>
@@ -48,22 +46,22 @@
 
     <div class="row pt-3">
         <div class="col">
-            <table class="table">
+            <table class="table d-block">
                 <thead>
                 <tr>
                     <th>Date</th>
-                    <th class="text-right">kWh</th>
-                    <th class="text-right">Charge</th>
-                    <th class="text-right">Bill</th>
+                    <th class="text-end">kWh</th>
+                    <th class="text-end">Charge</th>
+                    <th class="text-end">Bill</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for record in g.records %}
                     <tr>
                         <td>{{ record.bill_date }}</td>
-                        <td class="text-right">{{ record.kwh }}</td>
-                        <td class="text-right">{{ '$ %.2f'|format(record.charge) }}</td>
-                        <td class="text-right">{{ '$ %.2f'|format(record.bill) }}</td>
+                        <td class="text-end">{{ record.kwh }}</td>
+                        <td class="text-end">{{ '$ %.2f' | format(record.charge) }}</td>
+                        <td class="text-end">{{ '$ %.2f' | format(record.bill) }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
