@@ -1,3 +1,5 @@
+--extra-index-url https://alpine-wheels.github.io/index
+
 APScheduler
 Flask
 PyJWT
