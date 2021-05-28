@@ -204,7 +204,13 @@ class YavinDatabase(fort.PostgresDatabase):
         self.u(sql, params)
 
     def get_electricity(self):
-        sql = 'select bill_date, kwh, charge, bill from electricity order by bill_date desc'
+        sql = '''
+            select
+                bill_date, kwh, charge, bill,
+                round(avg(kwh) over (order by bill_date desc rows between current row and 11 following)) avg_12_months
+            from electricity
+            order by bill_date desc
+        '''
         return self.q(sql)
 
     # phone usage

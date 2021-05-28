@@ -51,6 +51,7 @@
                 <tr>
                     <th>Date</th>
                     <th class="text-end">kWh</th>
+                    <th class="text-end">12 month avg</th>
                     <th class="text-end">Charge</th>
                     <th class="text-end">Bill</th>
                 </tr>
@@ -60,6 +61,7 @@
                     <tr>
                         <td>{{ record.bill_date }}</td>
                         <td class="text-end">{{ record.kwh }}</td>
+                        <td class="text-end">{{ record.avg_12_months }}</td>
                         <td class="text-end">{{ '$ %.2f' | format(record.charge) }}</td>
                         <td class="text-end">{{ '$ %.2f' | format(record.bill) }}</td>
                     </tr>
