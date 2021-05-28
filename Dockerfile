@@ -5,7 +5,7 @@ COPY requirements.txt /yavin/requirements.txt
 RUN /sbin/apk add --no-cache libpq
 RUN /usr/local/bin/pip install --no-cache-dir --requirement /yavin/requirements.txt
 
-ENV APP_VERSION="2021.3" \
+ENV APP_VERSION="2021.4" \
     PYTHONUNBUFFERED="1" \
     TZ="Etc/UTC"
 
