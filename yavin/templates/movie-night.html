@@ -20,28 +20,20 @@
 
     <div class="row pt-3">
         <div class="col">
-            <table class="table d-block">
-                <thead>
-                <tr>
-                    <th>When</th>
-                    <th>Who</th>
-                    <th>What</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
+            <table class="table table-borderless d-block">
                 <tbody>
                 {% for pick in g.picks | sort(reverse=True, attribute='pick_date') %}
                     <tr>
-                        <td>{{ pick.pick_date }}</td>
-                        <td>{{ pick.person }}</td>
                         <td>
+                            {{ pick.person }} picked
                             {% if pick.pick_url is none %}
                                 {{ pick.pick_text }}
                             {% else %}
                                 <a href="{{ pick.pick_url }}" target="_blank" rel="noopener">{{ pick.pick_text }}</a>
                             {% endif %}
+                            on {{ pick.pick_date.strftime('%B') }} {{ pick.pick_date.day }}, {{ pick.pick_date.year }}.
                         </td>
-                        <td>
+                        <td class="text-end">
                             <a class="btn btn-sm btn-primary" href="#modal-edit" data-bs-toggle="modal"
                                data-pick-id="{{ pick.id }}" data-pick-date="{{ pick.pick_date }}"
                                data-pick-person-id="{{ pick.person_id }}" data-pick-text="{{ pick.pick_text }}"
