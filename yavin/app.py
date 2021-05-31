@@ -57,7 +57,7 @@ def before_request():
     flask.g.settings = settings
 
 
-@app.route('/')
+@app.get('/')
 def index():
     session_email = flask.session.get('email')
     if session_email is None:
@@ -74,7 +74,7 @@ def index():
     return flask.render_template('signed-in.html')
 
 
-@app.route('/captains-log')
+@app.get('/captains-log')
 @secure
 def captains_log():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -82,7 +82,7 @@ def captains_log():
     return flask.render_template('captains-log.html')
 
 
-@app.route('/captains-log/delete', methods=['POST'])
+@app.post('/captains-log/delete')
 @secure
 def captains_log_delete():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -90,7 +90,7 @@ def captains_log_delete():
     return flask.redirect(flask.url_for('captains_log'))
 
 
-@app.route('/captains-log/incoming', methods=['POST'])
+@app.post('/captains-log/incoming')
 def captains_log_incoming():
     db: yavin.db.YavinDatabase = flask.g.db
     app.logger.debug(f'json: {flask.request.json}')
@@ -103,7 +103,7 @@ def captains_log_incoming():
     return 'Authorization failure.'
 
 
-@app.route('/captains-log/update', methods=['POST'])
+@app.post('/captains-log/update')
 @secure
 def captains_log_update():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -112,7 +112,7 @@ def captains_log_update():
     return flask.redirect(flask.url_for('captains_log'))
 
 
-@app.route('/electricity')
+@app.get('/electricity')
 @secure
 def electricity():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -120,7 +120,7 @@ def electricity():
     return flask.render_template('electricity.html')
 
 
-@app.route('/electricity/add', methods=['POST'])
+@app.post('/electricity/add')
 def electricity_add():
     db: yavin.db.YavinDatabase = flask.g.db
     bill_date = yavin.util.str_to_date(flask.request.form.get('bill_date'))
@@ -131,7 +131,7 @@ def electricity_add():
     return flask.redirect(flask.url_for('electricity'))
 
 
-@app.route('/jar')
+@app.get('/jar')
 @secure
 def jar():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -140,7 +140,7 @@ def jar():
     return flask.render_template('jar.html')
 
 
-@app.route('/jar/add', methods=['POST'])
+@app.post('/jar/add')
 @secure
 def jar_add():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -150,7 +150,7 @@ def jar_add():
     return flask.redirect(flask.url_for('jar'))
 
 
-@app.route('/library')
+@app.get('/library')
 @secure
 def library():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -159,7 +159,7 @@ def library():
     return flask.render_template('library.html')
 
 
-@app.route('/library/add', methods=['POST'])
+@app.post('/library/add')
 @secure
 def library_add():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -174,7 +174,7 @@ def library_add():
     return flask.redirect(flask.url_for('library'))
 
 
-@app.route('/library/delete', methods=['POST'])
+@app.post('/library/delete')
 @secure
 def library_delete():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -183,7 +183,7 @@ def library_delete():
     return flask.redirect(flask.url_for('library'))
 
 
-@app.route('/library/renew', methods=['POST'])
+@app.post('/library/renew')
 @secure
 def library_renew():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -213,7 +213,7 @@ def library_renew():
     return flask.redirect(flask.url_for('library'))
 
 
-@app.route('/library/notify-now')
+@app.get('/library/notify-now')
 @secure
 def library_notify_now():
     app.logger.info('Got library notification request')
@@ -221,7 +221,7 @@ def library_notify_now():
     return flask.redirect(flask.url_for('library'))
 
 
-@app.route('/library/sync-now')
+@app.get('/library/sync-now')
 @secure
 def library_sync_now():
     app.logger.info('Got library sync request')
@@ -229,7 +229,7 @@ def library_sync_now():
     return flask.redirect(flask.url_for('library'))
 
 
-@app.route('/movie-night')
+@app.get('/movie-night')
 @secure
 def movie_night():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -239,7 +239,7 @@ def movie_night():
     return flask.render_template('movie-night.html')
 
 
-@app.route('/movie-night/add-person', methods=['POST'])
+@app.post('/movie-night/add-person')
 @secure
 def movie_night_add_person():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -248,7 +248,7 @@ def movie_night_add_person():
     return flask.redirect(flask.url_for('movie_night'))
 
 
-@app.route('/movie-night/add-pick', methods=['POST'])
+@app.post('/movie-night/add-pick')
 @secure
 def movie_night_add_pick():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -263,7 +263,7 @@ def movie_night_add_pick():
     return flask.redirect(flask.url_for('movie_night'))
 
 
-@app.route('/movie-night/delete-pick', methods=['POST'])
+@app.post('/movie-night/delete-pick')
 @secure
 def movie_night_delete_pick():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -274,7 +274,7 @@ def movie_night_delete_pick():
     return flask.redirect(flask.url_for('movie_night'))
 
 
-@app.route('/movie-night/edit-pick', methods=['POST'])
+@app.post('/movie-night/edit-pick')
 @secure
 def movie_night_edit_pick():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -289,7 +289,7 @@ def movie_night_edit_pick():
     return flask.redirect(flask.url_for('movie_night'))
 
 
-@app.route('/phone')
+@app.get('/phone')
 @secure
 def phone():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -297,7 +297,7 @@ def phone():
     return flask.render_template('phone.html')
 
 
-@app.route('/phone/add', methods=['POST'])
+@app.post('/phone/add')
 @secure
 def phone_add():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -305,7 +305,8 @@ def phone_add():
     db.add_phone_usage(v.get('start-date'), v.get('end-date'), v.get('minutes'), v.get('messages'), v.get('megabytes'))
     return flask.redirect(flask.url_for('phone'))
 
-@app.route('/weight')
+
+@app.get('/weight')
 @secure
 def weight():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -315,7 +316,7 @@ def weight():
     return flask.render_template('weight.html')
 
 
-@app.route('/weight/add', methods=['POST'])
+@app.post('/weight/add')
 @secure
 def weight_add():
     db: yavin.db.YavinDatabase = flask.g.db
@@ -328,7 +329,7 @@ def weight_add():
     return flask.redirect(flask.url_for('weight'))
 
 
-@app.route('/authorize')
+@app.get('/authorize')
 def authorize():
     for key, value in flask.request.values.items():
         app.logger.debug(f'{key}: {value}')
@@ -351,7 +352,7 @@ def authorize():
     return flask.redirect(flask.url_for('index'))
 
 
-@app.route('/sign-in')
+@app.get('/sign-in')
 def sign_in():
     state = str(uuid.uuid4())
     flask.session['state'] = state
@@ -369,7 +370,7 @@ def sign_in():
     return flask.redirect(auth_url, 307)
 
 
-@app.route('/sign-out')
+@app.get('/sign-out')
 def sign_out():
     flask.session.pop('email', None)
     return flask.redirect(flask.url_for('index'))
