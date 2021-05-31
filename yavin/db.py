@@ -5,6 +5,9 @@ import psycopg2
 import uuid
 
 
+class ExpensesDatabase(fort.SQLiteDatabase):
+    pass
+
 
 class YavinDatabase(fort.PostgresDatabase):
 

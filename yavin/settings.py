@@ -8,6 +8,7 @@ class Settings:
     application_root: str
     debug_layout: bool
     dsn: str
+    expenses_db: str
     log_format: str
     log_level: str
     openid_client_id: str
@@ -24,9 +25,9 @@ class Settings:
     def __init__(self):
         """Instantiating a Settings object will automatically read the following environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APP_VERSION, APPLICATION_ROOT, DEBUG_LAYOUT, DSN, LOG_FORMAT,
-        LOG_LEVEL, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME,
-        SECRET_KEY, SERVER_NAME, WEB_SERVER_THREADS
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, ADMIN_PASSWORD, APP_VERSION, APPLICATION_ROOT, DEBUG_LAYOUT, DSN, EXPENSES_DB,
+        LOG_FORMAT, LOG_LEVEL, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS,
+        PORT, SCHEME, SECRET_KEY, SERVER_NAME, WEB_SERVER_THREADS
 
         Some variables have defaults if they are not found in the environment:
 
@@ -49,6 +50,7 @@ class Settings:
         self.application_root = os.getenv('APPLICATION_ROOT', '/')
         self.debug_layout = os.getenv('DEBUG_LAYOUT', 'false').lower() in _true_values
         self.dsn = os.getenv('DSN')
+        self.expenses_db = os.getenv('EXPENSES_DB')
         self.log_format = os.getenv('LOG_FORMAT', '%(levelname)s [%(name)s] %(message)s')
         self.log_level = os.getenv('LOG_LEVEL', 'INFO')
         self.openid_client_id = os.getenv('OPENID_CLIENT_ID')
