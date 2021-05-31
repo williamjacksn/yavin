@@ -74,7 +74,7 @@ def index():
 @secure
 def captains_log():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.records = db.get_captains_log_entries()
+    flask.g.records = db.captains_log_list()
     return flask.render_template('captains-log.html')
 
 
@@ -82,7 +82,7 @@ def captains_log():
 @secure
 def captains_log_delete():
     db: yavin.db.YavinDatabase = flask.g.db
-    db.delete_captains_log_entry(flask.request.form.get('id'))
+    db.captains_log_delete(flask.request.form.get('id'))
     return flask.redirect(flask.url_for('captains_log'))
 
 
@@ -94,7 +94,7 @@ def captains_log_incoming():
     if auth_phrase.lower() == settings.admin_auth_phrase:
         app.logger.debug('Authorization accepted')
         log_text = flask.request.json['log-text']
-        db.add_captains_log_entry(log_text)
+        db.captains_log_insert(log_text)
         return 'Log recorded.'
     return 'Authorization failure.'
 
@@ -104,7 +104,7 @@ def captains_log_incoming():
 def captains_log_update():
     db: yavin.db.YavinDatabase = flask.g.db
     log_text = flask.request.form.get('log_text')
-    db.update_captains_log_entry(flask.request.form.get('id'), log_text)
+    db.captains_log_update(flask.request.form.get('id'), log_text)
     return flask.redirect(flask.url_for('captains_log'))
 
 
@@ -112,7 +112,7 @@ def captains_log_update():
 @secure
 def electricity():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.records = db.get_electricity()
+    flask.g.records = db.electricity_list()
     return flask.render_template('electricity.html')
 
 
@@ -123,7 +123,7 @@ def electricity_add():
     kwh = int(flask.request.form.get('kwh'))
     charge = decimal.Decimal(flask.request.form.get('charge'))
     bill = decimal.Decimal(flask.request.form.get('bill'))
-    db.add_electricity(bill_date, kwh, charge, bill)
+    db.electricity_insert(bill_date, kwh, charge, bill)
     return flask.redirect(flask.url_for('electricity'))
 
 
@@ -132,7 +132,7 @@ def electricity_add():
 def jar():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.today = yavin.util.today()
-    flask.g.jar_entries = db.get_recent_jar_entries()
+    flask.g.jar_entries = db.jar_entries_list()
     return flask.render_template('jar.html')
 
 
@@ -142,7 +142,7 @@ def jar_add():
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
     app.logger.info(f'Adding new jar entry for {entry_date}')
-    db.add_jar_entry(entry_date)
+    db.jar_entries_insert(entry_date)
     return flask.redirect(flask.url_for('jar'))
 
 
@@ -150,8 +150,8 @@ def jar_add():
 @secure
 def library():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.library_credentials = db.get_library_credentials()
-    flask.g.library_books = db.get_library_books()
+    flask.g.library_credentials = db.library_credentials_list()
+    flask.g.library_books = db.library_books_list()
     return flask.render_template('library.html')
 
 
@@ -165,7 +165,7 @@ def library_add():
         'username': flask.request.form.get('username'),
         'password': flask.request.form.get('password')
     }
-    db.add_library_credential(params)
+    db.library_credentials_insert(params)
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for('library'))
 
@@ -174,7 +174,7 @@ def library_add():
 @secure
 def library_delete():
     db: yavin.db.YavinDatabase = flask.g.db
-    db.delete_library_credential(flask.request.form)
+    db.library_credentials_delete(flask.request.form)
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for('library'))
 
@@ -207,8 +207,8 @@ def library_sync_now():
 @secure
 def movie_night():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.people = db.get_movie_night_people()
-    flask.g.picks = db.get_movie_night_picks()
+    flask.g.people = db.movie_people_list()
+    flask.g.picks = db.movie_picks_list()
     flask.g.today = yavin.util.today()
     return flask.render_template('movie-night.html')
 
@@ -218,7 +218,7 @@ def movie_night():
 def movie_night_add_person():
     db: yavin.db.YavinDatabase = flask.g.db
     params = {'person': flask.request.form.get('person')}
-    db.add_movie_night_person(params)
+    db.movie_people_insert(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 
@@ -233,7 +233,7 @@ def movie_night_add_pick():
         'pick_url': flask.request.form.get('pick_url')
     }
     app.logger.debug(params)
-    db.add_movie_night_pick(params)
+    db.movie_picks_insert(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 
@@ -244,7 +244,7 @@ def movie_night_delete_pick():
     params = {
         'id': flask.request.form.get('id')
     }
-    db.delete_movie_night_pick(params)
+    db.movie_picks_delete(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 
@@ -259,7 +259,7 @@ def movie_night_edit_pick():
         'pick_text': flask.request.form.get('pick_text'),
         'pick_url': flask.request.form.get('pick_url'),
     }
-    db.edit_movie_night_pick(params)
+    db.movie_picks_update(params)
     return flask.redirect(flask.url_for('movie_night'))
 
 
@@ -267,7 +267,7 @@ def movie_night_edit_pick():
 @secure
 def phone():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.records = db.get_phone_usage()
+    flask.g.records = db.phone_usage_list()
     return flask.render_template('phone.html')
 
 
@@ -276,7 +276,7 @@ def phone():
 def phone_add():
     db: yavin.db.YavinDatabase = flask.g.db
     v = flask.request.values
-    db.add_phone_usage(v.get('start-date'), v.get('end-date'), v.get('minutes'), v.get('messages'), v.get('megabytes'))
+    db.phone_usage_insert(v.get('start-date'), v.get('end-date'), v.get('minutes'), v.get('messages'), v.get('megabytes'))
     return flask.redirect(flask.url_for('phone'))
 
 
@@ -285,8 +285,8 @@ def phone_add():
 def weight():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.today = yavin.util.today()
-    flask.g.default_weight = db.get_weight_most_recent()
-    flask.g.weight_entries = db.get_recent_weight_entries()
+    flask.g.default_weight = db.weight_entries_get_most_recent()
+    flask.g.weight_entries = db.weight_entries_list()
     return flask.render_template('weight.html')
 
 
@@ -297,7 +297,7 @@ def weight_add():
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
     entry_weight = flask.request.form.get('weight')
     app.logger.info(f'Attempting to add new weight entry for {entry_date}: {entry_weight} lbs')
-    msg = db.add_weight_entry(entry_date, entry_weight)
+    msg = db.weight_entries_insert(entry_date, entry_weight)
     if msg is not None:
         flask.flash(msg, 'alert-danger')
     return flask.redirect(flask.url_for('weight'))

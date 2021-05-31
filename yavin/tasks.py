@@ -24,7 +24,7 @@ def library_notify(app: Flask):
     with app.app_context():
         lib_url = url_for('library')
     log.debug(f'url for library: {lib_url}')
-    for book in db.get_library_books():
+    for book in db.library_books_list():
         title = book.get('title')
         due = book.get('due')
         log.debug(f'{title} is due on {due}')
@@ -47,7 +47,7 @@ def library_renew(item_id: str):
     settings = Settings()
     db = YavinDatabase(settings.dsn)
     log.info(f'Attempting to renew item {item_id}')
-    lib_cred = db.get_book_credentials({'item_id': item_id})
+    lib_cred = db.library_credentials_get({'item_id': item_id})
     lib_url = lib_cred.get('library')
     s = requests.Session()
     login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
@@ -70,15 +70,15 @@ def library_renew(item_id: str):
     if renew_et.get('success') == '1':
         item = renew_et.find('item')
         new_due = clean_due_date(item.get('due'))
-        db.update_due_date({'due': new_due, 'item_id': item_id})
+        db.library_books_update({'due': new_due, 'item_id': item_id})
 
 
 def library_sync():
     log.info('Syncing library data')
     settings = Settings()
     db = YavinDatabase(settings.dsn)
-    db.clear_library_books()
-    for lib_cred in db.get_library_credentials():
+    db.library_books_truncate()
+    for lib_cred in db.library_credentials_list():
         cred_id = lib_cred.get('id')
         display_name = lib_cred.get('display_name')
         log.info(f'Syncing library data for {display_name}')
@@ -100,13 +100,13 @@ def library_sync():
         log.info(f'Received {len(account.content)} bytes from {account_url}')
         log.debug(account.text)
         account_et = ElementTree.XML(account.text)
-        db.update_balance({
+        db.library_credentials_update({
             'id': cred_id,
             'balance': 0
         })
         for alert in account_et.findall('alerts'):
             if alert.get('balance'):
-                db.update_balance({
+                db.library_credentials_update({
                     'id': cred_id,
                     'balance': int(alert.get('balance'))
                 })
@@ -119,4 +119,4 @@ def library_sync():
                 'item_id': item.get('id'),
                 'medium': item.get('medium').replace('\xad', '')
             }
-            db.add_library_book(params)
+            db.library_books_insert(params)

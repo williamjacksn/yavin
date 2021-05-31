@@ -13,32 +13,37 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # captain's log
 
-    def add_captains_log_entry(self, log_text: str, log_timestamp: datetime.datetime = None):
+    def captains_log_delete(self, id_: str):
+        sql = 'delete from captains_log where id = %(id)s'
+        params = {'id': uuid.UUID(hex=id_)}
+        self.u(sql, params)
+
+    def captains_log_insert(self, log_text: str, log_timestamp: datetime.datetime = None):
         sql = 'insert into captains_log (id, log_timestamp, log_text) values (%(id)s, %(log_timestamp)s, %(log_text)s)'
         if log_timestamp is None:
             log_timestamp = datetime.datetime.utcnow()
         params = {'id': uuid.uuid4(), 'log_text': log_text, 'log_timestamp': log_timestamp}
         self.u(sql, params)
 
-    def delete_captains_log_entry(self, id_: str):
-        sql = 'delete from captains_log where id = %(id)s'
-        params = {'id': uuid.UUID(hex=id_)}
-        self.u(sql, params)
-
-    def get_captains_log_entries(self, limit: int = 20) -> list[dict]:
+    def captains_log_list(self, limit: int = 20) -> list[dict]:
         sql = 'select id, log_timestamp, log_text from captains_log order by log_timestamp desc limit %(limit)s'
         params = {'limit': limit}
         return self.q(sql, params)
 
-    def update_captains_log_entry(self, id_: str, log_text: str):
+    def captains_log_update(self, id_: str, log_text: str):
         sql = 'update captains_log set log_text = %(log_text)s where id = %(id)s'
         params = {'id': uuid.UUID(hex=id_), 'log_text': log_text}
         self.u(sql, params)
 
     # gas prices
 
-    def add_gas_price_entry(self, price_date: datetime.date, price: decimal.Decimal, gallons: decimal.Decimal = None,
-                            location: str = None, vehicle: str = None, miles_driven: decimal.Decimal = None):
+    def gas_prices_delete(self, id_: str):
+        sql = 'delete from gas_prices where id = %(id)s'
+        params = {'id': id_}
+        self.u(sql, params)
+
+    def gas_prices_insert(self, price_date: datetime.date, price: decimal.Decimal, gallons: decimal.Decimal = None,
+                          location: str = None, vehicle: str = None, miles_driven: decimal.Decimal = None):
         sql = '''
             insert into gas_prices (id, price_date, price, gallons, location, vehicle, miles_driven)
             values (%(id)s, %(price_date)s, %(price)s, %(gallons)s, %(location)s, %(vehicle)s, %(miles_driven)s)
@@ -47,12 +52,7 @@ class YavinDatabase(fort.PostgresDatabase):
                   'location': location, 'vehicle': vehicle, 'miles_driven': miles_driven}
         self.u(sql, params)
 
-    def delete_gas_price_entry(self, id_: str):
-        sql = 'delete from gas_prices where id = %(id)s'
-        params = {'id': id_}
-        self.u(sql, params)
-
-    def get_gas_price_entries(self, limit: int = 20) -> list[dict]:
+    def gas_prices_list(self, limit: int = 20) -> list[dict]:
         sql = '''
             select id, price_date, price, gallons, location, vehicle, miles_driven
             from gas_prices
@@ -64,7 +64,7 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # jar
 
-    def add_jar_entry(self, entry_date: datetime.date):
+    def jar_entries_insert(self, entry_date: datetime.date):
         last: int = self.q_val('select max(id) max_id from jar_entries')
         if last is None:
             last = 0
@@ -74,44 +74,16 @@ class YavinDatabase(fort.PostgresDatabase):
         }
         self.u('insert into jar_entries (id, entry_date) values (%(id)s, %(entry_date)s)', params)
 
-    def get_recent_jar_entries(self, limit: int = 10) -> list[dict]:
+    def jar_entries_list(self, limit: int = 10) -> list[dict]:
         params = {'limit': limit}
         return self.q('select id, entry_date from jar_entries order by entry_date desc limit %(limit)s', params)
 
     # library
 
-    def add_library_credential(self, params: dict):
-        params['id'] = uuid.uuid4()
-        self.u('''
-            insert into library_credentials (id, library, username, password, display_name)
-            values (%(id)s, %(library)s, %(username)s, %(password)s, %(display_name)s)
-        ''', params)
-
-    def get_library_credentials(self) -> list[dict]:
-        return self.q('select id, library, username, password, display_name, balance from library_credentials')
-
-    def delete_library_credential(self, params: dict):
+    def library_credentials_delete(self, params: dict):
         self.u('delete from library_credentials where id = %(id)s', params)
 
-    def update_balance(self, params: dict):
-        self.u('update library_credentials set balance = %(balance)s where id = %(id)s', params)
-
-    def add_library_book(self, params: dict):
-        params['id'] = uuid.uuid4()
-        sql = '''
-            insert into library_books (id, credential_id, title, due, renewable, item_id, medium)
-            values (%(id)s, %(credential_id)s, %(title)s, %(due)s, %(renewable)s, %(item_id)s, %(medium)s)
-        '''
-        self.u(sql, params)
-
-    def update_due_date(self, params: dict):
-        sql = 'update library_books set due = %(due)s where item_id = %(item_id)s'
-        return self.u(sql, params)
-
-    def clear_library_books(self):
-        self.u('truncate table library_books')
-
-    def get_book_credentials(self, params: dict):
+    def library_credentials_get(self, params: dict):
         sql = '''
             select library, username, password
             from library_books
@@ -120,7 +92,28 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         return self.q_one(sql, params)
 
-    def get_library_books(self):
+    def library_credentials_insert(self, params: dict):
+        params['id'] = uuid.uuid4()
+        self.u('''
+            insert into library_credentials (id, library, username, password, display_name)
+            values (%(id)s, %(library)s, %(username)s, %(password)s, %(display_name)s)
+        ''', params)
+
+    def library_credentials_list(self) -> list[dict]:
+        return self.q('select id, library, username, password, display_name, balance from library_credentials')
+
+    def library_credentials_update(self, params: dict):
+        self.u('update library_credentials set balance = %(balance)s where id = %(id)s', params)
+
+    def library_books_insert(self, params: dict):
+        params['id'] = uuid.uuid4()
+        sql = '''
+            insert into library_books (id, credential_id, title, due, renewable, item_id, medium)
+            values (%(id)s, %(credential_id)s, %(title)s, %(due)s, %(renewable)s, %(item_id)s, %(medium)s)
+        '''
+        self.u(sql, params)
+
+    def library_books_list(self):
         sql = '''
             select display_name, title, due, renewable, item_id, medium
             from library_books
@@ -128,33 +121,40 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         return self.q(sql)
 
+    def library_books_truncate(self):
+        self.u('truncate table library_books')
+
+    def library_books_update(self, params: dict):
+        sql = 'update library_books set due = %(due)s where item_id = %(item_id)s'
+        return self.u(sql, params)
+
     # weight
 
-    def add_weight_entry(self, entry_date: datetime.date, weight: float):
+    def weight_entries_get_most_recent(self) -> float:
+        row = self.q_one('select weight from weight_entries order by entry_date desc')
+        if row is None:
+            return 0
+        return row['weight']
+
+    def weight_entries_insert(self, entry_date: datetime.date, weight: float):
         params = {'entry_date': entry_date, 'weight': weight}
         try:
             self.u('insert into weight_entries (entry_date, weight) values (%(entry_date)s, %(weight)s)', params)
         except psycopg2.IntegrityError:
             return f'There is already a weight entry for {entry_date}.'
 
-    def get_recent_weight_entries(self, limit: int = 10) -> list[dict]:
+    def weight_entries_list(self, limit: int = 10) -> list[dict]:
         params = {'limit': limit}
         return self.q('select entry_date, weight from weight_entries order by entry_date desc limit %(limit)s', params)
 
-    def get_weight_most_recent(self) -> float:
-        row = self.q_one('select weight from weight_entries order by entry_date desc')
-        if row is None:
-            return 0
-        return row['weight']
-
     # movie night
 
-    def add_movie_night_person(self, params: dict):
+    def movie_people_insert(self, params: dict):
         params['id'] = uuid.uuid4()
         sql = 'insert into movie_people (id, person) values (%(id)s, %(person)s)'
         self.u(sql, params)
 
-    def get_movie_night_people(self):
+    def movie_people_list(self):
         sql = '''
             select movie_people.id, person, row_number() over (order by max(pick_date) nulls first) pick_order
             from movie_people
@@ -163,7 +163,11 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         return self.q(sql)
 
-    def add_movie_night_pick(self, params: dict):
+    def movie_picks_delete(self, params: dict):
+        sql = 'delete from movie_picks where id = %(id)s'
+        self.u(sql, params)
+
+    def movie_picks_insert(self, params: dict):
         params['id'] = uuid.uuid4()
         if params['pick_url'] == '':
             params['pick_url'] = None
@@ -173,11 +177,15 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         self.u(sql, params)
 
-    def delete_movie_night_pick(self, params: dict):
-        sql = 'delete from movie_picks where id = %(id)s'
-        self.u(sql, params)
+    def movie_picks_list(self):
+        sql = '''
+            select movie_picks.id, pick_date, person_id, person, pick_text, pick_url
+            from movie_picks
+            join movie_people on movie_picks.person_id = movie_people.id
+        '''
+        return self.q(sql)
 
-    def edit_movie_night_pick(self, params: dict):
+    def movie_picks_update(self, params: dict):
         if params['pick_url'] == '':
             params['pick_url'] = None
         sql = '''
@@ -187,17 +195,9 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         self.u(sql, params)
 
-    def get_movie_night_picks(self):
-        sql = '''
-            select movie_picks.id, pick_date, person_id, person, pick_text, pick_url
-            from movie_picks
-            join movie_people on movie_picks.person_id = movie_people.id
-        '''
-        return self.q(sql)
-
     # electricity
 
-    def add_electricity(self, bill_date: datetime.date, kwh: int, charge: decimal.Decimal, bill: decimal.Decimal):
+    def electricity_insert(self, bill_date: datetime.date, kwh: int, charge: decimal.Decimal, bill: decimal.Decimal):
         sql = '''
             insert into electricity (bill_date, kwh, charge, bill)
             values (%(bill_date)s, %(kwh)s, %(charge)s, %(bill)s)
@@ -205,7 +205,7 @@ class YavinDatabase(fort.PostgresDatabase):
         params = {'bill_date': bill_date, 'kwh': kwh, 'charge': charge, 'bill': bill}
         self.u(sql, params)
 
-    def get_electricity(self):
+    def electricity_list(self):
         sql = '''
             select
                 bill_date, kwh, charge, bill,
@@ -217,8 +217,8 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # phone usage
 
-    def add_phone_usage(self, start_date: datetime.date, end_date: datetime.date,
-                        minutes: int, messages: int, megabytes: int):
+    def phone_usage_insert(self, start_date: datetime.date, end_date: datetime.date,
+                           minutes: int, messages: int, megabytes: int):
         sql = '''
             insert into phone_usage (id, start_date, end_date, minutes, messages, megabytes)
             values (%(id)s, %(start_date)s, %(end_date)s, %(minutes)s, %(messages)s, %(megabytes)s)
@@ -233,7 +233,7 @@ class YavinDatabase(fort.PostgresDatabase):
         }
         self.u(sql, params)
 
-    def get_phone_usage(self) -> list[dict]:
+    def phone_usage_list(self) -> list[dict]:
         sql = '''
             select id, start_date, end_date, minutes, messages, megabytes
             from phone_usage
