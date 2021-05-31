@@ -1,26 +1,22 @@
-import apscheduler.schedulers.background
 import decimal
-import email.message
 import flask
 import functools
 import jwt
 import logging
 import requests
 import requests.utils
-import smtplib
 import sys
 import urllib.parse
 import uuid
 import waitress
 import werkzeug.middleware.proxy_fix
 import werkzeug.utils
-import xml.etree.ElementTree
 import yavin.db
 import yavin.settings
+import yavin.tasks
 import yavin.util
 
 settings = yavin.settings.Settings()
-scheduler = apscheduler.schedulers.background.BackgroundScheduler()
 
 app = flask.Flask(__name__)
 app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_port=1)
@@ -170,7 +166,7 @@ def library_add():
         'password': flask.request.form.get('password')
     }
     db.add_library_credential(params)
-    scheduler.add_job(library_sync)
+    yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -179,37 +175,15 @@ def library_add():
 def library_delete():
     db: yavin.db.YavinDatabase = flask.g.db
     db.delete_library_credential(flask.request.form)
-    scheduler.add_job(library_sync)
+    yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
 @app.post('/library/renew')
 @secure
 def library_renew():
-    db: yavin.db.YavinDatabase = flask.g.db
     item_id = flask.request.form.get('item_id')
-    app.logger.info(f'Attempting to renew item {item_id}')
-    lib_cred = db.get_book_credentials({'item_id': item_id})
-    lib_url = lib_cred['library']
-    s = requests.Session()
-    login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
-    login_data = {'username': lib_cred['username'], 'password': lib_cred['password']}
-    login = s.post(url=login_url, data=login_data)
-    login_et = xml.etree.ElementTree.XML(login.text)
-    session_key = login_et.get('session')
-    account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
-    account_data = {'session': session_key}
-    s.post(url=account_url, data=account_data)
-    requests.utils.add_dict_to_cookiejar(s.cookies, {'session': session_key})
-    renew_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account_command.xml.pl'
-    renew_data = {'command': 'renew', 'checkout': item_id}
-    renew = s.post(url=renew_url, data=renew_data)
-    app.logger.debug(renew.text)
-    renew_et = xml.etree.ElementTree.XML(renew.text)
-    if renew_et.get('success') == '1':
-        item = renew_et.find('item')
-        new_due = yavin.util.clean_due_date(item.get('due'))
-        db.update_due_date({'due': new_due, 'item_id': item_id})
+    yavin.tasks.library_renew(item_id)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -217,7 +191,7 @@ def library_renew():
 @secure
 def library_notify_now():
     app.logger.info('Got library notification request')
-    scheduler.add_job(library_notify)
+    yavin.tasks.scheduler.add_job(yavin.tasks.library_notify, args=[app])
     return flask.redirect(flask.url_for('library'))
 
 
@@ -225,7 +199,7 @@ def library_notify_now():
 @secure
 def library_sync_now():
     app.logger.info('Got library sync request')
-    scheduler.add_job(library_sync)
+    yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for('library'))
 
 
@@ -376,73 +350,6 @@ def sign_out():
     return flask.redirect(flask.url_for('index'))
 
 
-def library_sync():
-    app.logger.info('Syncing library data')
-    with app.app_context():
-        db = yavin.db.YavinDatabase(settings.dsn)
-        db.clear_library_books()
-        for lib_cred in db.get_library_credentials():
-            app.logger.info(f'Syncing library data for {lib_cred["display_name"]}')
-            lib_url = lib_cred['library']
-            s = requests.Session()
-            login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
-            login_data = {'username': lib_cred['username'], 'password': lib_cred['password']}
-            login = s.post(url=login_url, data=login_data)
-            app.logger.info(f'Received {len(login.content)} bytes from {login_url}')
-            app.logger.debug(login.text)
-            login_et = xml.etree.ElementTree.XML(login.text)
-            session_key = login_et.get('session')
-            account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
-            account_data = {'session': session_key}
-            account = s.post(url=account_url, data=account_data)
-            app.logger.info(f'Received {len(account.content)} bytes from {account_url}')
-            app.logger.debug(account.text)
-            account_et = xml.etree.ElementTree.XML(account.text)
-            db.update_balance({'id': lib_cred['id'], 'balance': 0})
-            for alert in account_et.findall('alerts'):
-                if alert.get('balance'):
-                    params = {
-                        'id': lib_cred['id'],
-                        'balance': int(alert.get('balance'))
-                    }
-                    db.update_balance(params)
-            for item in account_et.findall('item'):
-                params = {
-                    'credential_id': lib_cred['id'],
-                    'title': item.get('title').replace('\xad', ''),
-                    'due': item.get('due_raw'),
-                    'renewable': item.get('renewable') == '1',
-                    'item_id': item.get('id'),
-                    'medium': item.get('medium').replace('\xad', '')
-                }
-                db.add_library_book(params)
-
-
-def library_notify():
-    app.logger.info('Checking for due library items')
-    with app.app_context():
-        db = yavin.db.YavinDatabase(settings.dsn)
-        lib_url = flask.url_for('library')
-        app.logger.debug(f'url for library: {lib_url}')
-        for book in db.get_library_books():
-            title = book['title']
-            due = book['due']
-            app.logger.debug(f'{title} is due on {due}')
-            if book['due'] <= yavin.util.today():
-                app.logger.info(f'** {title} is due today or overdue')
-                app.logger.info('Sending notification email')
-                msg = email.message.EmailMessage()
-                msg['Subject'] = 'Library alert'
-                msg['From'] = settings.admin_email
-                msg['To'] = settings.admin_email
-                content = flask.render_template('email-library-item-due.jinja2', lib_url=lib_url)
-                msg.set_content(content)
-                with smtplib.SMTP_SSL(host='smtp.gmail.com') as s:
-                    s.login(user=settings.admin_email, password=settings.admin_password)
-                    s.send_message(msg)
-                break
-
-
 def main():
     logging.basicConfig(format=settings.log_format, level='DEBUG', stream=sys.stdout)
     app.logger.debug(f'yavin {settings.version}')
@@ -455,9 +362,10 @@ def main():
         db = yavin.db.YavinDatabase(settings.dsn)
         db.migrate()
 
-        scheduler.start()
-        scheduler.add_job(library_sync, 'interval', hours=6, start_date=yavin.util.in_two_minutes())
-        scheduler.add_job(library_notify, 'cron', day='*', hour='3')
+        yavin.tasks.scheduler.start()
+        yavin.tasks.scheduler.add_job(yavin.tasks.library_sync, 'interval', hours=6,
+                                      start_date=yavin.util.in_two_minutes())
+        yavin.tasks.scheduler.add_job(yavin.tasks.library_notify, 'cron', day='*', hour='3', args=[app])
 
         url_prefix = settings.application_root
         if url_prefix == '/':
