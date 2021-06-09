@@ -61,6 +61,7 @@ def index():
     flask.g.pages = {
         'captains_log': 'Captain&#x02bc;s log',
         'electricity': 'Electricity',
+        'expenses': 'Expenses',
         'jar': 'Jar',
         'library': 'Library',
         'movie_night': 'Movie night',
@@ -125,6 +126,41 @@ def electricity_add():
     bill = decimal.Decimal(flask.request.form.get('bill'))
     db.electricity_insert(bill_date, kwh, charge, bill)
     return flask.redirect(flask.url_for('electricity'))
+
+
+@app.get('/expenses')
+@secure
+def expenses():
+    ex_db = yavin.db.ExpensesDatabase(settings.expenses_db)
+    try:
+        start_date = yavin.util.str_to_date(flask.request.values.get('start_date'))
+    except (TypeError, ValueError):
+        start_date = None
+    try:
+        end_date = yavin.util.str_to_date(flask.request.values.get('end_date'))
+    except (TypeError, ValueError):
+        end_date = None
+    if start_date is None:
+        if end_date is None:
+            start_date = yavin.util.today().replace(day=1)
+            end_date = yavin.util.today()
+            app.logger.debug(f'No dates provided, using {start_date} to {end_date}')
+        else:
+            start_date = yavin.util.add_days(end_date, -30)
+            app.logger.debug(f'Only end_date provided, using {start_date} to {end_date}')
+    else:
+        if end_date is None:
+            end_date = yavin.util.add_days(start_date, 30)
+            app.logger.debug(f'Only start_date provided, using {start_date} to {end_date}')
+        elif start_date > end_date:
+            start_date, end_date = end_date, start_date
+            app.logger.debug(f'Dates are out of order, using {start_date} to {end_date}')
+        else:
+            app.logger.debug(f'Both dates provided, using {start_date} to {end_date}')
+    flask.g.start_date = start_date
+    flask.g.end_date = end_date
+    flask.g.expenses = ex_db.get_expenses('Root Account:Expenses%', start_date, end_date)
+    return flask.render_template('expenses.html')
 
 
 @app.get('/jar')

@@ -1,0 +1,66 @@
+{% extends 'signed-in.html' %}
+
+{% set title = 'Expenses' %}
+
+{% block title %}{{ super() }} / {{ title }}{% endblock %}
+
+{% block breadcrumb %}
+    {% include '_back_to_home.html' %}
+{% endblock %}
+
+{% block content %}
+    {% include '_page_title_h1.html' %}
+
+    <div class="row pt-3">
+        <div class="col">
+            <form>
+                <div class="row g-1">
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <span class="input-group-text">from</span>
+                            <input type="date" class="form-control" name="start_date" value="{{ g.start_date }}"
+                                   aria-label="Start date">
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <span class="input-group-text">to</span>
+                            <input type="date" class="form-control" name="end_date" value="{{ g.end_date }}"
+                                   aria-label="End date">
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-success">Go</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row pt-3">
+        <div class="col">
+            <table class="table table-striped d-block">
+                <thead>
+                <tr>
+                    <th>Account</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Memo</th>
+                    <th>Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for e in g.expenses %}
+                    <tr>
+                        <td>{{ e.account[13:] }}</td>
+                        <td>{{ e.post_date }}</td>
+                        <td>{{ e.description }}</td>
+                        <td>{{ e.memo }}</td>
+                        <td>{{ e.amount }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -1,6 +1,10 @@
 import datetime
 
 
+def add_days(d: datetime.date, days: int) -> datetime.date:
+    return d + datetime.timedelta(days=days)
+
+
 def clean_datetime(d: datetime.datetime) -> str:
     return d.strftime('%Y-%m-%d %H:%M')
 
