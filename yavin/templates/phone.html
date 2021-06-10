@@ -24,9 +24,9 @@
                 <tr>
                     <th>Start date</th>
                     <th>End date</th>
-                    <th>Minutes</th>
-                    <th>Messages</th>
-                    <th>Megabytes</th>
+                    <th class="text-end">Minutes</th>
+                    <th class="text-end">Messages</th>
+                    <th class="text-end">Megabytes</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -34,9 +34,9 @@
                     <tr>
                         <td>{{ record.start_date }}</td>
                         <td>{{ record.end_date }}</td>
-                        <td>{{ record.minutes }}</td>
-                        <td>{{ record.messages }}</td>
-                        <td>{{ record.megabytes }}</td>
+                        <td class="text-end">{{ record.minutes }}</td>
+                        <td class="text-end">{{ record.messages }}</td>
+                        <td class="text-end">{{ record.megabytes }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
