@@ -38,25 +38,32 @@
     </div>
 
     <div class="row pt-3">
-        <div class="col">
-            <table class="table table-striped d-block">
-                <thead>
-                <tr>
-                    <th>Account</th>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Memo</th>
-                    <th>Amount</th>
-                </tr>
-                </thead>
+        <div class="col col-sm-8 col-md-6 col-lg-5 col-xl-4 col-xxl-3">
+            <table class="table table-striped">
                 <tbody>
+                <tr>
+                    <td>
+                        <div class="row g-1 justify-content-between">
+                            <div class="col-auto"><strong>Total</strong></div>
+                            <div class="col-auto"><strong>$ {{ '{:,.2f}'.format(g.total) }}</strong></div>
+                        </div>
+                    </td>
+                </tr>
                 {% for e in g.expenses %}
                     <tr>
-                        <td>{{ e.account[13:] }}</td>
-                        <td>{{ e.post_date }}</td>
-                        <td>{{ e.description }}</td>
-                        <td>{{ e.memo }}</td>
-                        <td>{{ e.amount }}</td>
+                        <td>
+                            <div class="row g-1 justify-content-between">
+                                <div class="col-auto">
+                                    {{ e.description }}<br>
+                                    {% if e.memo %}<small>{{ e.memo }}</small>{% endif %}
+                                </div>
+                                <div class="col-auto text-end"><strong>$ {{ '{:,.2f}'.format(e.amount) }}</strong></div>
+                            </div>
+                            <div class="row g-1 justify-content-between">
+                                <div class="col-auto"><span class="badge bg-primary">{{ e.account[13:] }}</span></div>
+                                <div class="col-auto text-end text-muted">{{ e.post_date[:10] }}</div>
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

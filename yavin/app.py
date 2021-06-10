@@ -160,6 +160,7 @@ def expenses():
     flask.g.start_date = start_date
     flask.g.end_date = end_date
     flask.g.expenses = ex_db.get_expenses('Root Account:Expenses%', start_date, end_date)
+    flask.g.total = sum([e['amount'] for e in flask.g.expenses], 0)
     return flask.render_template('expenses.html')
 
 

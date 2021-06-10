@@ -10,7 +10,7 @@ class ExpensesDatabase(fort.SQLiteDatabase):
         sql = '''
             select
                 a.full_name account, t.post_date, t.description, s.memo,
-                (s.value_num / cast(s.value_denom as real)) * -1 amount
+                (s.value_num / cast(s.value_denom as real)) amount
             from splits s
             left join v_account_full_names a on a.guid = s.account_guid
             left join transactions t on t.guid = s.tx_guid
