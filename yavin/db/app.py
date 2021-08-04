@@ -192,6 +192,27 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         self.u(sql, params)
 
+    # packages
+
+    def packages_list(self) -> list[dict]:
+        sql = '''
+            select tracking_number, shipper, notes, expected_at, arrived_at
+            from packages
+            order by arrived_at desc nulls first, expected_at
+        '''
+        return self.q(sql)
+
+    def packages_update(self, **kwargs):
+        sql = '''
+            insert into packages (
+                tracking_number, shipper, notes, expected_at, arrived_at
+            ) values (
+                %(tracking_number)s, %(shipper)s, %(notes)s, %(expected_at)s, %(arrived_at)s
+            ) on conflict (tracking_number) do update set
+                shipper = %(shipper)s, notes = %(notes)s, expected_at = %(expected_at)s, arrived_at = %(arrived_at)s
+        '''
+        self.u(sql, kwargs)
+
     # phone usage
 
     def phone_usage_insert(self, start_date: datetime.date, end_date: datetime.date,

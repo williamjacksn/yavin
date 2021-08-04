@@ -65,6 +65,7 @@ def index():
         'jar': 'Jar',
         'library': 'Library',
         'movie_night': 'Movie night',
+        'packages': 'Packages',
         'phone': 'Phone usage',
         'weight': 'Weight'
     }
@@ -298,6 +299,31 @@ def movie_night_edit_pick():
     }
     db.movie_picks_update(params)
     return flask.redirect(flask.url_for('movie_night'))
+
+
+@app.get('/packages')
+@secure
+def packages():
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.packages = db.packages_list()
+    return flask.render_template('packages.html')
+
+
+@app.post('/packages/update')
+@secure
+def packages_update():
+    for k, v in flask.request.values.lists():
+        app.logger.debug(f'{k}: {v}')
+    params = {
+        'arrived_at': flask.request.values.get('arrived-at') or None,
+        'expected_at': flask.request.values.get('expected-at') or None,
+        'notes': flask.request.values.get('notes'),
+        'shipper': flask.request.values.get('shipper'),
+        'tracking_number': flask.request.values.get('tracking-number'),
+    }
+    db: yavin.db.YavinDatabase = flask.g.db
+    db.packages_update(**params)
+    return flask.redirect(flask.url_for('packages'))
 
 
 @app.get('/phone')
