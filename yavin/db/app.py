@@ -5,27 +5,6 @@ import psycopg2
 import uuid
 
 
-class ExpensesDatabase(fort.SQLiteDatabase):
-    def get_expenses(self, account_prefix: str, start_date: datetime.date, end_date: datetime.date):
-        sql = '''
-            select
-                a.full_name account, t.post_date, t.description, s.memo,
-                (s.value_num / cast(s.value_denom as real)) amount
-            from splits s
-            left join v_account_full_names a on a.guid = s.account_guid
-            left join transactions t on t.guid = s.tx_guid
-            where t.post_date between :start_date and :end_date
-            and a.full_name like :account_prefix
-            order by t.post_date
-        '''
-        params = {
-            'account_prefix': account_prefix,
-            'start_date': start_date,
-            'end_date': end_date
-        }
-        return self.q(sql, params)
-
-
 class YavinDatabase(fort.PostgresDatabase):
 
     # captain's log
@@ -51,6 +30,26 @@ class YavinDatabase(fort.PostgresDatabase):
         sql = 'update captains_log set log_text = %(log_text)s where id = %(id)s'
         params = {'id': uuid.UUID(hex=id_), 'log_text': log_text}
         self.u(sql, params)
+
+    # electricity
+
+    def electricity_insert(self, bill_date: datetime.date, kwh: int, charge: decimal.Decimal, bill: decimal.Decimal):
+        sql = '''
+            insert into electricity (bill_date, kwh, charge, bill)
+            values (%(bill_date)s, %(kwh)s, %(charge)s, %(bill)s)
+        '''
+        params = {'bill_date': bill_date, 'kwh': kwh, 'charge': charge, 'bill': bill}
+        self.u(sql, params)
+
+    def electricity_list(self):
+        sql = '''
+            select
+                bill_date, kwh, charge, bill,
+                round(avg(kwh) over (order by bill_date desc rows between current row and 11 following)) avg_12_months
+            from electricity
+            order by bill_date desc
+        '''
+        return self.q(sql)
 
     # gas prices
 
@@ -145,25 +144,6 @@ class YavinDatabase(fort.PostgresDatabase):
         sql = 'update library_books set due = %(due)s where item_id = %(item_id)s'
         return self.u(sql, params)
 
-    # weight
-
-    def weight_entries_get_most_recent(self) -> float:
-        row = self.q_one('select weight from weight_entries order by entry_date desc')
-        if row is None:
-            return 0
-        return row['weight']
-
-    def weight_entries_insert(self, entry_date: datetime.date, weight: float):
-        params = {'entry_date': entry_date, 'weight': weight}
-        try:
-            self.u('insert into weight_entries (entry_date, weight) values (%(entry_date)s, %(weight)s)', params)
-        except psycopg2.IntegrityError:
-            return f'There is already a weight entry for {entry_date}.'
-
-    def weight_entries_list(self, limit: int = 10) -> list[dict]:
-        params = {'limit': limit}
-        return self.q('select entry_date, weight from weight_entries order by entry_date desc limit %(limit)s', params)
-
     # movie night
 
     def movie_people_insert(self, params: dict):
@@ -212,26 +192,6 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         self.u(sql, params)
 
-    # electricity
-
-    def electricity_insert(self, bill_date: datetime.date, kwh: int, charge: decimal.Decimal, bill: decimal.Decimal):
-        sql = '''
-            insert into electricity (bill_date, kwh, charge, bill)
-            values (%(bill_date)s, %(kwh)s, %(charge)s, %(bill)s)
-        '''
-        params = {'bill_date': bill_date, 'kwh': kwh, 'charge': charge, 'bill': bill}
-        self.u(sql, params)
-
-    def electricity_list(self):
-        sql = '''
-            select
-                bill_date, kwh, charge, bill,
-                round(avg(kwh) over (order by bill_date desc rows between current row and 11 following)) avg_12_months
-            from electricity
-            order by bill_date desc
-        '''
-        return self.q(sql)
-
     # phone usage
 
     def phone_usage_insert(self, start_date: datetime.date, end_date: datetime.date,
@@ -257,6 +217,25 @@ class YavinDatabase(fort.PostgresDatabase):
             order by end_date desc
         '''
         return self.q(sql)
+
+    # weight
+
+    def weight_entries_get_most_recent(self) -> float:
+        row = self.q_one('select weight from weight_entries order by entry_date desc')
+        if row is None:
+            return 0
+        return row['weight']
+
+    def weight_entries_insert(self, entry_date: datetime.date, weight: float):
+        params = {'entry_date': entry_date, 'weight': weight}
+        try:
+            self.u('insert into weight_entries (entry_date, weight) values (%(entry_date)s, %(weight)s)', params)
+        except psycopg2.IntegrityError:
+            return f'There is already a weight entry for {entry_date}.'
+
+    def weight_entries_list(self, limit: int = 10) -> list[dict]:
+        params = {'limit': limit}
+        return self.q('select entry_date, weight from weight_entries order by entry_date desc limit %(limit)s', params)
 
     # migrations and metadata
 
@@ -437,6 +416,18 @@ class YavinDatabase(fort.PostgresDatabase):
                 alter column id set default gen_random_uuid()
             ''')
             self._add_schema_version(16)
+        if self.version < 17:
+            self.log.debug('Migrating from version 16 to version 17')
+            self.u('''
+                create table packages (
+                    tracking_number text primary key,
+                    shipper text,
+                    notes text,
+                    expected_at date,
+                    arrived_at date
+                )
+            ''')
+            self._add_schema_version(17)
 
     def _insert_flag(self, flag_name: str, flag_value: str):
         sql = 'insert into flags (flag_name, flag_value) values (%(flag_name)s, %(flag_value)s)'
