@@ -411,9 +411,4 @@ class YavinDatabase(fort.PostgresDatabase):
                 current_version = self.q_val(sql)
                 if current_version is not None:
                     self._version = current_version
-            elif self._table_exists('flags'):
-                sql = 'select flag_value from flags where flag_name = %(flag_name)s'
-                current_version = self.q_val(sql, {'flag_name': 'db_version'})
-                if current_version is not None:
-                    self._version = current_version
         return self._version
