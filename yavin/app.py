@@ -21,10 +21,13 @@ settings = yavin.settings.Settings()
 app = flask.Flask(__name__)
 app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_port=1)
 
-app.config['APPLICATION_ROOT'] = settings.application_root
-app.config['PREFERRED_URL_SCHEME'] = settings.scheme
-app.config['SECRET_KEY'] = settings.secret_key
-app.config['SERVER_NAME'] = settings.server_name
+app.config.update(
+    APPLICATION_ROOT=settings.application_root,
+    PREFERRED_URL_SCHEME=settings.scheme,
+    SECRET_KEY=settings.secret_key,
+    SERVER_NAME=settings.server_name,
+    SESSION_COOKIE_SAMESITE='Lax'
+)
 
 if settings.scheme == 'https':
     app.config['SESSION_COOKIE_SECURE'] = True
