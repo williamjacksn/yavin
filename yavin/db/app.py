@@ -302,6 +302,26 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             ''')
             self.u('''
+                create table hymns (
+                    hymn_number integer primary key,
+                    title text not null,
+                    first_line text
+                )
+            ''')
+            self.u('''
+                create table hymn_tags (
+                    hymn_number integer not null references hymns,
+                    tag text not null,
+                    primary key (hymn_number, tag)
+                )
+            ''')
+            self.u('''
+                create table hymn_history (
+                    hymn_number integer references hymns,
+                    date date not null
+                )
+            ''')
+            self.u('''
                 create table jar_entries (
                     id integer primary key,
                     entry_date date not null,
