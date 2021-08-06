@@ -1,17 +1,22 @@
 FROM python:3.9.6-alpine3.14
 
-COPY requirements.txt /yavin/requirements.txt
-
 RUN /sbin/apk add --no-cache libpq
-RUN /usr/local/bin/pip install --no-cache-dir --requirement /yavin/requirements.txt
+RUN /usr/sbin/adduser -g python -D python
+
+USER python
+RUN /usr/local/bin/python -m venv /home/python/venv
+
+COPY --chown=python:python requirements.txt /home/python/yavin/requirements.txt
+RUN /home/python/venv/bin/pip install --no-cache-dir --requirement /home/python/yavin/requirements.txt
 
 ENV APP_VERSION="2021.8" \
+    PATH="/home/python/venv/bin:${PATH}" \
     PYTHONUNBUFFERED="1" \
     TZ="Etc/UTC"
 
-ENTRYPOINT ["/usr/local/bin/python"]
-CMD ["/yavin/run.py"]
-HEALTHCHECK CMD ["/yavin/docker-healthcheck.sh"]
+ENTRYPOINT ["/home/python/venv/bin/python"]
+CMD ["/home/python/yavin/run.py"]
+HEALTHCHECK CMD ["/home/python/yavin/docker-healthcheck.sh"]
 
 LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.com>" \
       org.opencontainers.image.description="Personal web tools" \
@@ -19,5 +24,6 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.title="Yavin" \
       org.opencontainers.image.version="${APP_VERSION}"
 
-COPY . /yavin
-RUN chmod +x /yavin/docker-healthcheck.sh
+COPY --chown=python:python docker-healthcheck.sh /home/python/yavin/docker-healthcheck.sh
+COPY --chown=python:python run.py /home/python/yavin/run.py
+COPY --chown=python:python yavin /home/python/yavin/yavin
