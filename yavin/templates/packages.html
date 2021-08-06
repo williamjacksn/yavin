@@ -4,6 +4,14 @@
 
 {% block title %}{{ super() }} / {{ title }}{% endblock %}
 
+{% block end_of_head %}
+    {#
+        Disable automatic detection of possible phone numbers in a webpage in Safari on iOS.
+        https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html#//apple_ref/doc/uid/TP40008193-SW5
+    #}
+    <meta name="format-detection" content="telephone=no">
+{% endblock %}
+
 {% block breadcrumb %}
     {% include '_back_to_home.html' %}
 {% endblock %}
