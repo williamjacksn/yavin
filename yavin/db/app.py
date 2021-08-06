@@ -6,6 +6,7 @@ import uuid
 
 
 class YavinDatabase(fort.PostgresDatabase):
+    _version: int = None
 
     # captain's log
 
@@ -466,6 +467,7 @@ class YavinDatabase(fort.PostgresDatabase):
         self.u(sql, params)
 
     def _add_schema_version(self, schema_version: int):
+        self._version = schema_version
         sql = '''
             insert into schema_versions (schema_version, migration_date)
             values (%(schema_version)s, %(migration_date)s)
@@ -480,13 +482,17 @@ class YavinDatabase(fort.PostgresDatabase):
         return True
 
     @property
-    def version(self):
-        if self._table_exists('schema_versions'):
-            sql = 'select max(schema_version) current_version from schema_versions'
-            for record in self.q(sql):
-                return record['current_version']
-        if self._table_exists('flags'):
-            sql = 'select flag_value from flags where flag_name = %(flag_name)s'
-            for record in self.q(sql, {'flag_name': 'db_version'}):
-                return int(record['flag_value'])
-        return 0
+    def version(self) -> int:
+        if self._version is None:
+            self._version = 0
+            if self._table_exists('schema_versions'):
+                sql = 'select max(schema_version) current_version from schema_versions'
+                current_version = self.q_val(sql)
+                if current_version is not None:
+                    self._version = current_version
+            elif self._table_exists('flags'):
+                sql = 'select flag_value from flags where flag_name = %(flag_name)s'
+                current_version = self.q_val(sql, {'flag_name': 'db_version'})
+                if current_version is not None:
+                    self._version = current_version
+        return self._version
