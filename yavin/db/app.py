@@ -264,118 +264,10 @@ class YavinDatabase(fort.PostgresDatabase):
     def migrate(self):
         self.log.debug(f'The database is at schema version {self.version}')
         self.log.debug('Checking for database migrations ...')
-        if self.version == 0:
-            self.log.debug('Migrating from version 0 to version 1')
+        if self.version < 17:
+            self.log.debug('Migrating to version 17')
             self.u('''
-                create table flags (
-                    flag_name text primary key,
-                    flag_value text not null
-                )
-            ''')
-            self._insert_flag('db_version', '1')
-        if self.version == 1:
-            self.log.debug('Migrating from version 1 to version 2')
-            self.u('''
-                create table jar_entries (
-                    id integer primary key,
-                    entry_date date not null,
-                    paid boolean default false not null
-                )
-            ''')
-            self.u('''
-                create table weight_entries (
-                    entry_date date primary key,
-                    weight numeric not null check (weight > 0)
-                )
-            ''')
-            self._update_flag('db_version', '2')
-        if self.version == 2:
-            self.log.debug('Migrating from version 2 to version 3')
-            self.u('''
-                create table library_credentials (
-                    id uuid primary key,
-                    library text not null,
-                    username text not null,
-                    password text not null,
-                    display_name text not null
-                )
-            ''')
-            self._update_flag('db_version', '3')
-        if self.version == 3:
-            self.log.debug('Migrating from version 3 to version 4')
-            self.u('''
-                create table library_books (
-                    id uuid primary key,
-                    credential_id uuid references library_credentials (id) on delete cascade,
-                    title text not null,
-                    due date not null,
-                    renewable boolean not null
-                )
-            ''')
-            self._update_flag('db_version', '4')
-        if self.version == 4:
-            self.log.debug('Migrating from version 4 to version 5')
-            self.u("alter table library_books add column item_id text not null default ''")
-            self._update_flag('db_version', '5')
-        if self.version == 5:
-            self.log.debug('Migrating from version 5 to version 6')
-            self.u("alter table library_books add column medium text not null default ''")
-            self._update_flag('db_version', '6')
-        if self.version == 6:
-            self.log.debug('Migrating from version 6 to version 7')
-            self.u('''
-                create table movie_people (
-                    id uuid primary key,
-                    person text not null
-                )
-            ''')
-            self.u('''
-                create table movie_picks (
-                    id uuid primary key,
-                    pick_date date not null,
-                    person_id uuid references movie_people (id) on delete set null,
-                    pick_text text not null
-                )
-            ''')
-            self._update_flag('db_version', '7')
-        if self.version == 7:
-            self.log.debug('Migrating from version 7 to version 8')
-            self.u('''
-                create table electricity (
-                    bill_date date primary key,
-                    kwh integer not null,
-                    charge integer not null,
-                    bill integer not null
-                )
-            ''')
-            self._update_flag('db_version', '8')
-        if self.version == 8:
-            self.log.debug('Migrating from version 8 to version 9')
-            self.u('''
-                create table timeline_entries (
-                    id uuid primary key,
-                    start_date date not null,
-                    end_date date not null,
-                    description text not null,
-                    zoom_level integer not null default 1,
-                    tags text
-                )
-            ''')
-            self._update_flag('db_version', '9')
-        if self.version == 9:
-            self.log.debug('Migrating from version 9 to version 10')
-            self.u('''
-                alter table library_credentials
-                add column balance integer not null default 0
-            ''')
-            self._update_flag('db_version', '10')
-        if self.version == 10:
-            self.log.debug('Migrating from version 10 to version 11')
-            self.u('''
-                create table schema_versions (
-                    schema_version integer primary key,
-                    migration_date timestamp not null
-                )
+                create extension if not exists pgcrypto
             ''')
             self.u('''
                 create table captains_log (
@@ -384,10 +276,20 @@ class YavinDatabase(fort.PostgresDatabase):
                     log_text text not null
                 )
             ''')
-            self._delete_flag('db_version')
-            self._add_schema_version(11)
-        if self.version == 11:
-            self.log.debug('Migrating from version 11 to version 12')
+            self.u('''
+                create table electricity (
+                    bill_date date primary key,
+                    kwh integer not null,
+                    charge numeric(10, 2) not null,
+                    bill numeric(10, 2) not null
+                )
+            ''')
+            self.u('''
+                create table flags (
+                    flag_name text primary key,
+                    flag_value text not null
+                )
+            ''')
             self.u('''
                 create table gas_prices (
                     id uuid primary key,
@@ -399,47 +301,49 @@ class YavinDatabase(fort.PostgresDatabase):
                     miles_driven numeric
                 )
             ''')
-            self._add_schema_version(12)
-        if self.version == 12:
-            self.log.debug('Migrating from version 12 to version 13')
             self.u('''
-                alter table movie_picks
-                add column pick_url text
-            ''')
-            self._add_schema_version(13)
-        if self.version == 13:
-            self.log.debug('Migrating from version 13 to version 14')
-            self.u('''
-                alter table electricity
-                alter column charge type numeric(10, 2) using (charge / 100.0),
-                alter column bill type numeric(10, 2) using (bill / 100.0)
-            ''')
-            self._add_schema_version(14)
-        if self.version < 15:
-            self.log.debug('Migrating from version 14 to version 15')
-            self.u('''
-                create table phone_usage (
-                    id uuid primary key,
-                    start_date date not null,
-                    end_date date not null,
-                    minutes int not null,
-                    messages int not null,
-                    megabytes int not null
+                create table jar_entries (
+                    id integer primary key,
+                    entry_date date not null,
+                    paid boolean default false not null
                 )
             ''')
-            self._add_schema_version(15)
-        if self.version < 16:
-            self.log.debug('Migrating from version 15 to version 16')
             self.u('''
-                create extension if not exists pgcrypto
+                create table library_books (
+                    id uuid primary key,
+                    credential_id uuid references library_credentials (id) on delete cascade,
+                    title text not null,
+                    due date not null,
+                    renewable boolean not null,
+                    item_id text not null default '',
+                    medium text not null default ''
+                )
             ''')
             self.u('''
-                alter table phone_usage
-                alter column id set default gen_random_uuid()
+                create table library_credentials (
+                    id uuid primary key,
+                    library text not null,
+                    username text not null,
+                    password text not null,
+                    display_name text not null,
+                    balance integer not null default 0
+                )
             ''')
-            self._add_schema_version(16)
-        if self.version < 17:
-            self.log.debug('Migrating from version 16 to version 17')
+            self.u('''
+                create table movie_people (
+                    id uuid primary key,
+                    person text not null
+                )
+            ''')
+            self.u('''
+                create table movie_picks (
+                    id uuid primary key,
+                    pick_date date not null,
+                    person_id uuid references movie_people (id) on delete set null,
+                    pick_text text not null,
+                    pick_url text
+                )
+            ''')
             self.u('''
                 create table packages (
                     tracking_number text primary key,
@@ -449,22 +353,39 @@ class YavinDatabase(fort.PostgresDatabase):
                     arrived_at date
                 )
             ''')
+            self.u('''
+                create table phone_usage (
+                    id uuid primary key default gen_random_uuid(),
+                    start_date date not null,
+                    end_date date not null,
+                    minutes int not null,
+                    messages int not null,
+                    megabytes int not null
+                )
+            ''')
+            self.u('''
+                create table schema_versions (
+                    schema_version integer primary key,
+                    migration_date timestamp not null
+                )
+            ''')
+            self.u('''
+                create table timeline_entries (
+                    id uuid primary key,
+                    start_date date not null,
+                    end_date date not null,
+                    description text not null,
+                    zoom_level integer not null default 1,
+                    tags text
+                )
+            ''')
+            self.u('''
+                create table weight_entries (
+                    entry_date date primary key,
+                    weight numeric not null check (weight > 0)
+                )
+            ''')
             self._add_schema_version(17)
-
-    def _insert_flag(self, flag_name: str, flag_value: str):
-        sql = 'insert into flags (flag_name, flag_value) values (%(flag_name)s, %(flag_value)s)'
-        params = {'flag_name': flag_name, 'flag_value': flag_value}
-        self.u(sql, params)
-
-    def _delete_flag(self, flag_name: str):
-        sql = 'delete from flags where flag_name = %(flag_name)s'
-        params = {'flag_name': flag_name}
-        self.u(sql, params)
-
-    def _update_flag(self, flag_name: str, flag_value: str):
-        sql = 'update flags set flag_value = %(flag_value)s where flag_name = %(flag_name)s'
-        params = {'flag_name': flag_name, 'flag_value': flag_value}
-        self.u(sql, params)
 
     def _add_schema_version(self, schema_version: int):
         self._version = schema_version
