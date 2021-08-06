@@ -1,9 +1,9 @@
 --extra-index-url https://alpine-wheels.github.io/index
 
-APScheduler
-Flask
-PyJWT
+apscheduler
+flask
 fort
 psycopg2
+pyjwt
 requests
 waitress
