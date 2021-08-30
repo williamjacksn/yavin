@@ -43,7 +43,7 @@
                 </thead>
                 <tbody>
                 {% for p in g.packages %}
-                    <tr>
+                    <tr class="{{ 'text-muted' if p.arrived_at }}">
                         <td>{{ p.tracking_number }}</td>
                         <td>{{ p.shipper }}</td>
                         <td>{{ p.notes }}</td>
