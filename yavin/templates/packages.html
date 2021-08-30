@@ -19,7 +19,11 @@
 {% block content %}
     {% include '_page_title_h1.html' %}
 
-    <div class="pt-3 row">
+    <div class="g-1 pt-3 row">
+        <div class="col-auto">
+            <input aria-label="Find a package" autofocus class="form-control" id="filter-input"
+                   placeholder="Find a package ..." type="text">
+        </div>
         <div class="col">
             <a class="btn btn-primary" data-action="Add a package" data-arrived-at="" data-bs-toggle="modal"
                data-expected-at="" data-notes="" data-shipper="" data-tracking-number="" href="#modal-package">
@@ -43,7 +47,8 @@
                 </thead>
                 <tbody>
                 {% for p in g.packages %}
-                    <tr class="{{ 'text-muted' if p.arrived_at }}">
+                    <tr class="filter-candidate {{ 'text-muted' if p.arrived_at }}"
+                        data-filter-value={{ p.tracking_number | lower }}>
                         <td>{{ p.tracking_number }}</td>
                         <td>{{ p.shipper }}</td>
                         <td>{{ p.notes }}</td>
@@ -109,4 +114,5 @@
 {% block end_of_body %}
     {{ super() }}
     <script src="{{ url_for('static', filename='packages.js') }}"></script>
+    <script src="{{ url_for('static', filename='filter.js') }}"></script>
 {% endblock %}
