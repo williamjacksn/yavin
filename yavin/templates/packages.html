@@ -47,7 +47,7 @@
                 </thead>
                 <tbody>
                 {% for p in g.packages %}
-                    <tr class="filter-candidate {{ 'text-muted' if p.arrived_at }}"
+                    <tr class="collapse filter-candidate show {{ 'text-muted' if p.arrived_at }}"
                         data-filter-value={{ p.tracking_number | lower }}>
                         <td>{{ p.tracking_number }}</td>
                         <td>{{ p.shipper }}</td>
