@@ -9,7 +9,7 @@ RUN /usr/local/bin/python -m venv /home/python/venv
 COPY --chown=python:python requirements.txt /home/python/yavin/requirements.txt
 RUN /home/python/venv/bin/pip install --no-cache-dir --requirement /home/python/yavin/requirements.txt
 
-ENV APP_VERSION="2021.11" \
+ENV APP_VERSION="2021.12" \
     PATH="/home/python/venv/bin:${PATH}" \
     PYTHONUNBUFFERED="1" \
     TZ="Etc/UTC"
