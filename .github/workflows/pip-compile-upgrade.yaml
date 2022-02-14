@@ -31,3 +31,4 @@ jobs:
           commit-message: Upgrade all dependencies with `pip-compile --upgrade`
           delete-branch: true
           title: Upgrade all dependencies with `pip-compile --upgrade`
+          token: ${{ secrets.personal_token }}
