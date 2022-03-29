@@ -12,9 +12,9 @@ certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.12
     # via requests
-click==8.0.4
+click==8.1.0
     # via flask
-flask==2.0.3
+flask==2.1.0
     # via -r requirements.in
 fort==1.0.1
     # via -r requirements.in
@@ -46,7 +46,7 @@ urllib3==1.26.9
     # via requests
 waitress==2.1.1
     # via -r requirements.in
-werkzeug==2.0.3
+werkzeug==2.1.0
     # via flask
 
 # The following packages are considered to be unsafe in a requirements file:
