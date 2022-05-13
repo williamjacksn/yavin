@@ -289,7 +289,7 @@ class YavinDatabase(fort.PostgresDatabase):
             return 0
         return row['weight']
 
-    def weight_entries_insert(self, entry_date: datetime.date, weight: float):
+    def weight_entries_insert(self, entry_date: datetime.date, weight: decimal.Decimal):
         params = {'entry_date': entry_date, 'weight': weight}
         try:
             self.u('insert into weight_entries (entry_date, weight) values (%(entry_date)s, %(weight)s)', params)

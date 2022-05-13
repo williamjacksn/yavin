@@ -402,7 +402,7 @@ def weight_add():
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
     entry_weight = flask.request.form.get('weight')
     log.info(f'Attempting to add new weight entry for {entry_date}: {entry_weight} lbs')
-    msg = db.weight_entries_insert(entry_date, entry_weight)
+    msg = db.weight_entries_insert(entry_date, decimal.Decimal(entry_weight))
     if msg is not None:
         flask.flash(msg, 'alert-danger')
     return flask.redirect(flask.url_for('weight'))
