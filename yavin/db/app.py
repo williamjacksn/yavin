@@ -329,6 +329,16 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             ''')
             self.u('''
+                create table library_credentials (
+                    id uuid primary key,
+                    library text not null,
+                    username text not null,
+                    password text not null,
+                    display_name text not null,
+                    balance integer not null default 0
+                )
+            ''')
+            self.u('''
                 create table library_books (
                     id uuid primary key,
                     credential_id uuid references library_credentials (id) on delete cascade,
@@ -337,16 +347,6 @@ class YavinDatabase(fort.PostgresDatabase):
                     renewable boolean not null,
                     item_id text not null default '',
                     medium text not null default ''
-                )
-            ''')
-            self.u('''
-                create table library_credentials (
-                    id uuid primary key,
-                    library text not null,
-                    username text not null,
-                    password text not null,
-                    display_name text not null,
-                    balance integer not null default 0
                 )
             ''')
             self.u('''
