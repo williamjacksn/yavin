@@ -53,8 +53,7 @@ def secure(f):
 @app.before_request
 def before_request():
     log.debug(f'{flask.request.method} {flask.request.path}')
-    if settings.permanent_sessions:
-        flask.session.permanent = True
+    flask.session.permanent = True
     flask.g.db = yavin.db.YavinDatabase(settings.dsn)
     flask.g.settings = settings
 

@@ -11,7 +11,6 @@ class Settings:
     openid_client_id: str
     openid_client_secret: str
     openid_discovery_document: str
-    permanent_sessions: bool
     port: int
     scheme: str
     secret_key: str
@@ -22,14 +21,12 @@ class Settings:
         """Instantiating a Settings object will automatically read the following environment variables:
 
         ADMIN_AUTH_PHRASE, ADMIN_EMAIL, APPLICATION_ROOT, DEBUG_LAYOUT, DSN, EXPENSES_DB, OPENID_CLIENT_ID,
-        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PERMANENT_SESSIONS, PORT, SCHEME, SECRET_KEY, SERVER_NAME,
-        WEB_SERVER_THREADS
+        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PORT, SCHEME, SECRET_KEY, SERVER_NAME, WEB_SERVER_THREADS
 
         Some variables have defaults if they are not found in the environment:
 
         APPLICATION_ROOT="/"
         DEBUG_LAYOUT="False"
-        PERMANENT_SESSIONS="False"
         PORT="8080"
         SCHEME="http"
         SERVER_NAME="localhost:8080"
@@ -46,7 +43,6 @@ class Settings:
         self.openid_client_id = os.getenv('OPENID_CLIENT_ID')
         self.openid_client_secret = os.getenv('OPENID_CLIENT_SECRET')
         self.openid_discovery_document = os.getenv('OPENID_DISCOVERY_DOCUMENT')
-        self.permanent_sessions = os.getenv('PERMANENT_SESSIONS', 'false').lower() in _true_values
         self.port = int(os.getenv('PORT', '8080'))
         self.scheme = os.getenv('SCHEME', 'http').lower()
         self.secret_key = os.getenv('SECRET_KEY')
