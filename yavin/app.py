@@ -5,7 +5,6 @@ import jwt
 import logging
 import requests
 import requests.utils
-import sys
 import urllib.parse
 import uuid
 import waitress
@@ -15,6 +14,10 @@ import yavin.db
 import yavin.settings
 import yavin.tasks
 import yavin.util
+
+log = logging.getLogger(__name__)
+
+__version__ = '2022.2'
 
 settings = yavin.settings.Settings()
 
@@ -49,7 +52,7 @@ def secure(f):
 
 @app.before_request
 def before_request():
-    app.logger.debug(f'{flask.request.method} {flask.request.path}')
+    log.debug(f'{flask.request.method} {flask.request.path}')
     if settings.permanent_sessions:
         flask.session.permanent = True
     flask.g.db = yavin.db.YavinDatabase(settings.dsn)
@@ -93,7 +96,7 @@ def app_settings_update():
     ]
     db: yavin.db.YavinDatabase = flask.g.db
     for k, v in flask.request.values.items():
-        app.logger.debug(f'{k}: {v!r}')
+        log.debug(f'{k}: {v!r}')
         if k in valid_settings:
             if v == '':
                 db.settings_delete(k)
@@ -121,10 +124,10 @@ def captains_log_delete():
 @app.post('/captains-log/incoming')
 def captains_log_incoming():
     db: yavin.db.YavinDatabase = flask.g.db
-    app.logger.debug(f'json: {flask.request.json}')
+    log.debug(f'json: {flask.request.json}')
     auth_phrase: str = flask.request.json['auth-phrase']
     if auth_phrase.lower() == settings.admin_auth_phrase:
-        app.logger.debug('Authorization accepted')
+        log.debug('Authorization accepted')
         log_text = flask.request.json['log-text']
         db.captains_log_insert(log_text)
         return 'Log recorded.'
@@ -175,19 +178,19 @@ def expenses():
         if end_date is None:
             start_date = yavin.util.today().replace(day=1)
             end_date = yavin.util.today()
-            app.logger.debug(f'No dates provided, using {start_date} to {end_date}')
+            log.debug(f'No dates provided, using {start_date} to {end_date}')
         else:
             start_date = yavin.util.add_days(end_date, -30)
-            app.logger.debug(f'Only end_date provided, using {start_date} to {end_date}')
+            log.debug(f'Only end_date provided, using {start_date} to {end_date}')
     else:
         if end_date is None:
             end_date = yavin.util.add_days(start_date, 30)
-            app.logger.debug(f'Only start_date provided, using {start_date} to {end_date}')
+            log.debug(f'Only start_date provided, using {start_date} to {end_date}')
         elif start_date > end_date:
             start_date, end_date = end_date, start_date
-            app.logger.debug(f'Dates are out of order, using {start_date} to {end_date}')
+            log.debug(f'Dates are out of order, using {start_date} to {end_date}')
         else:
-            app.logger.debug(f'Both dates provided, using {start_date} to {end_date}')
+            log.debug(f'Both dates provided, using {start_date} to {end_date}')
     flask.g.start_date = start_date
     flask.g.end_date = end_date
     flask.g.expenses = ex_db.get_expenses('Root Account:Expenses%', start_date, end_date)
@@ -209,7 +212,7 @@ def jar():
 def jar_add():
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
-    app.logger.info(f'Adding new jar entry for {entry_date}')
+    log.info(f'Adding new jar entry for {entry_date}')
     db.jar_entries_insert(entry_date)
     return flask.redirect(flask.url_for('jar'))
 
@@ -258,7 +261,7 @@ def library_renew():
 @app.get('/library/notify-now')
 @secure
 def library_notify_now():
-    app.logger.info('Got library notification request')
+    log.info('Got library notification request')
     yavin.tasks.scheduler.add_job(yavin.tasks.library_notify, args=[app])
     return flask.redirect(flask.url_for('library'))
 
@@ -266,7 +269,7 @@ def library_notify_now():
 @app.get('/library/sync-now')
 @secure
 def library_sync_now():
-    app.logger.info('Got library sync request')
+    log.info('Got library sync request')
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for('library'))
 
@@ -300,7 +303,7 @@ def movie_night_add_pick():
         'pick_text': flask.request.form.get('pick_text'),
         'pick_url': flask.request.form.get('pick_url')
     }
-    app.logger.debug(params)
+    log.debug(params)
     db.movie_picks_insert(params)
     return flask.redirect(flask.url_for('movie_night'))
 
@@ -343,7 +346,7 @@ def packages():
 @secure
 def packages_update():
     for k, v in flask.request.values.lists():
-        app.logger.debug(f'{k}: {v}')
+        log.debug(f'{k}: {v}')
     params = {
         'arrived_at': flask.request.values.get('arrived-at') or None,
         'expected_at': flask.request.values.get('expected-at') or None,
@@ -389,7 +392,7 @@ def weight_add():
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
     entry_weight = flask.request.form.get('weight')
-    app.logger.info(f'Attempting to add new weight entry for {entry_date}: {entry_weight} lbs')
+    log.info(f'Attempting to add new weight entry for {entry_date}: {entry_weight} lbs')
     msg = db.weight_entries_insert(entry_date, entry_weight)
     if msg is not None:
         flask.flash(msg, 'alert-danger')
@@ -399,7 +402,7 @@ def weight_add():
 @app.get('/authorize')
 def authorize():
     for key, value in flask.request.values.items():
-        app.logger.debug(f'{key}: {value}')
+        log.debug(f'{key}: {value}')
     if flask.session.get('state') != flask.request.values.get('state'):
         return 'State mismatch', 401
     discovery_document = requests.get(settings.openid_discovery_document).json()
@@ -444,13 +447,9 @@ def sign_out():
 
 
 def main():
-    logging.basicConfig(format=settings.log_format, level='DEBUG', stream=sys.stdout)
-    app.logger.debug(f'yavin {settings.version}')
-    app.logger.debug(f'Changing log level to {settings.log_level}')
-    logging.getLogger().setLevel(settings.log_level)
-
+    log.info(f'Welcome to Yavin {__version__}')
     if settings.dsn is None:
-        app.logger.critical('Missing environment variable DSN; I cannot start without a database')
+        log.critical('Missing environment variable DSN; I cannot start without a database')
     else:
         db = yavin.db.YavinDatabase(settings.dsn)
         db.migrate()

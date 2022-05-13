@@ -9,8 +9,7 @@ RUN /usr/local/bin/python -m venv /home/python/venv
 COPY --chown=python:python requirements.txt /home/python/yavin/requirements.txt
 RUN /home/python/venv/bin/pip install --no-cache-dir --requirement /home/python/yavin/requirements.txt
 
-ENV APP_VERSION="2022.2" \
-    PATH="/home/python/venv/bin:${PATH}" \
+ENV PATH="/home/python/venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE="1" \
     PYTHONUNBUFFERED="1" \
     TZ="Etc/UTC"
@@ -21,8 +20,7 @@ CMD ["/home/python/yavin/run.py"]
 LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.com>" \
       org.opencontainers.image.description="Personal web tools" \
       org.opencontainers.image.source="https://github.com/williamjacksn/yavin/" \
-      org.opencontainers.image.title="Yavin" \
-      org.opencontainers.image.version="${APP_VERSION}"
+      org.opencontainers.image.title="Yavin"
 
 COPY --chown=python:python run.py /home/python/yavin/run.py
 COPY --chown=python:python yavin /home/python/yavin/yavin
