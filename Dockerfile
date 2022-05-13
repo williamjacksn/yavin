@@ -17,7 +17,6 @@ ENV APP_VERSION="2022.1" \
 
 ENTRYPOINT ["/home/python/venv/bin/python"]
 CMD ["/home/python/yavin/run.py"]
-HEALTHCHECK CMD ["/home/python/yavin/docker-healthcheck.sh"]
 
 LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.com>" \
       org.opencontainers.image.description="Personal web tools" \
@@ -25,6 +24,5 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.title="Yavin" \
       org.opencontainers.image.version="${APP_VERSION}"
 
-COPY --chown=python:python docker-healthcheck.sh /home/python/yavin/docker-healthcheck.sh
 COPY --chown=python:python run.py /home/python/yavin/run.py
 COPY --chown=python:python yavin /home/python/yavin/yavin
