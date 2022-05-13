@@ -4,7 +4,6 @@ import os
 class Settings:
     admin_auth_phrase: str
     admin_email: str
-    admin_password: str
     application_root: str
     debug_layout: bool
     dsn: str
@@ -46,7 +45,6 @@ class Settings:
         _true_values = ('true', '1', 'yes', 'on')
         self.admin_auth_phrase = os.getenv('ADMIN_AUTH_PHRASE', '').lower()
         self.admin_email = os.getenv('ADMIN_EMAIL')
-        self.admin_password = os.getenv('ADMIN_PASSWORD')
         self.application_root = os.getenv('APPLICATION_ROOT', '/')
         self.debug_layout = os.getenv('DEBUG_LAYOUT', 'false').lower() in _true_values
         self.dsn = os.getenv('DSN')
