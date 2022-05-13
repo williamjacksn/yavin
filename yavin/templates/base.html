@@ -32,8 +32,8 @@
         <div class="col">
             <hr class="border-light">
             <small class="text-muted">
-                {{ g.settings.version }}
-                {% if g.settings.debug_layout %}
+                {{ g.version }}
+                {% if g.app_settings.debug_layout == 'true' %}
                     <span class="d-inline d-sm-none">xs</span>
                     <span class="d-none d-sm-inline d-md-none">sm</span>
                     <span class="d-none d-md-inline d-lg-none">md</span>

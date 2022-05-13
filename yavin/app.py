@@ -55,6 +55,8 @@ def before_request():
     flask.session.permanent = True
     flask.g.db = yavin.db.YavinDatabase(settings.dsn)
     flask.g.settings = settings
+    flask.g.app_settings = flask.g.db.settings_list()
+    flask.g.version = __version__
 
 
 @app.get('/')
@@ -79,27 +81,36 @@ def index():
 @app.get('/app-settings')
 @secure
 def app_settings():
-    flask.g.app_settings = flask.g.db.settings_list()
     return flask.render_template('app-settings.html')
 
 
 @app.post('/app-settings/update')
 @secure
 def app_settings_update():
-    valid_settings = [
+    db: yavin.db.YavinDatabase = flask.g.db
+
+    text_settings = [
+        'expenses_db',
         'smtp_from_address',
         'smtp_password',
         'smtp_server',
         'smtp_username',
     ]
-    db: yavin.db.YavinDatabase = flask.g.db
     for k, v in flask.request.values.items():
         log.debug(f'{k}: {v!r}')
-        if k in valid_settings:
+        if k in text_settings:
             if v == '':
                 db.settings_delete(k)
             else:
                 db.settings_update(k, v)
+
+    bool_settings = [
+        'debug_layout',
+    ]
+    for setting_id in bool_settings:
+        setting_value = 'true' if setting_id in flask.request.values else 'false'
+        db.settings_update(setting_id, setting_value)
+
     return flask.redirect(flask.url_for('app_settings'))
 
 
@@ -163,7 +174,7 @@ def electricity_add():
 @app.get('/expenses')
 @secure
 def expenses():
-    ex_db = yavin.db.ExpensesDatabase(settings.expenses_db)
+    ex_db = yavin.db.ExpensesDatabase(flask.g.app_settings.get('expenses_db'))
     try:
         start_date = yavin.util.str_to_date(flask.request.values.get('start_date'))
     except (TypeError, ValueError):
