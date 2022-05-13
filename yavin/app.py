@@ -25,7 +25,6 @@ app = flask.Flask(__name__)
 app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_port=1)
 
 app.config.update(
-    APPLICATION_ROOT=settings.application_root,
     PREFERRED_URL_SCHEME=settings.scheme,
     SECRET_KEY=settings.secret_key,
     SERVER_NAME=settings.server_name,
@@ -458,8 +457,5 @@ def main():
                                       start_date=yavin.util.in_two_minutes())
         yavin.tasks.scheduler.add_job(yavin.tasks.library_notify, 'cron', day='*', hour='3', args=[app])
 
-        url_prefix = settings.application_root
-        if url_prefix == '/':
-            url_prefix = ''
-        waitress.serve(app, port=settings.port, threads=settings.web_server_threads, url_prefix=url_prefix,
-                       url_scheme=settings.scheme, ident=None)
+        waitress.serve(app, port=settings.port, threads=settings.web_server_threads, url_scheme=settings.scheme,
+                       ident=None)

@@ -4,7 +4,6 @@ import os
 class Settings:
     admin_auth_phrase: str
     admin_email: str
-    application_root: str
     debug_layout: bool
     dsn: str
     expenses_db: str
@@ -20,12 +19,11 @@ class Settings:
     def __init__(self):
         """Instantiating a Settings object will automatically read the following environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, APPLICATION_ROOT, DEBUG_LAYOUT, DSN, EXPENSES_DB, OPENID_CLIENT_ID,
-        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PORT, SCHEME, SECRET_KEY, SERVER_NAME, WEB_SERVER_THREADS
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, DEBUG_LAYOUT, DSN, EXPENSES_DB, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET,
+        OPENID_DISCOVERY_DOCUMENT, PORT, SCHEME, SECRET_KEY, SERVER_NAME, WEB_SERVER_THREADS
 
         Some variables have defaults if they are not found in the environment:
 
-        APPLICATION_ROOT="/"
         DEBUG_LAYOUT="False"
         PORT="8080"
         SCHEME="http"
@@ -36,7 +34,6 @@ class Settings:
         _true_values = ('true', '1', 'yes', 'on')
         self.admin_auth_phrase = os.getenv('ADMIN_AUTH_PHRASE', '').lower()
         self.admin_email = os.getenv('ADMIN_EMAIL')
-        self.application_root = os.getenv('APPLICATION_ROOT', '/')
         self.debug_layout = os.getenv('DEBUG_LAYOUT', 'false').lower() in _true_values
         self.dsn = os.getenv('DSN')
         self.expenses_db = os.getenv('EXPENSES_DB')
