@@ -138,6 +138,15 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         return self.q(sql)
 
+    def library_books_list_due(self):
+        sql = '''
+            select b.title, b.due, b.medium, c.display_name account_name
+            from library_books b
+            join library_credentials c on c.id = b.credential_id
+            where b.due <= current_date
+        '''
+        return self.q(sql)
+
     def library_books_truncate(self):
         self.u('truncate table library_books')
 
@@ -239,6 +248,38 @@ class YavinDatabase(fort.PostgresDatabase):
             order by end_date desc
         '''
         return self.q(sql)
+
+    # settings
+
+    def settings_delete(self, setting_id: str):
+        sql = '''
+            delete from settings where setting_id = %(setting_id)s
+        '''
+        params = {
+            'setting_id': setting_id
+        }
+        self.u(sql, params)
+
+    def settings_list(self) -> dict[str, str]:
+        sql = '''
+            select setting_id, setting_value
+            from settings
+        '''
+        return {
+            s.get('setting_id'): s.get('setting_value') for s in self.q(sql)
+        }
+
+    def settings_update(self, setting_id: str, setting_value: str):
+        sql = '''
+            insert into settings (setting_id, setting_value)
+            values (%(setting_id)s, %(setting_value)s)
+            on conflict (setting_id) do update set setting_value = %(setting_value)s
+        '''
+        params = {
+            'setting_id': setting_id,
+            'setting_value': setting_value
+        }
+        self.u(sql, params)
 
     # weight
 
@@ -406,6 +447,15 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             ''')
             self._add_schema_version(17)
+        if self.version < 18:
+            self.log.debug('Migrating to version 18')
+            self.u('''
+                create table settings (
+                    setting_id text primary key,
+                    setting_value text
+                )
+            ''')
+            self._add_schema_version(18)
 
     def _add_schema_version(self, schema_version: int):
         self._version = schema_version

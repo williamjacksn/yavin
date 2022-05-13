@@ -75,6 +75,33 @@ def index():
     return flask.render_template('signed-in.html')
 
 
+@app.get('/app-settings')
+@secure
+def app_settings():
+    flask.g.app_settings = flask.g.db.settings_list()
+    return flask.render_template('app-settings.html')
+
+
+@app.post('/app-settings/update')
+@secure
+def app_settings_update():
+    valid_settings = [
+        'smtp_from_address',
+        'smtp_password',
+        'smtp_server',
+        'smtp_username',
+    ]
+    db: yavin.db.YavinDatabase = flask.g.db
+    for k, v in flask.request.values.items():
+        app.logger.debug(f'{k}: {v!r}')
+        if k in valid_settings:
+            if v == '':
+                db.settings_delete(k)
+            else:
+                db.settings_update(k, v)
+    return flask.redirect(flask.url_for('app_settings'))
+
+
 @app.get('/captains-log')
 @secure
 def captains_log():

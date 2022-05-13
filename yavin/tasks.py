@@ -21,26 +21,22 @@ def library_notify(app: Flask):
     log.info('Checking for due library items')
     settings = Settings()
     db = YavinDatabase(settings.dsn)
-    with app.app_context():
-        lib_url = url_for('library')
-    log.debug(f'url for library: {lib_url}')
-    for book in db.library_books_list():
-        title = book.get('title')
-        due = book.get('due')
-        log.debug(f'{title} is due on {due}')
-        if due <= today():
-            log.info(f'** {title} is due today or overdue')
-            log.info('Sending notification email')
+    app_settings = db.settings_list()
+    due_books = db.library_books_list_due()
+    if due_books:
+        log.info('Sending notification email')
+        with app.app_context():
             msg = EmailMessage()
             msg['Subject'] = 'Library alert'
-            msg['From'] = settings.admin_email
+            msg['From'] = app_settings.get('smtp_from_address')
             msg['To'] = settings.admin_email
-            content = render_template('email-library-item-due.jinja2', lib_url=lib_url)
-            msg.set_content(content)
-            with SMTP_SSL(host='smtp.gmail.com') as s:
-                s.login(user=settings.admin_email, password=settings.admin_password)
+            content = render_template('email-library-item-due.html', due_books=due_books)
+            msg.set_content(content, subtype='html')
+            with SMTP_SSL(host=app_settings.get('smtp_server')) as s:
+                s.login(user=app_settings.get('smtp_username'), password=app_settings.get('smtp_password'))
                 s.send_message(msg)
-            break
+    else:
+        log.info('No due library items found')
 
 
 def library_renew(item_id: str):
