@@ -3,6 +3,7 @@ import flask
 import functools
 import jwt
 import logging
+import lxml.html
 import requests
 import requests.utils
 import urllib.parse
@@ -65,6 +66,7 @@ def index():
     if session_email is None:
         return flask.render_template('index.html')
     flask.g.pages = {
+        'billboard': 'Billboard Hot 100 #1',
         'captains_log': 'Captain&#x02bc;s log',
         'electricity': 'Electricity',
         'expenses': 'Expenses',
@@ -112,6 +114,22 @@ def app_settings_update():
         db.settings_update(setting_id, setting_value)
 
     return flask.redirect(flask.url_for('app_settings'))
+
+
+@app.get('/billboard')
+@secure
+def billboard():
+    url = 'https://www.billboard.com/charts/hot-100/'
+    resp = requests.get(url)
+    resp.raise_for_status()
+    doc = lxml.html.document_fromstring(resp.content)
+    title_h3 = doc.cssselect('h3')[0]
+    div = title_h3.getparent()
+    artist_p = div.cssselect('p')[0]
+    flask.g.title = str(title_h3.text_content()).strip()
+    flask.g.artist = str(artist_p.text_content()).strip()
+    app.logger.debug(f'Current number 1 song is {flask.g.title} by {flask.g.artist}')
+    return flask.render_template('billboard.html')
 
 
 @app.get('/captains-log')

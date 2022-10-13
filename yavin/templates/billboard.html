@@ -1,0 +1,20 @@
+{% extends 'signed-in.html' %}
+
+{% set title = 'Billboard Hot 100 #1' %}
+
+{% block title %}{{ super() }} / {{ title }}{% endblock %}
+
+{% block breadcrumb %}
+    {% include '_back_to_home.html' %}
+{% endblock %}
+
+{% block content %}
+    {% include '_page_title_h1.html' %}
+
+    <div class="row pt-3">
+        <div class="col">
+            <p><strong>{{ g.title }}</strong> by {{ g.artist }}</p>
+        </div>
+    </div>
+
+{% endblock %}
