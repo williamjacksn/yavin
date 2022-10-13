@@ -3,6 +3,7 @@
 apscheduler
 flask
 fort
+lxml
 notch
 psycopg2
 pyjwt
