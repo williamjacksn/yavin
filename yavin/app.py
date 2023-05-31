@@ -192,6 +192,9 @@ def electricity_add():
 @app.get('/expenses')
 @secure
 def expenses():
+    ex_db_path = flask.g.app_settings.get('expenses_db')
+    if ex_db_path is None:
+        return flask.redirect(flask.url_for('app_settings'))
     ex_db = yavin.db.ExpensesDatabase(flask.g.app_settings.get('expenses_db'))
     try:
         start_date = yavin.util.str_to_date(flask.request.values.get('start_date'))
