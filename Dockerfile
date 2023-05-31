@@ -19,7 +19,7 @@ CMD ["/home/python/yavin/run.py"]
 
 LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.com>" \
       org.opencontainers.image.description="Personal web tools" \
-      org.opencontainers.image.source="https://github.com/williamjacksn/yavin/" \
+      org.opencontainers.image.source="https://github.com/williamjacksn/yavin" \
       org.opencontainers.image.title="Yavin"
 
 COPY --chown=python:python run.py /home/python/yavin/run.py
