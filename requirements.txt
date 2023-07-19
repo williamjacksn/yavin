@@ -38,7 +38,7 @@ notch==2022.1
     # via -r requirements.in
 psycopg2==2.9.6
     # via -r requirements.in
-pyjwt==2.7.0
+pyjwt==2.8.0
     # via -r requirements.in
 pytz==2023.3
     # via apscheduler
