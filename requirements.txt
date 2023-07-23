@@ -10,11 +10,11 @@ apscheduler==3.10.1
     # via -r requirements.in
 blinker==1.6.2
     # via flask
-certifi==2023.5.7
+certifi==2023.7.22
     # via requests
 charset-normalizer==3.2.0
     # via requests
-click==8.1.5
+click==8.1.6
     # via flask
 cssselect==1.2.0
     # via -r requirements.in
@@ -38,7 +38,7 @@ notch==2022.1
     # via -r requirements.in
 psycopg2==2.9.6
     # via -r requirements.in
-pyjwt==2.7.0
+pyjwt==2.8.0
     # via -r requirements.in
 pytz==2023.3
     # via apscheduler
@@ -48,7 +48,7 @@ six==1.16.0
     # via apscheduler
 tzlocal==5.0.1
     # via apscheduler
-urllib3==2.0.3
+urllib3==2.0.4
     # via requests
 waitress==2.1.2
     # via -r requirements.in
