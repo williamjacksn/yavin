@@ -172,6 +172,27 @@ def balances():
     return flask.render_template('balances.html')
 
 
+@app.post('/balances/-/modal-add-tx')
+@permission_required('balances')
+def balances_modal_add_tx():
+    flask.g.account_id = flask.request.values.get('account-id')
+    flask.g.today = yavin.util.today()
+    return flask.render_template('modal-add-tx.html')
+
+
+@app.post('/balances/add-transaction')
+@permission_required('balances')
+def balances_add_tx():
+    params = {
+        'account_id': flask.request.values.get('account-id'),
+        'tx_date': flask.request.values.get('tx-date'),
+        'tx_description': flask.request.values.get('tx-description'),
+        'tx_value': flask.request.values.get('tx-value'),
+    }
+    flask.g.db.balances_transactions_add(params)
+    return flask.redirect(flask.url_for('balances'))
+
+
 @app.get('/billboard')
 @permission_required('billboard')
 def billboard():

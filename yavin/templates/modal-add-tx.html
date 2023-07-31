@@ -1,0 +1,28 @@
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Add a transaction</h5>
+        </div>
+        <div class="modal-body">
+            <form action="{{ url_for('balances_add_tx') }}" method="post" id="form-add-tx">
+                <input name="account-id" type="hidden" value="{{ g.account_id }}">
+                <div class="mb-3">
+                    <label class="form-label" for="tx-date">Date</label>
+                    <input class="form-control" id="tx-date" name="tx-date" required type="date" value="{{ g.today }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="tx-description">Description</label>
+                    <input class="form-control" id="tx-description" name="tx-description" required type="text">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="tx-value">Amount</label>
+                    <input class="form-control" id="tx-value" name="tx-value" required step="0.01" type="number">
+                </div>
+            </form>
+        </div>
+        <div class="justify-content-between modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-success" form="form-add-tx">Add transaction</button>
+        </div>
+    </div>
+</div>

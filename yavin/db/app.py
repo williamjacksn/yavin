@@ -10,6 +10,16 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # balances
 
+    def balances_transactions_add(self, params: dict):
+        sql = '''
+            insert into balances_transactions (
+                account_id, tx_date, tx_description, tx_value
+            ) values (
+                %(account_id)s, %(tx_date)s, %(tx_description)s, %(tx_value)s
+            )
+        '''
+        self.u(sql, params)
+
     def balances_transactions_list(self):
         sql = '''
             select

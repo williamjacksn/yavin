@@ -12,12 +12,6 @@
     {% include '_page_title_h1.html' %}
 
     <div class="pt-3 row">
-        <div class="col-12 col-sm-10 col-md-8 col-lg-7 col-xl-4">
-            <a class="btn btn-primary" href="#">Add account</a>
-        </div>
-    </div>
-
-    <div class="pt-3 row">
         <div class="col">
             <ul class="nav nav-tabs">
             {% for a in g.accounts %}
@@ -37,6 +31,16 @@
             <div class="tab-content">
             {% for a in g.accounts %}
                 <div class="fade tab-pane {{ 'active show' if loop.first }}" id="account-{{ a.account_id }}">
+                    <div class="mb-3">
+                        <form>
+                            <input name="account-id" type="hidden" value="{{ a.account_id }}">
+                            <button class="btn btn-sm btn-success" data-bs-target="#modal-add-tx" data-bs-toggle="modal"
+                                    data-hx-post="{{ url_for('balances_modal_add_tx') }}"
+                                    data-hx-target="#modal-add-tx">
+                                Add transaction
+                            </button>
+                        </form>
+                    </div>
                     <table class="d-block table table-striped">
                         <thead>
                         <tr>
@@ -57,6 +61,16 @@
                     </table>
                 </div>
             {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-add-tx">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="justify-content-center modal-body">
+                    <div class="spinner-border"></div>
+                </div>
             </div>
         </div>
     </div>
