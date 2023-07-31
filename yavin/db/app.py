@@ -281,6 +281,56 @@ class YavinDatabase(fort.PostgresDatabase):
         }
         self.u(sql, params)
 
+    # user permissions
+
+    def user_permissions_add(self, email: str, permission: str):
+        existing_permissions = self.user_permissions_get(email)
+        if permission in existing_permissions:
+            self.log.debug(f'{email} already has permission {permission}')
+            return
+        new_permissions = existing_permissions + [permission]
+        self.user_permissions_set(email, new_permissions)
+
+    def user_permissions_get(self, email: str) -> list[str]:
+        sql = '''
+            select permissions from user_permissions where email = %(email)s
+        '''
+        params = {
+            'email': email,
+        }
+        permissions = self.q_val(sql, params)
+        if permissions:
+            return sorted(set(permissions.split()))
+        return []
+
+    def user_permissions_list(self) -> list[dict]:
+        sql = '''
+            select email, permissions
+            from user_permissions
+        '''
+        result = []
+        for row in self.q(sql):
+            result.append({
+                'email': row.get('email'),
+                'permissions': sorted(set(row.get('permissions').split())),
+            })
+        return result
+
+    def user_permissions_set(self, email: str, permissions: list[str]):
+        sql = '''
+            insert into user_permissions (
+                email, permissions
+            ) values (
+                %(email)s, %(permissions)s
+            ) on conflict (email) do update set
+                permissions = %(permissions)s
+        '''
+        params = {
+            'email': email,
+            'permissions': ' '.join(sorted(set(permissions)))
+        }
+        self.u(sql, params)
+
     # weight
 
     def weight_entries_get_most_recent(self) -> float:
@@ -456,6 +506,15 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             ''')
             self._add_schema_version(18)
+        if self.version < 19:
+            self.log.debug('Migrating to version 19')
+            self.u('''
+                create table user_permissions (
+                    email text primary key,
+                    permissions text
+                )
+            ''')
+            self._add_schema_version(19)
 
     def _add_schema_version(self, schema_version: int):
         self._version = schema_version

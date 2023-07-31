@@ -17,8 +17,8 @@
     <div class="row pt-3">
         <div class="col">
             <div class="list-group">
-            {% for view, title in g.pages.items() %}
-                <a class="list-group-item list-group-item-action" href="{{ url_for(view) }}">{{ title|safe }}</a>
+            {% for page in g.pages if page.visible %}
+                <a class="list-group-item list-group-item-action" href="{{ url_for(page.view) }}">{{ page.title|safe }}</a>
             {% endfor %}
             </div>
         </div>

@@ -38,16 +38,18 @@ if settings.scheme == 'https':
 app.jinja_env.filters['datetime'] = yavin.util.clean_datetime
 
 
-def secure(f):
-    @functools.wraps(f)
-    def decorated_function(*args, **kwargs):
-        session_email = flask.session.get('email')
-        if session_email is None:
-            return flask.redirect(flask.url_for('index'))
-        if session_email == settings.admin_email:
-            return f(*args, **kwargs)
-        return flask.render_template('not-authorized.html')
-    return decorated_function
+def permission_required(permission: str):
+    def decorator(f):
+        @functools.wraps(f)
+        def decorated_function(*args, **kwargs):
+            app.logger.debug(f'Checking permission for {flask.g.email}')
+            if flask.g.email is None:
+                return flask.redirect(flask.url_for('index'))
+            if 'admin' in flask.g.permissions or permission in flask.g.permissions:
+                return f(*args, **kwargs)
+            return flask.render_template('not-authorized.html')
+        return decorated_function
+    return decorator
 
 
 @app.before_request
@@ -58,6 +60,8 @@ def before_request():
     flask.g.settings = settings
     flask.g.app_settings = flask.g.db.settings_list()
     flask.g.version = __version__
+    flask.g.email = flask.session.get('email')
+    flask.g.permissions = flask.g.db.user_permissions_get(flask.g.email)
 
 
 @app.get('/')
@@ -65,29 +69,69 @@ def index():
     session_email = flask.session.get('email')
     if session_email is None:
         return flask.render_template('index.html')
-    flask.g.pages = {
-        'billboard': 'Billboard Hot 100 #1',
-        'captains_log': 'Captain&#x02bc;s log',
-        'electricity': 'Electricity',
-        'expenses': 'Expenses',
-        'jar': 'Jar',
-        'library': 'Library',
-        'movie_night': 'Movie night',
-        'packages': 'Packages',
-        'phone': 'Phone usage',
-        'weight': 'Weight'
-    }
+    flask.g.pages = [
+        {
+            'title': 'Billboard Hot 100 #1',
+            'view': 'billboard',
+            'visible': 'billboard' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Captain&#x02bc;s log',
+            'view': 'captains_log',
+            'visible': 'captains-log' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Electricity',
+            'view': 'electricity',
+            'visible': 'electricity' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Expenses',
+            'view': 'expenses',
+            'visible': 'expenses' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Jar',
+            'view': 'jar',
+            'visible': 'jar' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Library',
+            'view': 'library',
+            'visible': 'library' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Movie night',
+            'view': 'movie_night',
+            'visible': 'movie-night' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Packages',
+            'view': 'packages',
+            'visible': 'packages' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Phone usage',
+            'view': 'phone',
+            'visible': 'phone' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Weight',
+            'view': 'weight',
+            'visible': 'weight' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+    ]
     return flask.render_template('signed-in.html')
 
 
 @app.get('/app-settings')
-@secure
+@permission_required('admin')
 def app_settings():
     return flask.render_template('app-settings.html')
 
 
 @app.post('/app-settings/update')
-@secure
+@permission_required('admin')
 def app_settings_update():
     db: yavin.db.YavinDatabase = flask.g.db
 
@@ -117,7 +161,7 @@ def app_settings_update():
 
 
 @app.get('/billboard')
-@secure
+@permission_required('billboard')
 def billboard():
     url = 'https://www.billboard.com/charts/hot-100/'
     resp = requests.get(url)
@@ -133,7 +177,7 @@ def billboard():
 
 
 @app.get('/captains-log')
-@secure
+@permission_required('captains-log')
 def captains_log():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.captains_log_list()
@@ -141,7 +185,7 @@ def captains_log():
 
 
 @app.post('/captains-log/delete')
-@secure
+@permission_required('captains-log')
 def captains_log_delete():
     db: yavin.db.YavinDatabase = flask.g.db
     db.captains_log_delete(flask.request.form.get('id'))
@@ -162,7 +206,7 @@ def captains_log_incoming():
 
 
 @app.post('/captains-log/update')
-@secure
+@permission_required('captains-log')
 def captains_log_update():
     db: yavin.db.YavinDatabase = flask.g.db
     log_text = flask.request.form.get('log_text')
@@ -171,7 +215,7 @@ def captains_log_update():
 
 
 @app.get('/electricity')
-@secure
+@permission_required('electricity')
 def electricity():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.electricity_list()
@@ -179,6 +223,7 @@ def electricity():
 
 
 @app.post('/electricity/add')
+@permission_required('electricity')
 def electricity_add():
     db: yavin.db.YavinDatabase = flask.g.db
     bill_date = yavin.util.str_to_date(flask.request.form.get('bill_date'))
@@ -190,7 +235,7 @@ def electricity_add():
 
 
 @app.get('/expenses')
-@secure
+@permission_required('expenses')
 def expenses():
     ex_db_path = flask.g.app_settings.get('expenses_db')
     if ex_db_path is None:
@@ -229,7 +274,7 @@ def expenses():
 
 
 @app.get('/jar')
-@secure
+@permission_required('jar')
 def jar():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.today = yavin.util.today()
@@ -238,7 +283,7 @@ def jar():
 
 
 @app.post('/jar/add')
-@secure
+@permission_required('jar')
 def jar_add():
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
@@ -248,7 +293,7 @@ def jar_add():
 
 
 @app.get('/library')
-@secure
+@permission_required('library')
 def library():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.library_credentials = db.library_credentials_list()
@@ -257,7 +302,7 @@ def library():
 
 
 @app.post('/library/add')
-@secure
+@permission_required('library')
 def library_add():
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
@@ -272,7 +317,7 @@ def library_add():
 
 
 @app.post('/library/delete')
-@secure
+@permission_required('library')
 def library_delete():
     db: yavin.db.YavinDatabase = flask.g.db
     db.library_credentials_delete(flask.request.form)
@@ -281,7 +326,7 @@ def library_delete():
 
 
 @app.post('/library/renew')
-@secure
+@permission_required('library')
 def library_renew():
     item_id = flask.request.form.get('item_id')
     yavin.tasks.library_renew(item_id)
@@ -289,7 +334,7 @@ def library_renew():
 
 
 @app.get('/library/notify-now')
-@secure
+@permission_required('library')
 def library_notify_now():
     log.info('Got library notification request')
     yavin.tasks.scheduler.add_job(yavin.tasks.library_notify, args=[app])
@@ -297,7 +342,7 @@ def library_notify_now():
 
 
 @app.get('/library/sync-now')
-@secure
+@permission_required('library')
 def library_sync_now():
     log.info('Got library sync request')
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
@@ -305,7 +350,7 @@ def library_sync_now():
 
 
 @app.get('/movie-night')
-@secure
+@permission_required('movie-night')
 def movie_night():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.people = db.movie_people_list()
@@ -315,7 +360,7 @@ def movie_night():
 
 
 @app.post('/movie-night/add-person')
-@secure
+@permission_required('movie-night')
 def movie_night_add_person():
     db: yavin.db.YavinDatabase = flask.g.db
     params = {'person': flask.request.form.get('person')}
@@ -324,7 +369,7 @@ def movie_night_add_person():
 
 
 @app.post('/movie-night/add-pick')
-@secure
+@permission_required('movie-night')
 def movie_night_add_pick():
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
@@ -339,7 +384,7 @@ def movie_night_add_pick():
 
 
 @app.post('/movie-night/delete-pick')
-@secure
+@permission_required('movie-night')
 def movie_night_delete_pick():
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
@@ -350,7 +395,7 @@ def movie_night_delete_pick():
 
 
 @app.post('/movie-night/edit-pick')
-@secure
+@permission_required('movie-night')
 def movie_night_edit_pick():
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
@@ -365,7 +410,7 @@ def movie_night_edit_pick():
 
 
 @app.get('/packages')
-@secure
+@permission_required('packages')
 def packages():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.packages = db.packages_list()
@@ -373,7 +418,7 @@ def packages():
 
 
 @app.post('/packages/update')
-@secure
+@permission_required('packages')
 def packages_update():
     for k, v in flask.request.values.lists():
         log.debug(f'{k}: {v}')
@@ -390,7 +435,7 @@ def packages_update():
 
 
 @app.get('/phone')
-@secure
+@permission_required('phone')
 def phone():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.phone_usage_list()
@@ -398,7 +443,7 @@ def phone():
 
 
 @app.post('/phone/add')
-@secure
+@permission_required('phone')
 def phone_add():
     db: yavin.db.YavinDatabase = flask.g.db
     v = flask.request.values
@@ -407,7 +452,7 @@ def phone_add():
 
 
 @app.get('/weight')
-@secure
+@permission_required('weight')
 def weight():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.today = yavin.util.today()
@@ -417,7 +462,7 @@ def weight():
 
 
 @app.post('/weight/add')
-@secure
+@permission_required('weight')
 def weight_add():
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get('entry_date'))
@@ -483,6 +528,9 @@ def main():
     else:
         db = yavin.db.YavinDatabase(settings.dsn)
         db.migrate()
+
+        if settings.admin_email:
+            db.user_permissions_add(settings.admin_email, 'admin')
 
         yavin.tasks.scheduler.start()
         yavin.tasks.scheduler.add_job(yavin.tasks.library_sync, 'interval', hours=6,
