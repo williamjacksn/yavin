@@ -168,29 +168,33 @@ def app_settings_update():
 @app.get('/balances')
 @permission_required('balances')
 def balances():
-    flask.g.accounts = flask.g.db.balances_transactions_list()
+    flask.g.accounts = flask.g.db.balances_accounts_list()
     return flask.render_template('balances.html')
 
 
-@app.post('/balances/-/modal-add-tx')
+@app.get('/balances/<uuid:account_id>')
 @permission_required('balances')
-def balances_modal_add_tx():
-    flask.g.account_id = flask.request.values.get('account-id')
+def balances_detail(account_id: uuid.UUID):
+    flask.g.account_id = account_id
+    flask.g.transactions = flask.g.db.balances_transactions_list(account_id)
+    flask.g.account_name = flask.g.transactions[0].get('account_name')
+    flask.g.account_balance = flask.g.transactions[0].get('account_balance')
     flask.g.today = yavin.util.today()
-    return flask.render_template('modal-add-tx.html')
+    return flask.render_template('balances-detail.html')
 
 
 @app.post('/balances/add-transaction')
 @permission_required('balances')
 def balances_add_tx():
+    account_id = flask.request.values.get('account-id')
     params = {
-        'account_id': flask.request.values.get('account-id'),
+        'account_id': account_id,
         'tx_date': flask.request.values.get('tx-date'),
         'tx_description': flask.request.values.get('tx-description'),
         'tx_value': flask.request.values.get('tx-value'),
     }
     flask.g.db.balances_transactions_add(params)
-    return flask.redirect(flask.url_for('balances'))
+    return flask.redirect(flask.url_for('balances_detail', account_id=account_id))
 
 
 @app.get('/billboard')

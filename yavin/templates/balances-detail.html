@@ -1,0 +1,85 @@
+{% extends 'balances.html' %}
+
+{% block title %}{{ super() }} / {{ g.account_name }}{% endblock %}
+
+{% block breadcrumb %}
+    <a class="btn btn-outline-dark" href="{{ url_for('balances') }}">
+        <strong>
+            <i class="bi-chevron-left"></i>
+            Balances
+        </strong>
+    </a>
+{% endblock %}
+
+{% block content %}
+    <div class="pt-3 row">
+        <div class="col">
+            <h1>{{ g.account_name }}</h1>
+            <p>Current balance: $ {{ '{:,.2f}'.format(g.account_balance) }}</p>
+        </div>
+    </div>
+
+    <div class="pt-3 row">
+        <div class="col">
+            <a class="btn btn-success" data-bs-target="#modal-add-tx" data-bs-toggle="modal">
+                Add transaction
+            </a>
+        </div>
+    </div>
+
+    <div class="pt-3 row">
+        <div class="col">
+            <table class="d-block table table-striped">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th class="text-end">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for t in g.transactions if t.tx_id %}
+                    <tr>
+                        <td>{{ t.tx_date }}</td>
+                        <td>{{ t.tx_description }}</td>
+                        <td class="text-end">$ {{ '{:,.2f}'.format(t.tx_value) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-add-tx">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add a transaction</h5>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('balances_add_tx') }}" method="post" id="form-add-tx">
+                        <input name="account-id" type="hidden" value="{{ g.account_id }}">
+                        <div class="mb-3">
+                            <label class="form-label" for="tx-date">Date</label>
+                            <input class="form-control" id="tx-date" name="tx-date" required type="date"
+                                   value="{{ g.today }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="tx-description">Description</label>
+                            <input class="form-control" id="tx-description" name="tx-description" required type="text">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="tx-value">Amount</label>
+                            <input class="form-control" id="tx-value" name="tx-value" required step="0.01"
+                                   type="number">
+                        </div>
+                    </form>
+                </div>
+                <div class="justify-content-between modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-success" form="form-add-tx">Add transaction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -13,65 +13,22 @@
 
     <div class="pt-3 row">
         <div class="col">
-            <ul class="nav nav-tabs">
-            {% for a in g.accounts %}
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if loop.first }}" data-bs-toggle="tab" href="#account-{{ a.account_id }}">
-                        {{ a.account_name }}
-                        <span class="badge text-bg-primary">$ {{ '{:,.2f}'.format(a.account_balance) }}</span>
-                    </a>
-                </li>
-            {% endfor %}
-            </ul>
-        </div>
-    </div>
-
-    <div class="pt-3 row">
-        <div class="col">
-            <div class="tab-content">
-            {% for a in g.accounts %}
-                <div class="fade tab-pane {{ 'active show' if loop.first }}" id="account-{{ a.account_id }}">
-                    <div class="mb-3">
-                        <form>
-                            <input name="account-id" type="hidden" value="{{ a.account_id }}">
-                            <button class="btn btn-sm btn-success" data-bs-target="#modal-add-tx" data-bs-toggle="modal"
-                                    data-hx-post="{{ url_for('balances_modal_add_tx') }}"
-                                    data-hx-target="#modal-add-tx">
-                                Add transaction
-                            </button>
-                        </form>
-                    </div>
-                    <table class="d-block table table-striped">
-                        <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th class="text-end">Amount</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                    {% for t in a.transactions if t.tx_id %}
-                        <tr>
-                            <td>{{ t.tx_date }}</td>
-                            <td>{{ t.tx_description }}</td>
-                            <td class="text-end">$ {{ '{:,.2f}'.format(t.tx_value) }}</td>
-                        </tr>
-                    {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="modal-add-tx">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="justify-content-center modal-body">
-                    <div class="spinner-border"></div>
-                </div>
-            </div>
+            <table class="d-block table table-striped">
+                <thead>
+                <tr>
+                    <th>Account</th>
+                    <th class="text-end">Balance</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for a in g.accounts %}
+                    <tr data-href="{{ url_for('balances_detail', account_id=a.account_id) }}" role="button">
+                        <td>{{ a.account_name }}</td>
+                        <td class="text-end">$ {{ '{:,.2f}'.format(a.account_balance) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 {% endblock %}

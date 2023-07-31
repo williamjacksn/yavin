@@ -10,6 +10,17 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # balances
 
+    def balances_accounts_list(self):
+        sql = '''
+            select
+                a.id as account_id, a.account_name, sum(coalesce(t.tx_value, 0)) as account_balance
+            from balances_accounts a
+            left join balances_transactions t on t.account_id = a.id
+            group by a.id, a.account_name
+            order by a.account_name
+        '''
+        return self.q(sql)
+
     def balances_transactions_add(self, params: dict):
         sql = '''
             insert into balances_transactions (
@@ -20,31 +31,20 @@ class YavinDatabase(fort.PostgresDatabase):
         '''
         self.u(sql, params)
 
-    def balances_transactions_list(self):
+    def balances_transactions_list(self, account_id: uuid.UUID):
         sql = '''
             select
-                jsonb_build_object(
-                    'account_id', account_id,
-                    'account_name', account_name,
-                    'account_balance', coalesce(account_balance, 0),
-                    'transactions', transactions
-                ) account_data
-                from (
-                    select
-                        a.id as account_id, a.account_name, sum(t.tx_value) account_balance,
-                        jsonb_agg(jsonb_build_object(
-                            'tx_id', t.tx_id,
-                            'tx_date', t.tx_date,
-                            'tx_description', t.tx_description,
-                            'tx_value', t.tx_value
-                        )) as transactions
-                    from balances_accounts a
-                    left join balances_transactions t on t.account_id = a.id
-                    group by a.id, a.account_name
-                ) t
-                order by account_name
+                a.id as account_id, a.account_name, tx_id, tx_date, tx_description, tx_value,
+                sum(coalesce(tx_value, 0)) over () account_balance
+            from balances_accounts a
+            left join balances_transactions t on t.account_id = a.id
+            where a.id = %(account_id)s
+            order by tx_date desc, tx_description
         '''
-        return [row.get('account_data') for row in self.q(sql)]
+        params = {
+            'account_id': account_id,
+        }
+        return self.q(sql, params)
 
     # captain's log
 
