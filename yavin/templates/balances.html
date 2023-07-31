@@ -1,0 +1,9 @@
+{% extends 'signed-in.html' %}
+
+{% set title = 'Balances' %}
+
+{% block title %}{{ super() }} / {{ title }}{% endblock %}
+
+{% block breadcrumb %}
+    {% include '_back_to_home.html' %}
+{% endblock %}

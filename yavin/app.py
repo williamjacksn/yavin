@@ -71,6 +71,11 @@ def index():
         return flask.render_template('index.html')
     flask.g.pages = [
         {
+            'title': 'Balances',
+            'view': 'balances',
+            'visible': 'balances' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
             'title': 'Billboard Hot 100 #1',
             'view': 'billboard',
             'visible': 'billboard' in flask.g.permissions or 'admin' in flask.g.permissions,
@@ -158,6 +163,12 @@ def app_settings_update():
         db.settings_update(setting_id, setting_value)
 
     return flask.redirect(flask.url_for('app_settings'))
+
+
+@app.get('/balances')
+@permission_required('balances')
+def balances():
+    return flask.render_template('balances.html')
 
 
 @app.get('/billboard')
