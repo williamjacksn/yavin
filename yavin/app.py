@@ -168,6 +168,7 @@ def app_settings_update():
 @app.get('/balances')
 @permission_required('balances')
 def balances():
+    flask.g.accounts = flask.g.db.balances_transactions_list()
     return flask.render_template('balances.html')
 
 

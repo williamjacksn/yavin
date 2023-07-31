@@ -8,6 +8,34 @@ import uuid
 class YavinDatabase(fort.PostgresDatabase):
     _version: int = None
 
+    # balances
+
+    def balances_transactions_list(self):
+        sql = '''
+            select
+                jsonb_build_object(
+                    'account_id', account_id,
+                    'account_name', account_name,
+                    'account_balance', coalesce(account_balance, 0),
+                    'transactions', transactions
+                ) account_data
+                from (
+                    select
+                        a.id as account_id, a.account_name, sum(t.tx_value) account_balance,
+                        jsonb_agg(jsonb_build_object(
+                            'tx_id', t.tx_id,
+                            'tx_date', t.tx_date,
+                            'tx_description', t.tx_description,
+                            'tx_value', t.tx_value
+                        )) as transactions
+                    from balances_accounts a
+                    left join balances_transactions t on t.account_id = a.id
+                    group by a.id, a.account_name
+                ) t
+                order by account_name
+        '''
+        return [row.get('account_data') for row in self.q(sql)]
+
     # captain's log
 
     def captains_log_delete(self, id_: str):
@@ -513,6 +541,21 @@ class YavinDatabase(fort.PostgresDatabase):
                 create table user_permissions (
                     email text primary key,
                     permissions text
+                )
+            ''')
+            self.u('''
+                create table balances_accounts (
+                    id uuid primary key default gen_random_uuid(),
+                    account_name text not null
+                )
+            ''')
+            self.u('''
+                create table balances_transactions (
+                    tx_id uuid primary key default gen_random_uuid(),
+                    account_id uuid not null references balances_accounts(id) on delete cascade,
+                    tx_date date not null,
+                    tx_description text,
+                    tx_value numeric not null
                 )
             ''')
             self._add_schema_version(19)
