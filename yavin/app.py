@@ -451,6 +451,12 @@ def phone_add():
     return flask.redirect(flask.url_for('phone'))
 
 
+@app.get('/user-permissions')
+@permission_required('admin')
+def user_permissions():
+    flask.g.users = flask.g.db.user_permissions_list()
+    return flask.render_template('user-permissions.html')
+
 @app.get('/weight')
 @permission_required('weight')
 def weight():

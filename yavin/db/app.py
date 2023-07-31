@@ -307,6 +307,7 @@ class YavinDatabase(fort.PostgresDatabase):
         sql = '''
             select email, permissions
             from user_permissions
+            order by email
         '''
         result = []
         for row in self.q(sql):

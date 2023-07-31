@@ -9,6 +9,7 @@
             <h6 class="dropdown-header">{{ session.email }}</h6>
             {% if 'admin' in g.permissions %}
                 <a class="dropdown-item" href="{{ url_for('app_settings') }}">App settings</a>
+                <a class="dropdown-item" href="{{ url_for('user_permissions') }}">User permissions</a>
             {% endif %}
             <a class="dropdown-item" href="{{ url_for('sign_out') }}">Sign out</a>
         </div>
