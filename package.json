@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "bootstrap": "5.3.0",
-    "bootstrap-icons": "1.10.5"
+    "bootstrap-icons": "1.10.5",
+    "htmx.org": "1.9.4"
   }
 }
