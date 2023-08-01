@@ -1,4 +1,5 @@
 import datetime
+import zoneinfo
 
 
 def add_days(d: datetime.date, days: int) -> datetime.date:
@@ -22,4 +23,4 @@ def str_to_date(d: str) -> datetime.date:
 
 
 def today() -> datetime.date:
-    return datetime.date.today()
+    return datetime.datetime.now(tz=datetime.timezone.utc).astimezone(tz=zoneinfo.ZoneInfo('America/Chicago')).date()
