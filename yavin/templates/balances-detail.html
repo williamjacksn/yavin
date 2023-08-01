@@ -30,19 +30,18 @@
     <div class="pt-3 row">
         <div class="col">
             <table class="d-block table table-striped">
-                <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th class="text-end">Amount</th>
-                </tr>
-                </thead>
                 <tbody>
                 {% for t in g.transactions if t.tx_id %}
                     <tr>
-                        <td>{{ t.tx_date }}</td>
-                        <td>{{ t.tx_description }}</td>
-                        <td class="text-end">$ {{ '{:,.2f}'.format(t.tx_value) }}</td>
+                        <td>
+                            <span class="badge text-bg-secondary">{{ t.tx_date }}</span><br>
+                            {{ t.tx_description }}
+                        </td>
+                        <td class="text-end">
+                            <span class="badge {{ 'text-bg-success' if t.tx_value >= 0 else 'text-bg-danger' }}">
+                                $ {{ '{:,.2f}'.format(t.tx_value|abs) }}
+                            </span>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -70,8 +69,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="tx-value">Amount</label>
-                            <input class="form-control" id="tx-value" name="tx-value" required step="0.01"
-                                   type="number">
+                            <input class="form-control" id="tx-value" inputmode="decimal" name="tx-value" required
+                                   step="0.01" type="number">
                         </div>
                     </form>
                 </div>
