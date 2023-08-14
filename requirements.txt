@@ -6,7 +6,7 @@
 #
 --extra-index-url https://alpine-wheels.github.io/index
 
-apscheduler==3.10.1
+apscheduler==3.10.2
     # via -r requirements.in
 blinker==1.6.2
     # via flask
@@ -54,6 +54,3 @@ waitress==2.1.2
     # via -r requirements.in
 werkzeug==2.3.6
     # via flask
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
