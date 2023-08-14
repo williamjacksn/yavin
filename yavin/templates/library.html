@@ -31,6 +31,7 @@
                 <tr>
                     <th>Name</th>
                     <th>Library</th>
+                    <th>Type</th>
                     <th>Username</th>
                     <th>Password</th>
                     <th>Balance</th>
@@ -38,10 +39,11 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for lib_cred in g.library_credentials | sort(attribute='display_name') %}
+                {% for lib_cred in g.library_credentials %}
                     <tr>
                         <td>{{ lib_cred.display_name }}</td>
                         <td>{{ lib_cred.library }}</td>
+                        <td>{{ lib_cred.library_type }}</td>
                         <td>{{ lib_cred.username }}</td>
                         <td>***</td>
                         <td>{{ lib_cred.balance }}&cent;</td>
@@ -65,6 +67,13 @@
                     <td>
                         <input type="text" class="form-control" form="form-add-library" name="library"
                                placeholder="Library" aria-label="Library" required>
+                    </td>
+                    <td>
+                        <select aria-label="Library type" class="form-select" form="form-add-library"
+                                name="library_type">
+                            <option>bibliocommons</option>
+                            <option selected>biblionix</option>
+                        </select>
                     </td>
                     <td>
                         <input type="text" class="form-control" form="form-add-library" name="username"

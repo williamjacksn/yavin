@@ -140,7 +140,7 @@ class YavinDatabase(fort.PostgresDatabase):
 
     def library_credentials_get(self, params: dict):
         sql = '''
-            select library, username, password
+            select library, username, password, library_type
             from library_books
             join library_credentials on library_credentials.id = library_books.credential_id
             where item_id = %(item_id)s
@@ -150,12 +150,17 @@ class YavinDatabase(fort.PostgresDatabase):
     def library_credentials_insert(self, params: dict):
         params['id'] = uuid.uuid4()
         self.u('''
-            insert into library_credentials (id, library, username, password, display_name)
-            values (%(id)s, %(library)s, %(username)s, %(password)s, %(display_name)s)
+            insert into library_credentials (id, library, username, password, display_name, library_type)
+            values (%(id)s, %(library)s, %(username)s, %(password)s, %(display_name)s, %(library_type)s)
         ''', params)
 
     def library_credentials_list(self) -> list[dict]:
-        return self.q('select id, library, username, password, display_name, balance from library_credentials')
+        sql = '''
+            select id, library, username, password, display_name, balance, library_type
+            from library_credentials
+            order by display_name
+        '''
+        return self.q(sql)
 
     def library_credentials_update(self, params: dict):
         self.u('update library_credentials set balance = %(balance)s where id = %(id)s', params)
@@ -182,6 +187,7 @@ class YavinDatabase(fort.PostgresDatabase):
             from library_books b
             join library_credentials c on c.id = b.credential_id
             where b.due <= current_date
+            order by c.display_name, b.title
         '''
         return self.q(sql)
 
@@ -569,6 +575,13 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             ''')
             self._add_schema_version(19)
+        if self.version < 20:
+            self.log.debug('Migrating to version 20')
+            self.u('''
+                alter table library_credentials
+                add library_type text not null default 'biblionix'
+            ''')
+            self._add_schema_version(20)
 
     def _add_schema_version(self, schema_version: int):
         self._version = schema_version

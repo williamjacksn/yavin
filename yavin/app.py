@@ -345,6 +345,7 @@ def library_add():
     params = {
         'display_name': flask.request.form.get('display_name'),
         'library': flask.request.form.get('library'),
+        'library_type': flask.request.form.get('library_type'),
         'username': flask.request.form.get('username'),
         'password': flask.request.form.get('password')
     }

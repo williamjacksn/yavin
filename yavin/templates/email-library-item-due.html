@@ -4,7 +4,10 @@
 
 <ul>
 {% for book in due_books %}
-    <li><em>{{ book.title }}</em> {% if book.medium %}({{ book.medium }}){% endif %} is due on {{ book.due }}</li>
+    <li>
+        <em>{{ book.title }}</em> {% if book.medium %}({{ book.medium }}){% endif %}
+        is due on {{ book.due }} ({{ book.account_name }})
+    </li>
 {% endfor %}
 </ul>
 

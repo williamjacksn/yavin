@@ -2,6 +2,7 @@ import apscheduler.schedulers.background
 import email.message
 import flask
 import logging
+import lxml.html
 import requests
 import requests.utils
 import smtplib
@@ -72,44 +73,97 @@ def library_sync():
     db = yavin.db.YavinDatabase(settings.dsn)
     db.library_books_truncate()
     for lib_cred in db.library_credentials_list():
-        cred_id = lib_cred.get('id')
+        lib_type = lib_cred.get('library_type')
         display_name = lib_cred.get('display_name')
         log.info(f'Syncing library data for {display_name}')
-        lib_url = lib_cred.get('library')
-        s = requests.Session()
-        login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
-        login_data = {
-            'username': lib_cred.get('username'),
-            'password': lib_cred.get('password'),
+        if lib_type == 'biblionix':
+            library_sync_biblionix(lib_cred, db)
+        elif lib_type == 'bibliocommons':
+            library_sync_bibliocommons(lib_cred, db)
+        else:
+            log.warning(f'Library type {lib_type} is not implemented yet')
+
+
+def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase):
+    lib_url = lib_data.get('library')
+    s = requests.Session()
+    login_page = s.get(f'https://{lib_url}.bibliocommons.com/user/login', params={'destination': 'x'})
+    login_page.raise_for_status()
+    doc = lxml.html.document_fromstring(login_page.content)
+    auth_token_el = doc.cssselect('input[name="authenticity_token"]')[0]
+    auth_token = auth_token_el.value
+    data = {
+        'authenticity_token': auth_token,
+        'name': lib_data.get('username'),
+        'user_pin': lib_data.get('password'),
+    }
+    login_action = s.post(f'https://{lib_url}.bibliocommons.com/user/login', data=data)
+    login_action.raise_for_status()
+    log.debug(f'Cookies: {s.cookies}')
+    session_id = s.cookies.get('session_id')
+    access_token = s.cookies.get('bc_access_token')
+    account_id_guess = int(session_id.split('-')[-1]) + 1
+    checkouts_url = f'https://gateway.bibliocommons.com/v2/libraries/{lib_url}/checkouts'
+    params = {
+        'accountId': account_id_guess
+    }
+    headers = {
+        'X-Access-Token': access_token,
+        'X-Session-Id': session_id,
+    }
+    checkouts = s.get(checkouts_url, headers=headers, params=params)
+    checkouts.raise_for_status()
+    response = checkouts.json()
+    log.debug(response)
+    for item in response.get('entities', {}).get('checkouts', {}).values():
+        params = {
+            'credential_id': lib_data.get('id'),
+            'due': item.get('dueDate'),
+            'item_id': '',
+            'medium': '',
+            'renewable': False,
+            'title': item.get('bibTitle'),
         }
-        login = s.post(url=login_url, data=login_data)
-        log.info(f'Received {len(login.content)} bytes from {login_url}')
-        log.debug(login.text)
-        login_et = xml.etree.ElementTree.XML(login.text)
-        session_key = login_et.get('session')
-        account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
-        account_data = {'session': session_key}
-        account = s.post(url=account_url, data=account_data)
-        log.info(f'Received {len(account.content)} bytes from {account_url}')
-        log.debug(account.text)
-        account_et = xml.etree.ElementTree.XML(account.text)
-        db.library_credentials_update({
-            'id': cred_id,
-            'balance': 0
-        })
-        for alert in account_et.findall('alerts'):
-            if alert.get('balance'):
-                db.library_credentials_update({
-                    'id': cred_id,
-                    'balance': int(alert.get('balance'))
-                })
-        for item in account_et.findall('item'):
-            params = {
-                'credential_id': cred_id,
-                'title': item.get('title').replace('\xad', ''),
-                'due': item.get('due_raw'),
-                'renewable': item.get('renewable') == '1',
-                'item_id': item.get('id'),
-                'medium': item.get('medium').replace('\xad', '')
-            }
-            db.library_books_insert(params)
+        db.library_books_insert(params)
+
+
+def library_sync_biblionix(lib_data: dict, db: yavin.db.YavinDatabase):
+    lib_url = lib_data.get('library')
+    s = requests.Session()
+    login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
+    login_data = {
+        'username': lib_data.get('username'),
+        'password': lib_data.get('password'),
+    }
+    login = s.post(url=login_url, data=login_data)
+    log.info(f'Received {len(login.content)} bytes from {login_url}')
+    log.debug(login.text)
+    login_et = xml.etree.ElementTree.XML(login.text)
+    session_key = login_et.get('session')
+    account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
+    account_data = {'session': session_key}
+    account = s.post(url=account_url, data=account_data)
+    log.info(f'Received {len(account.content)} bytes from {account_url}')
+    log.debug(account.text)
+    account_et = xml.etree.ElementTree.XML(account.text)
+    cred_id = lib_data.get('id')
+    db.library_credentials_update({
+        'id': cred_id,
+        'balance': 0
+    })
+    for alert in account_et.findall('alerts'):
+        if alert.get('balance'):
+            db.library_credentials_update({
+                'id': cred_id,
+                'balance': int(alert.get('balance'))
+            })
+    for item in account_et.findall('item'):
+        params = {
+            'credential_id': cred_id,
+            'title': item.get('title').replace('\xad', ''),
+            'due': item.get('due_raw'),
+            'renewable': item.get('renewable') == '1',
+            'item_id': item.get('id'),
+            'medium': item.get('medium').replace('\xad', '')
+        }
+        db.library_books_insert(params)
