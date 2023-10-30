@@ -325,6 +325,44 @@ class YavinDatabase(fort.PostgresDatabase):
         }
         self.u(sql, params)
 
+    # tithing
+
+    def tithing_get_current_owed(self):
+        sql = '''
+            select round(coalesce(sum(amount), 0) * 0.1, 2) tithing_owed
+            from tithing_income
+            where tithing_paid is null
+        '''
+        return self.q_val(sql)
+
+    def tithing_income_insert(self, date: datetime.date, amount: decimal.Decimal, description: str):
+        sql = '''
+            insert into tithing_income (date, amount, description) values (%(date)s, %(amount)s, %(description)s)
+        '''
+        params = {
+            'date': date,
+            'amount': amount,
+            'description': description,
+        }
+        self.u(sql, params)
+
+    def tithing_income_list_unpaid(self):
+        sql = '''
+            select id, date, amount, description
+            from tithing_income
+            where tithing_paid is null
+            order by date, description, id
+        '''
+        return self.q(sql)
+
+    def tithing_income_mark_paid(self):
+        sql = '''
+            update tithing_income
+            set tithing_paid = current_date
+            where tithing_paid is null
+        '''
+        self.u(sql)
+
     # user permissions
 
     def user_permissions_add(self, email: str, permission: str):
@@ -582,6 +620,18 @@ class YavinDatabase(fort.PostgresDatabase):
                 add library_type text not null default 'biblionix'
             ''')
             self._add_schema_version(20)
+        if self.version < 21:
+            self.log.debug('Migrating to version 21')
+            self.u('''
+                create table tithing_income (
+                    id uuid primary key default gen_random_uuid(),
+                    date date not null,
+                    amount numeric not null,
+                    description text,
+                    tithing_paid date
+                )
+            ''')
+            self._add_schema_version(21)
 
     def _add_schema_version(self, schema_version: int):
         self._version = schema_version

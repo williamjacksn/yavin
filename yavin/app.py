@@ -1,3 +1,4 @@
+import datetime
 import decimal
 import flask
 import functools
@@ -119,6 +120,11 @@ def index():
             'title': 'Phone usage',
             'view': 'phone',
             'visible': 'phone' in flask.g.permissions or 'admin' in flask.g.permissions,
+        },
+        {
+            'title': 'Tithing',
+            'view': 'tithing',
+            'visible': 'tithing' in flask.g.permissions or 'admin' in flask.g.permissions,
         },
         {
             'title': 'Weight',
@@ -487,6 +493,34 @@ def phone_add():
     v = flask.request.values
     db.phone_usage_insert(v.get('start-date'), v.get('end-date'), v.get('minutes'), v.get('messages'), v.get('megabytes'))
     return flask.redirect(flask.url_for('phone'))
+
+
+@app.get('/tithing')
+@permission_required('tithing')
+def tithing():
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.tithing_owed = db.tithing_get_current_owed()
+    flask.g.transactions = db.tithing_income_list_unpaid()
+    return flask.render_template('tithing.html')
+
+
+@app.post('/tithing/income/add')
+@permission_required('tithing')
+def tithing_income_add():
+    db: yavin.db.YavinDatabase = flask.g.db
+    date = datetime.datetime.strptime(flask.request.values.get('tx-date'), '%Y-%m-%d')
+    amount = decimal.Decimal(flask.request.values.get('tx-value'))
+    description = flask.request.values.get('tx-description')
+    db.tithing_income_insert(date, amount, description)
+    return flask.redirect(flask.url_for('tithing'))
+
+
+@app.post('/tithing/income/paid')
+@permission_required('tithing')
+def tithing_income_paid():
+    db: yavin.db.YavinDatabase = flask.g.db
+    db.tithing_income_mark_paid()
+    return flask.redirect(flask.url_for('tithing'))
 
 
 @app.get('/user-permissions')
