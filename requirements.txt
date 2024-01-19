@@ -18,7 +18,7 @@ click==8.1.7
     # via flask
 cssselect==1.2.0
     # via -r requirements.in
-flask==3.0.0
+flask==3.0.1
     # via -r requirements.in
 fort==1.2.0
     # via -r requirements.in
