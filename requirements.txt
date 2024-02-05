@@ -50,7 +50,7 @@ tzlocal==5.2
     # via apscheduler
 urllib3==2.2.0
     # via requests
-waitress==2.1.2
+waitress==3.0.0
     # via -r requirements.in
 werkzeug==3.0.1
     # via flask
