@@ -1,5 +1,6 @@
 import apscheduler.schedulers.background
 import email.message
+import email.utils
 import flask
 import logging
 import lxml.html
@@ -25,6 +26,7 @@ def library_notify(app: flask.Flask):
         log.info('Sending notification email')
         with app.app_context():
             msg = email.message.EmailMessage()
+            msg['Date'] = email.utils.formatdate()
             msg['Subject'] = 'Library alert'
             msg['From'] = app_settings.get('smtp_from_address')
             msg['To'] = settings.admin_email
