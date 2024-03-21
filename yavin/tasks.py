@@ -26,6 +26,7 @@ def library_notify(app: flask.Flask):
         log.info('Sending notification email')
         with app.app_context():
             msg = email.message.EmailMessage()
+            msg['Message-ID'] = email.utils.make_msgid()
             msg['Date'] = email.utils.formatdate()
             msg['Subject'] = 'Library alert'
             msg['From'] = app_settings.get('smtp_from_address')
