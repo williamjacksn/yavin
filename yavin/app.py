@@ -19,7 +19,7 @@ import yavin.util
 
 log = logging.getLogger(__name__)
 
-__version__ = '2023.8'
+__version__ = '2024.1'
 
 settings = yavin.settings.Settings()
 
