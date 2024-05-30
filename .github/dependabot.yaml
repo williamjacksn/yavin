@@ -14,5 +14,7 @@ updates:
       interval: daily
   - package-ecosystem: pip
     directory: /
+    allow:
+      - dependency-type: all
     schedule:
       interval: daily
