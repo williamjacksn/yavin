@@ -350,14 +350,21 @@ def jar_rows():
 @permission_required('library')
 def library():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.library_credentials = db.library_credentials_list()
     flask.g.library_books = db.library_books_list()
     return flask.render_template('library.html')
 
 
-@app.post('/library/add')
+@app.get('/library/accounts')
 @permission_required('library')
-def library_add():
+def library_accounts():
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.library_credentials = db.library_credentials_list()
+    return flask.render_template('library-accounts.html')
+
+
+@app.post('/library/accounts/add')
+@permission_required('library')
+def library_accounts_add():
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
         'display_name': flask.request.form.get('display_name'),
@@ -368,16 +375,16 @@ def library_add():
     }
     db.library_credentials_insert(params)
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
-    return flask.redirect(flask.url_for('library'))
+    return flask.redirect(flask.url_for('library_accounts'))
 
 
-@app.post('/library/delete')
+@app.post('/library/accounts/delete')
 @permission_required('library')
-def library_delete():
+def library_accounts_delete():
     db: yavin.db.YavinDatabase = flask.g.db
     db.library_credentials_delete(flask.request.form)
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
-    return flask.redirect(flask.url_for('library'))
+    return flask.redirect(flask.url_for('library_accounts'))
 
 
 @app.post('/library/renew')
