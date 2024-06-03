@@ -337,6 +337,15 @@ def jar_add():
     return flask.redirect(flask.url_for('jar'))
 
 
+@app.post('/jar/rows')
+@permission_required('jar')
+def jar_rows():
+    db: yavin.db.YavinDatabase = flask.g.db
+    flask.g.page = int(flask.request.values.get('page', 1))
+    flask.g.rows = db.jar_entries_list(flask.g.page)
+    return flask.render_template('jar-rows.html')
+
+
 @app.get('/library')
 @permission_required('library')
 def library():
