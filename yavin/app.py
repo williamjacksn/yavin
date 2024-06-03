@@ -508,8 +508,14 @@ def phone():
 @permission_required('phone')
 def phone_add():
     db: yavin.db.YavinDatabase = flask.g.db
-    v = flask.request.values
-    db.phone_usage_insert(v.get('start-date'), v.get('end-date'), v.get('minutes'), v.get('messages'), v.get('megabytes'))
+    kwargs = {
+        'start_date': datetime.date.fromisoformat(flask.request.values.get('start-date')),
+        'end_date': datetime.date.fromisoformat(flask.request.values.get('end-date')),
+        'minutes': int(flask.request.values.get('minutes')),
+        'messages': int(flask.request.values.get('messages')),
+        'megabytes': int(flask.request.values.get('megabytes')),
+    }
+    db.phone_usage_insert(**kwargs)
     return flask.redirect(flask.url_for('phone'))
 
 
