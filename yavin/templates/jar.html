@@ -41,12 +41,12 @@
                     <th>Date</th>
                 </tr>
                 </thead>
-                <tbody>
-                {% for entry in g.jar_entries %}
-                    <tr>
-                        <td>{{ entry.entry_date }}</td>
-                    </tr>
-                {% endfor %}
+                <tbody hx-post="{{ url_for('jar_rows') }}" hx-trigger="load">
+                <tr>
+                    <td class="py-3 text-center">
+                        <span class="htmx-indicator spinner-border spinner-border-sm"></span>
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
