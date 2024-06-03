@@ -119,6 +119,19 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # jar
 
+    def jar_entries_days_since_last(self) -> int:
+        """Get the number of days since the last jar entry. If the last jar entry was today (or in the future),
+        return 0. If there is no jar entry, return -1"""
+        sql = '''
+            select max(entry_date) last_entry from jar_entries
+        '''
+        last_entry = self.q_val(sql)
+        if last_entry is None:
+            return -1
+        if last_entry > datetime.date.today():
+            return 0
+        return (datetime.date.today() - last_entry).days
+
     def jar_entries_insert(self, entry_date: datetime.date):
         last: int = self.q_val('select max(id) max_id from jar_entries')
         if last is None:
