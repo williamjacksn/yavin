@@ -321,6 +321,8 @@ def expenses():
 def jar():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.today = yavin.util.today()
+    flask.g.days_since_last = db.jar_entries_days_since_last()
+    app.logger.debug(f'Days since last jar entry: {flask.g.days_since_last}')
     flask.g.jar_entries = db.jar_entries_list()
     return flask.render_template('jar.html')
 
