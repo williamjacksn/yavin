@@ -13,6 +13,10 @@
 
     <div class="pt-3 row">
         <div class="col">
+            <a class="btn btn-primary" href="{{ url_for('library_accounts') }}">
+                <i class="bi-person-badge"></i>
+                Manage accounts
+            </a>
             <a class="btn btn-primary" href="{{ url_for('library_sync_now') }}">
                 <i class="bi-arrow-repeat"></i>
                 Sync now
@@ -21,77 +25,6 @@
                 <i class="bi-bell"></i>
                 Notify now
             </a>
-        </div>
-    </div>
-
-    <div class="row pt-3">
-        <div class="col">
-            <table class="table d-block">
-                <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Library</th>
-                    <th>Type</th>
-                    <th>Username</th>
-                    <th>Password</th>
-                    <th>Balance</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for lib_cred in g.library_credentials %}
-                    <tr>
-                        <td>{{ lib_cred.display_name }}</td>
-                        <td>{{ lib_cred.library }}</td>
-                        <td>{{ lib_cred.library_type }}</td>
-                        <td>{{ lib_cred.username }}</td>
-                        <td>***</td>
-                        <td>{{ lib_cred.balance }}&cent;</td>
-                        <td>
-                            <form action="{{ url_for('library_delete') }}" method="post">
-                                <input type="hidden" name="id" value="{{ lib_cred.id }}">
-                                <button type="submit" class="btn btn-sm btn-danger">
-                                    <i class="bi-trash-fill"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-                <tr>
-                    <td>
-                        <form id="form-add-library" action="{{ url_for('library_add') }}" method="post">
-                            <input type="text" class="form-control" name="display_name" placeholder="Name"
-                                   aria-label="Name" required>
-                        </form>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control" form="form-add-library" name="library"
-                               placeholder="Library" aria-label="Library" required>
-                    </td>
-                    <td>
-                        <select aria-label="Library type" class="form-select" form="form-add-library"
-                                name="library_type">
-                            <option>bibliocommons</option>
-                            <option selected>biblionix</option>
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control" form="form-add-library" name="username"
-                               placeholder="Username" aria-label="Username" required>
-                    </td>
-                    <td>
-                        <input type="password" class="form-control" form="form-add-library" name="password"
-                               placeholder="Password" aria-label="Password" required>
-                    </td>
-                    <td></td>
-                    <td>
-                        <button type="submit" form="form-add-library" class="btn btn-success">
-                            <i class="bi-plus-circle"></i>
-                        </button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
         </div>
     </div>
 
