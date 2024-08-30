@@ -10,7 +10,7 @@ apscheduler==3.10.4
     # via -r requirements.in
 blinker==1.8.2
     # via flask
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
 charset-normalizer==3.3.2
     # via requests
