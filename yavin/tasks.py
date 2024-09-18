@@ -1,9 +1,9 @@
 import apscheduler.schedulers.background
+import bibliocommons
 import email.message
 import email.utils
 import flask
 import logging
-import lxml.html
 import requests
 import requests.utils
 import smtplib
@@ -89,34 +89,9 @@ def library_sync():
 
 def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase):
     lib_url = lib_data.get('library')
-    s = requests.Session()
-    login_page = s.get(f'https://{lib_url}.bibliocommons.com/user/login', params={'destination': 'x'})
-    login_page.raise_for_status()
-    doc = lxml.html.document_fromstring(login_page.content)
-    auth_token_el = doc.cssselect('input[name="authenticity_token"]')[0]
-    auth_token = auth_token_el.value
-    data = {
-        'authenticity_token': auth_token,
-        'name': lib_data.get('username'),
-        'user_pin': lib_data.get('password'),
-    }
-    login_action = s.post(f'https://{lib_url}.bibliocommons.com/user/login', data=data)
-    login_action.raise_for_status()
-    log.debug(f'Cookies: {s.cookies}')
-    session_id = s.cookies.get('session_id')
-    access_token = s.cookies.get('bc_access_token')
-    account_id_guess = int(session_id.split('-')[-1]) + 1
-    checkouts_url = f'https://gateway.bibliocommons.com/v2/libraries/{lib_url}/checkouts'
-    params = {
-        'accountId': account_id_guess
-    }
-    headers = {
-        'X-Access-Token': access_token,
-        'X-Session-Id': session_id,
-    }
-    checkouts = s.get(checkouts_url, headers=headers, params=params)
-    checkouts.raise_for_status()
-    response = checkouts.json()
+    bc = bibliocommons.BiblioCommonsClient(lib_url)
+    bc.authenticate(lib_data.get('username'), lib_data.get('password'))
+    response = bc.get_checkouts()
     log.debug(response)
     for item in response.get('entities', {}).get('checkouts', {}).values():
         params = {
