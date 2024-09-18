@@ -1,6 +1,7 @@
 --extra-index-url https://alpine-wheels.github.io/index
 
 apscheduler
+bibliocommons
 cssselect
 flask
 fort
