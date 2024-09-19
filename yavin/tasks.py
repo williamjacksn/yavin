@@ -1,5 +1,6 @@
 import apscheduler.schedulers.background
 import bibliocommons
+import biblionix
 import email.message
 import email.utils
 import flask
@@ -107,23 +108,9 @@ def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase):
 
 def library_sync_biblionix(lib_data: dict, db: yavin.db.YavinDatabase):
     lib_url = lib_data.get('library')
-    s = requests.Session()
-    login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
-    login_data = {
-        'username': lib_data.get('username'),
-        'password': lib_data.get('password'),
-    }
-    login = s.post(url=login_url, data=login_data)
-    log.info(f'Received {len(login.content)} bytes from {login_url}')
-    log.debug(login.text)
-    login_et = xml.etree.ElementTree.XML(login.text)
-    session_key = login_et.get('session')
-    account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
-    account_data = {'session': session_key}
-    account = s.post(url=account_url, data=account_data)
-    log.info(f'Received {len(account.content)} bytes from {account_url}')
-    log.debug(account.text)
-    account_et = xml.etree.ElementTree.XML(account.text)
+    bc = biblionix.BiblionixClient(lib_url)
+    bc.authenticate(lib_data.get('username'), lib_data.get('password'))
+    account_et = bc.get_account_info()
     cred_id = lib_data.get('id')
     db.library_credentials_update({
         'id': cred_id,
