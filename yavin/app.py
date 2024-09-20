@@ -4,7 +4,6 @@ import flask
 import functools
 import jwt
 import logging
-import lxml.html
 import requests
 import requests.utils
 import urllib.parse
@@ -201,16 +200,10 @@ def balances_add_tx():
 @app.get('/billboard')
 @permission_required('billboard')
 def billboard():
-    url = 'https://www.billboard.com/charts/hot-100/'
-    resp = requests.get(url)
-    resp.raise_for_status()
-    doc = lxml.html.document_fromstring(resp.content)
-    title_h3 = doc.cssselect('h3')[0]
-    div = title_h3.getparent()
-    artist_p = div.cssselect('p')[0]
-    flask.g.title = str(title_h3.text_content()).strip()
-    flask.g.artist = str(artist_p.text_content()).strip()
-    app.logger.debug(f'Current number 1 song is {flask.g.title} by {flask.g.artist}')
+    flask.g.latest = flask.g.db.billboard_get_latest()
+    if flask.g.latest is None:
+        yavin.tasks.billboard_number_one_fetch()
+        flask.g.latest = flask.g.db.billboard_get_latest()
     return flask.render_template('billboard.html')
 
 
@@ -605,6 +598,8 @@ def main():
             db.user_permissions_add(settings.admin_email, 'admin')
 
         yavin.tasks.scheduler.start()
+        yavin.tasks.scheduler.add_job(yavin.tasks.billboard_number_one_fetch, 'interval', hours=24,
+                                      start_date=yavin.util.in_two_minutes())
         yavin.tasks.scheduler.add_job(yavin.tasks.library_sync, 'interval', hours=6,
                                       start_date=yavin.util.in_two_minutes())
         yavin.tasks.scheduler.add_job(yavin.tasks.library_notify, 'cron', day='*', hour='3', args=[app])

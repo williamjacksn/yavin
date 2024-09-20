@@ -4,6 +4,8 @@ import biblionix
 import email.message
 import email.utils
 import flask
+import httpx
+import lxml.html
 import logging
 import requests
 import requests.utils
@@ -15,6 +17,29 @@ import yavin.util
 
 log = logging.getLogger(__name__)
 scheduler = apscheduler.schedulers.background.BackgroundScheduler()
+
+
+def billboard_number_one_fetch():
+    log.info('Fetching Billboard Hot 100 #1')
+    url = 'https://www.billboard.com/charts/hot-100/'
+    resp = httpx.get(url)
+    resp.raise_for_status()
+    doc = lxml.html.document_fromstring(resp.content)
+
+    title_h3 = doc.cssselect('h3')[0]
+    title = str(title_h3.text_content()).strip()
+
+    div = title_h3.getparent()
+    artist_p = div.cssselect('p')[0]
+    artist = str(artist_p.text_content()).strip()
+
+    settings = yavin.settings.Settings()
+    db = yavin.db.YavinDatabase(settings.dsn)
+    latest = db.billboard_get_latest()
+    if latest and (artist, title) == (latest.get('artist'), latest.get('title')):
+        db.billboard_update_fetched_at(latest.get('id'))
+    else:
+        db.billboard_insert(artist, title)
 
 
 def library_notify(app: flask.Flask):

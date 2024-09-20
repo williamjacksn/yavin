@@ -13,7 +13,10 @@
 
     <div class="row pt-3">
         <div class="col">
-            <p><strong>{{ g.title }}</strong> by {{ g.artist }}</p>
+            <p><strong>{{ g.latest.title }}</strong> by {{ g.latest.artist }}</p>
+            <p>
+                Last fetched: {{ g.latest.fetched_at | datetime }} UTC
+            </p>
         </div>
     </div>
 

@@ -46,6 +46,43 @@ class YavinDatabase(fort.PostgresDatabase):
         }
         return self.q(sql, params)
 
+    # billboard
+
+    def billboard_get_latest(self):
+        sql = '''
+            select artist, fetched_at, id, title
+            from billboard_number_one
+            order by fetched_at desc
+            limit 1
+        '''
+        return self.q_one(sql)
+
+    def billboard_insert(self, artist: str, title: str):
+        sql = '''
+            insert into billboard_number_one (
+                artist, fetched_at, id, title
+            ) values (
+                %(artist)s, current_timestamp, %(id)s, %(title)s
+            )
+        '''
+        params = {
+            'artist': artist,
+            'id': uuid.uuid4(),
+            'title': title,
+        }
+        self.u(sql, params)
+
+    def billboard_update_fetched_at(self, _id):
+        sql = '''
+            update billboard_number_one
+            set fetched_at = current_timestamp
+            where id = %(id)s
+        '''
+        params = {
+            'id': _id,
+        }
+        self.u(sql, params)
+
     # captain's log
 
     def captains_log_delete(self, id_: str):
@@ -632,6 +669,17 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             ''')
             self._add_schema_version(21)
+        if self.version < 22:
+            self.log.debug('Migrating to version 22')
+            self.u('''
+                create table billboard_number_one (
+                    id uuid primary key,
+                    fetched_at timestamptz not null,
+                    artist text not null,
+                    title text not null
+                )
+            ''')
+            self._add_schema_version(22)
 
     def _add_schema_version(self, schema_version: int):
         self._version = schema_version
