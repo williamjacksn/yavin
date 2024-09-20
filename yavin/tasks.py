@@ -95,13 +95,20 @@ def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase):
     response = bc.get_checkouts()
     log.debug(response)
     for item in response.get('entities', {}).get('checkouts', {}).values():
+        bib = response.get('entities', {}).get('bibs', {}).get(item.get('metadataId'), {})
+        medium = bib.get('briefInfo').get('format')
+        if medium == 'BK':
+            medium = ''
+        titles = [bib.get('briefInfo').get('title')]
+        if bib.get('briefInfo').get('subtitle'):
+            titles.append(bib.get('briefInfo').get('subtitle'))
         params = {
             'credential_id': lib_data.get('id'),
             'due': item.get('dueDate'),
             'item_id': '',
-            'medium': '',
+            'medium': medium,
             'renewable': False,
-            'title': item.get('bibTitle'),
+            'title': ' / '.join(titles),
         }
         db.library_books_insert(params)
 
