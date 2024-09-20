@@ -7,8 +7,6 @@ import flask
 import httpx
 import lxml.html
 import logging
-import requests
-import requests.utils
 import smtplib
 import xml.etree.ElementTree
 import yavin.db
@@ -72,7 +70,7 @@ def library_renew(item_id: str):
     log.info(f'Attempting to renew item {item_id}')
     lib_cred = db.library_credentials_get({'item_id': item_id})
     lib_url = lib_cred.get('library')
-    s = requests.Session()
+    s = httpx.Client()
     login_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl'
     login_data = {
         'username': lib_cred.get('username'),
@@ -84,7 +82,7 @@ def library_renew(item_id: str):
     account_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl'
     account_data = {'session': session_key}
     s.post(url=account_url, data=account_data)
-    requests.utils.add_dict_to_cookiejar(s.cookies, {'session': session_key})
+    s.cookies.update({'session': session_key})
     renew_url = f'https://{lib_url}.biblionix.com/catalog/ajax_backend/account_command.xml.pl'
     renew_data = {'command': 'renew', 'checkout': item_id}
     renew = s.post(url=renew_url, data=renew_data)

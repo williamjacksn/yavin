@@ -2,10 +2,9 @@ import datetime
 import decimal
 import flask
 import functools
+import httpx
 import jwt
 import logging
-import requests
-import requests.utils
 import urllib.parse
 import uuid
 import waitress
@@ -545,7 +544,7 @@ def authorize():
         log.debug(f'{key}: {value}')
     if flask.session.get('state') != flask.request.values.get('state'):
         return 'State mismatch', 401
-    discovery_document = requests.get(settings.openid_discovery_document).json()
+    discovery_document = httpx.get(settings.openid_discovery_document).json()
     token_endpoint = discovery_document.get('token_endpoint')
     data = {
         'code': flask.request.values.get('code'),
@@ -554,7 +553,7 @@ def authorize():
         'redirect_uri': flask.url_for('authorize', _external=True),
         'grant_type': 'authorization_code'
     }
-    resp = requests.post(token_endpoint, data=data).json()
+    resp = httpx.post(token_endpoint, data=data).json()
     id_token = resp.get('id_token')
     algorithms = discovery_document.get('id_token_signing_alg_values_supported')
     claim = jwt.decode(id_token, options={'verify_signature': False}, algorithms=algorithms)
@@ -574,7 +573,7 @@ def sign_in():
         'redirect_uri': redirect_uri,
         'state': state
     }
-    discovery_document = requests.get(settings.openid_discovery_document).json()
+    discovery_document = httpx.get(settings.openid_discovery_document).json()
     auth_endpoint = discovery_document.get('authorization_endpoint')
     auth_url = f'{auth_endpoint}?{urllib.parse.urlencode(query)}'
     return flask.redirect(auth_url, 307)
