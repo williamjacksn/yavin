@@ -10,5 +10,4 @@ lxml
 notch
 psycopg2
 pyjwt
-requests
 waitress
