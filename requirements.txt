@@ -54,7 +54,7 @@ markupsafe==3.0.1
     #   werkzeug
 notch==2023.1
     # via -r requirements.in
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
     # via -r requirements.in
 pyjwt==2.9.0
     # via -r requirements.in
