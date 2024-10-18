@@ -1,5 +1,3 @@
---extra-index-url https://alpine-wheels.github.io/index
-
 apscheduler
 bibliocommons
 biblionix
@@ -8,6 +6,6 @@ flask
 fort
 lxml
 notch
-psycopg2
+psycopg2-binary
 pyjwt
 waitress

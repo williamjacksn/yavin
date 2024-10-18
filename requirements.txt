@@ -4,8 +4,6 @@
 #
 #    pip-compile
 #
---extra-index-url https://alpine-wheels.github.io/index
-
 anyio==4.6.2.post1
     # via httpx
 apscheduler==3.10.4
@@ -56,7 +54,7 @@ markupsafe==3.0.1
     #   werkzeug
 notch==2023.1
     # via -r requirements.in
-psycopg2==2.9.9
+psycopg2-binary==2.9.9
     # via -r requirements.in
 pyjwt==2.9.0
     # via -r requirements.in

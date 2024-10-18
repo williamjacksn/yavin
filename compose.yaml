@@ -25,7 +25,7 @@ services:
 
   shell:
     entrypoint:
-      - /bin/sh
+      - /bin/bash
     image: ghcr.io/williamjacksn/yavin
     init: true
     volumes:
