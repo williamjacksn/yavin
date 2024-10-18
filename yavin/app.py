@@ -201,7 +201,7 @@ def balances_add_tx():
 def billboard():
     flask.g.latest = flask.g.db.billboard_get_latest()
     if flask.g.latest is None:
-        yavin.tasks.billboard_number_one_fetch()
+        yavin.tasks.billboard_number_one_fetch(app)
         flask.g.latest = flask.g.db.billboard_get_latest()
     return flask.render_template('billboard.html')
 
@@ -598,7 +598,7 @@ def main():
 
         yavin.tasks.scheduler.start()
         yavin.tasks.scheduler.add_job(yavin.tasks.billboard_number_one_fetch, 'interval', hours=24,
-                                      start_date=yavin.util.in_two_minutes())
+                                      start_date=yavin.util.in_two_minutes(), args=[app])
         yavin.tasks.scheduler.add_job(yavin.tasks.library_sync, 'interval', hours=6,
                                       start_date=yavin.util.in_two_minutes())
         yavin.tasks.scheduler.add_job(yavin.tasks.library_notify, 'cron', day='*', hour='3', args=[app])

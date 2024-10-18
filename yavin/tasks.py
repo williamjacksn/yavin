@@ -17,7 +17,23 @@ log = logging.getLogger(__name__)
 scheduler = apscheduler.schedulers.background.BackgroundScheduler()
 
 
-def billboard_number_one_fetch():
+def _notify(subject: str, body: str):
+    settings = yavin.settings.Settings()
+    db = yavin.db.YavinDatabase(settings.dsn)
+    app_settings = db.settings_list()
+    msg = email.message.EmailMessage()
+    msg['Message-ID'] = email.utils.make_msgid()
+    msg['Date'] = email.utils.formatdate()
+    msg['Subject'] = subject
+    msg['From'] = app_settings.get('smtp_from_address')
+    msg['To'] = settings.admin_email
+    msg.set_content(body, subtype='html')
+    with smtplib.SMTP_SSL(host=app_settings.get('smtp_server')) as s:
+        s.login(user=app_settings.get('smtp_username'), password=app_settings.get('smtp_password'))
+        s.send_message(msg)
+
+
+def billboard_number_one_fetch(app: flask.Flask):
     log.info('Fetching Billboard Hot 100 #1')
     url = 'https://www.billboard.com/charts/hot-100/'
     resp = httpx.get(url)
@@ -38,28 +54,23 @@ def billboard_number_one_fetch():
         db.billboard_update_fetched_at(latest.get('id'))
     else:
         db.billboard_insert(artist, title)
+        subject = 'New Billboard Hot 100 #1'
+        with app.app_context():
+            body = flask.render_template('email-billboard.html', artist=artist, title=title)
+        _notify(subject, body)
 
 
 def library_notify(app: flask.Flask):
     log.info('Checking for due library items')
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
-    app_settings = db.settings_list()
     due_books = db.library_books_list_due()
     if due_books:
         log.info('Sending notification email')
+        subject = 'Library alert'
         with app.app_context():
-            msg = email.message.EmailMessage()
-            msg['Message-ID'] = email.utils.make_msgid()
-            msg['Date'] = email.utils.formatdate()
-            msg['Subject'] = 'Library alert'
-            msg['From'] = app_settings.get('smtp_from_address')
-            msg['To'] = settings.admin_email
-            content = flask.render_template('email-library-item-due.html', due_books=due_books)
-            msg.set_content(content, subtype='html')
-            with smtplib.SMTP_SSL(host=app_settings.get('smtp_server')) as s:
-                s.login(user=app_settings.get('smtp_username'), password=app_settings.get('smtp_password'))
-                s.send_message(msg)
+            body = flask.render_template('email-library-item-due.html', due_books=due_books)
+        _notify(subject, body)
     else:
         log.info('No due library items found')
 
