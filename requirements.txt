@@ -70,5 +70,5 @@ tzlocal==5.2
     # via apscheduler
 waitress==3.0.0
     # via -r requirements.in
-werkzeug==3.0.5
+werkzeug==3.0.6
     # via flask
