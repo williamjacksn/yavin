@@ -1,5 +1,5 @@
 services:
-  yavin:
+  app:
     environment:
       ADMIN_EMAIL: (set in compose.override.yaml)
       DSN: postgres://postgres:postgres@postgres/postgres
@@ -12,6 +12,15 @@ services:
     init: true
     ports:
       - 8080:8080
+
+  pip-compile:
+    entrypoint:
+      - /home/python/venv/bin/pip-compile
+    image: ghcr.io/williamjacksn/pip-tools:py3.12
+    init: true
+    volumes:
+      - ./:/home/python/yavin
+    working_dir: /home/python/yavin
 
   postgres:
     image: postgres:16
