@@ -24,7 +24,7 @@ cssselect==1.2.0
     # via
     #   -r requirements.in
     #   bibliocommons
-flask==3.0.3
+flask==3.1.0
     # via -r requirements.in
 fort==2024.2
     # via -r requirements.in
