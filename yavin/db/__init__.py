@@ -1,2 +1,2 @@
-from .app import YavinDatabase
-from .expenses import ExpensesDatabase
+from .app import YavinDatabase as YavinDatabase
+from .expenses import ExpensesDatabase as ExpensesDatabase
