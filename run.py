@@ -3,7 +3,8 @@ import signal
 import sys
 import yavin.app
 
-log = notch.make_log('yavin-entrypoint')
+log = notch.make_log("yavin-entrypoint")
+
 
 def handle_sigterm(_signal, _frame):
     sys.exit()

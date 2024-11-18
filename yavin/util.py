@@ -7,11 +7,11 @@ def add_days(d: datetime.date, days: int) -> datetime.date:
 
 
 def clean_datetime(d: datetime.datetime) -> str:
-    return d.strftime('%Y-%m-%d %H:%M')
+    return d.strftime("%Y-%m-%d %H:%M")
 
 
 def clean_due_date(due: str) -> datetime.date:
-    return datetime.datetime.strptime(due, '%m\u2011%d\u2011%Y').date()
+    return datetime.datetime.strptime(due, "%m\u2011%d\u2011%Y").date()
 
 
 def in_two_minutes() -> datetime.datetime:
@@ -19,8 +19,12 @@ def in_two_minutes() -> datetime.datetime:
 
 
 def str_to_date(d: str) -> datetime.date:
-    return datetime.datetime.strptime(d, '%Y-%m-%d').date()
+    return datetime.datetime.strptime(d, "%Y-%m-%d").date()
 
 
 def today() -> datetime.date:
-    return datetime.datetime.now(tz=datetime.timezone.utc).astimezone(tz=zoneinfo.ZoneInfo('America/Chicago')).date()
+    return (
+        datetime.datetime.now(tz=datetime.timezone.utc)
+        .astimezone(tz=zoneinfo.ZoneInfo("America/Chicago"))
+        .date()
+    )
