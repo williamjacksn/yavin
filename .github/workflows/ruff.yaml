@@ -1,0 +1,25 @@
+name: Ruff
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  ruff:
+    name: Run ruff linting and formatting checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Run ruff check
+        uses: astral-sh/ruff-action@v1
+        with:
+          args: check --output-format=github
+      - name: Run ruff format
+        uses: astral-sh/ruff-action@v1
+        with:
+          args: format --check
