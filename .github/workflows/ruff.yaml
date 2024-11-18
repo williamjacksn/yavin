@@ -10,6 +10,7 @@ on:
 
 jobs:
   ruff:
+    name: Run ruff linting and formatting checks
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
