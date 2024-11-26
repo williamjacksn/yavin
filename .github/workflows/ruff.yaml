@@ -16,10 +16,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Run ruff check
-        uses: astral-sh/ruff-action@v1
+        uses: astral-sh/ruff-action@v2
         with:
           args: check --output-format=github
       - name: Run ruff format
-        uses: astral-sh/ruff-action@v1
+        uses: astral-sh/ruff-action@v2
         with:
           args: format --check
