@@ -18,7 +18,7 @@ certifi==2024.12.14
     # via
     #   httpcore
     #   httpx
-click==8.1.7
+click==8.1.8
     # via flask
 cssselect==1.2.0
     # via
