@@ -16,17 +16,17 @@
             <table class="table d-block">
                 <thead>
                 <tr>
-                    <th class="col-captains-log-date">Log date</th>
+                    <th>Log date</th>
                     <th>Log text</th>
-                    <th class="col-captains-log-actions">Actions</th>
+                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for record in g.records | sort(attribute='log_timestamp', reverse=True) %}
                     <tr>
-                        <td>{{ record.log_timestamp | datetime }} UTC</td>
+                        <td class="text-nowrap">{{ record.log_timestamp | datetime }} UTC</td>
                         <td>{{ record.log_text }}</td>
-                        <td>
+                        <td class="text-nowrap">
                             <a class="btn btn-sm btn-primary" href="#modal-edit" data-bs-toggle="modal"
                                data-log-id="{{ record.id }}" data-log-text="{{ record.log_text }}"
                                data-log-timestamp="{{ record.log_timestamp | datetime }} UTC">
