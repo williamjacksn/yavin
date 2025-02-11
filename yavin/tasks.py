@@ -8,7 +8,6 @@ import httpx
 import lxml.html
 import logging
 import smtplib
-import xml.etree.ElementTree
 import yavin.db
 import yavin.settings
 import yavin.util
