@@ -82,38 +82,6 @@ def library_notify(app: flask.Flask):
         log.info("No due library items found")
 
 
-def library_renew(item_id: str):
-    settings = yavin.settings.Settings()
-    db = yavin.db.YavinDatabase(settings.dsn)
-    log.info(f"Attempting to renew item {item_id}")
-    lib_cred = db.library_credentials_get({"item_id": item_id})
-    lib_url = lib_cred.get("library")
-    s = httpx.Client()
-    login_url = f"https://{lib_url}.biblionix.com/catalog/ajax_backend/login.xml.pl"
-    login_data = {
-        "username": lib_cred.get("username"),
-        "password": lib_cred.get("password"),
-    }
-    login = s.post(url=login_url, data=login_data)
-    login_et = xml.etree.ElementTree.XML(login.text)
-    session_key = login_et.get("session")
-    account_url = f"https://{lib_url}.biblionix.com/catalog/ajax_backend/account.xml.pl"
-    account_data = {"session": session_key}
-    s.post(url=account_url, data=account_data)
-    s.cookies.update({"session": session_key})
-    renew_url = (
-        f"https://{lib_url}.biblionix.com/catalog/ajax_backend/account_command.xml.pl"
-    )
-    renew_data = {"command": "renew", "checkout": item_id}
-    renew = s.post(url=renew_url, data=renew_data)
-    log.debug(renew.text)
-    renew_et = xml.etree.ElementTree.XML(renew.text)
-    if renew_et.get("success") == "1":
-        item = renew_et.find("item")
-        new_due = yavin.util.clean_due_date(item.get("due"))
-        db.library_books_update({"due": new_due, "item_id": item_id})
-
-
 def library_sync():
     log.info("Syncing library data")
     settings = yavin.settings.Settings()

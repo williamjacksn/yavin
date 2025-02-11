@@ -389,14 +389,6 @@ def library_accounts_delete():
     return flask.redirect(flask.url_for("library_accounts"))
 
 
-@app.post("/library/renew")
-@permission_required("library")
-def library_renew():
-    item_id = flask.request.form.get("item_id")
-    yavin.tasks.library_renew(item_id)
-    return flask.redirect(flask.url_for("library"))
-
-
 @app.get("/library/notify-now")
 @permission_required("library")
 def library_notify_now():

@@ -36,7 +36,6 @@
                     <th>Due</th>
                     <th>Title</th>
                     <th>Account</th>
-                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -45,16 +44,6 @@
                         <td>{{ book.due }}</td>
                         <td><span class="badge bg-dark">{{ book.medium }}</span> {{ book.title }}</td>
                         <td>{{ book.display_name }}</td>
-                        <td>
-                        {% if book.renewable %}
-                            <form action="{{ url_for('library_renew') }}" method="post">
-                                <input type="hidden" name="item_id" value="{{ book.item_id }}">
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="bi-arrow-repeat"></i>
-                                </button>
-                            </form>
-                        {% endif %}
-                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
