@@ -135,25 +135,18 @@ def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase):
     lib_url = lib_data.get("library")
     bc = bibliocommons.BiblioCommonsClient(lib_url)
     bc.authenticate(lib_data.get("username"), lib_data.get("password"))
-    response = bc.get_checkouts()
-    log.debug(response)
-    for item in response.get("entities", {}).get("checkouts", {}).values():
-        bib = (
-            response.get("entities", {}).get("bibs", {}).get(item.get("metadataId"), {})
-        )
-        medium = bib.get("briefInfo").get("format")
-        if medium == "BK":
-            medium = ""
-        titles = [bib.get("briefInfo").get("title")]
-        if bib.get("briefInfo").get("subtitle"):
-            titles.append(bib.get("briefInfo").get("subtitle"))
+    for item in bc.loans:
+        if item.subtitle:
+            title = f'{item.title} / {item.subtitle}'
+        else:
+            title = item.title
         params = {
-            "credential_id": lib_data.get("id"),
-            "due": item.get("dueDate"),
-            "item_id": "",
-            "medium": medium,
-            "renewable": False,
-            "title": " / ".join(titles),
+            'credential_id': lib_data.get('id'),
+            'due': item.due,
+            'item_id': item.item_id,
+            'medium': item.medium,
+            'renewable': item.renewable,
+            'title': title,
         }
         db.library_books_insert(params)
 
