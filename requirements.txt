@@ -10,7 +10,7 @@ apscheduler==3.11.0
     # via -r requirements.in
 bibliocommons==2025.0
     # via -r requirements.in
-biblionix==2024.0
+biblionix==2025.0
     # via -r requirements.in
 blinker==1.9.0
     # via flask
