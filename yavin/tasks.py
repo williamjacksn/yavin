@@ -105,16 +105,16 @@ def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase):
     bc.authenticate(lib_data.get("username"), lib_data.get("password"))
     for item in bc.loans:
         if item.subtitle:
-            title = f'{item.title} / {item.subtitle}'
+            title = f"{item.title} / {item.subtitle}"
         else:
             title = item.title
         params = {
-            'credential_id': lib_data.get('id'),
-            'due': item.due,
-            'item_id': item.item_id,
-            'medium': item.medium,
-            'renewable': item.renewable,
-            'title': title,
+            "credential_id": lib_data.get("id"),
+            "due": item.due,
+            "item_id": item.item_id,
+            "medium": item.medium,
+            "renewable": item.renewable,
+            "title": title,
         }
         db.library_books_insert(params)
 
