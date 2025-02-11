@@ -8,7 +8,7 @@ anyio==4.8.0
     # via httpx
 apscheduler==3.11.0
     # via -r requirements.in
-bibliocommons==2024.1
+bibliocommons==2025.0
     # via -r requirements.in
 biblionix==2024.0
     # via -r requirements.in
