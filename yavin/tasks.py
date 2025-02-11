@@ -122,15 +122,13 @@ def library_sync_biblionix(lib_data: dict, db: yavin.db.YavinDatabase):
     lib_url = lib_data.get("library")
     bc = biblionix.BiblionixClient(lib_url)
     bc.authenticate(lib_data.get("username"), lib_data.get("password"))
-    account_et = bc.get_account_info()
-    cred_id = lib_data.get("id")
-    for item in account_et.findall("item"):
+    for item in bc.loans:
         params = {
-            "credential_id": cred_id,
-            "title": item.get("title").replace("\xad", ""),
-            "due": item.get("due_raw"),
-            "renewable": item.get("renewable") == "1",
-            "item_id": item.get("id"),
-            "medium": item.get("medium").replace("\xad", ""),
+            "credential_id": lib_data.get("id"),
+            "due": item.due,
+            "item_id": item.item_id,
+            "medium": item.medium,
+            "renewable": item.renewable,
+            "title": item.title,
         }
         db.library_books_insert(params)
