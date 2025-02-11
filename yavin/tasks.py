@@ -124,12 +124,6 @@ def library_sync_biblionix(lib_data: dict, db: yavin.db.YavinDatabase):
     bc.authenticate(lib_data.get("username"), lib_data.get("password"))
     account_et = bc.get_account_info()
     cred_id = lib_data.get("id")
-    db.library_credentials_update({"id": cred_id, "balance": 0})
-    for alert in account_et.findall("alerts"):
-        if alert.get("balance"):
-            db.library_credentials_update(
-                {"id": cred_id, "balance": int(alert.get("balance"))}
-            )
     for item in account_et.findall("item"):
         params = {
             "credential_id": cred_id,
