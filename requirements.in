@@ -4,6 +4,7 @@ biblionix
 cssselect
 flask
 fort
+htpy
 lxml
 notch
 psycopg2-binary
