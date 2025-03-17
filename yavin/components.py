@@ -11,7 +11,10 @@ def dashboard_card(
             htpy.div(".card-body")[
                 htpy.h5(".card-title")[markupsafe.Markup(card_title)],
                 card_href
-                and htpy.a(".card-link.stretched-link", href=card_href)[card_text],
+                and htpy.a(
+                    ".card-link.stretched-link.text-decoration-none.text-reset",
+                    href=card_href,
+                )[card_text],
             ]
         ]
     )
