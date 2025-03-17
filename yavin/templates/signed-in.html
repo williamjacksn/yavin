@@ -17,13 +17,9 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row pt-3">
-        <div class="col">
-            <div class="list-group">
-            {% for page in g.pages if page.visible %}
-                <a class="list-group-item list-group-item-action" href="{{ url_for(page.view) }}">{{ page.title|safe }}</a>
-            {% endfor %}
-            </div>
-        </div>
+    <div class="g-2 pt-3 row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6">
+    {% for c in g.cards if c.visible %}
+        <div class="col" hx-get="{{ c.url }}" hx-trigger="load"></div>
+    {% endfor %}
     </div>
 {% endblock %}

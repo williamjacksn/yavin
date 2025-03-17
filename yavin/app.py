@@ -10,6 +10,7 @@ import uuid
 import waitress
 import werkzeug.middleware.proxy_fix
 import werkzeug.utils
+import yavin.components
 import yavin.db
 import yavin.settings
 import yavin.tasks
@@ -72,68 +73,57 @@ def index():
     session_email = flask.session.get("email")
     if session_email is None:
         return flask.render_template("index.html")
-    flask.g.pages = [
+    flask.g.cards = [
         {
-            "title": "Balances",
-            "view": "balances",
+            "url": flask.url_for("dashboard_card_balances"),
             "visible": "balances" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
         {
-            "title": "Billboard Hot 100 #1",
-            "view": "billboard",
+            "url": flask.url_for("dashboard_card_billboard"),
             "visible": "billboard" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
         {
-            "title": "Captain&#x02bc;s log",
-            "view": "captains_log",
+            "url": flask.url_for("dashboard_card_captains_log"),
             "visible": "captains-log" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
         {
-            "title": "Electricity",
-            "view": "electricity",
+            "url": flask.url_for("dashboard_card_electricity"),
             "visible": "electricity" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
         {
-            "title": "Expenses",
-            "view": "expenses",
+            "url": flask.url_for("dashboard_card_expenses"),
             "visible": "expenses" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
         {
-            "title": "Jar",
-            "view": "jar",
+            "url": flask.url_for("dashboard_card_jar"),
             "visible": "jar" in flask.g.permissions or "admin" in flask.g.permissions,
         },
         {
-            "title": "Library",
-            "view": "library",
+            "url": flask.url_for("dashboard_card_library"),
             "visible": "library" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
         {
-            "title": "Movie night",
-            "view": "movie_night",
+            "url": flask.url_for("dashboard_card_movie_night"),
             "visible": "movie-night" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
         {
-            "title": "Phone usage",
-            "view": "phone",
+            "url": flask.url_for("dashboard_card_phone"),
             "visible": "phone" in flask.g.permissions or "admin" in flask.g.permissions,
         },
         {
-            "title": "Tithing",
-            "view": "tithing",
+            "url": flask.url_for("dashboard_card_tithing"),
             "visible": "tithing" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
         {
-            "title": "Weight",
-            "view": "weight",
+            "url": flask.url_for("dashboard_card_weight"),
             "visible": "weight" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
@@ -255,6 +245,72 @@ def captains_log_update():
     log_text = flask.request.form.get("log_text")
     db.captains_log_update(flask.request.form.get("id"), log_text)
     return flask.redirect(flask.url_for("captains_log"))
+
+
+@app.get("/dashboard-card/balances")
+def dashboard_card_balances():
+    return yavin.components.dashboard_card_balances()
+
+
+@app.get("/dashboard-card/billboard")
+def dashboard_card_billboard():
+    latest = flask.g.db.billboard_get_latest()
+    if latest is None:
+        text = "Unknown"
+    else:
+        text = f'{latest.get("title")} by {latest.get("artist")}'
+    return yavin.components.dashboard_card_billboard(text)
+
+
+@app.get("/dashboard-card/captains-log")
+def dashboard_card_captains_log():
+    return yavin.components.dashboard_card_captains_log()
+
+
+@app.get("/dashboard-card/electricity")
+def dashboard_card_electricity():
+    return yavin.components.dashboard_card_electricity()
+
+
+@app.get("/dashboard-card/expenses")
+def dashboard_card_expenses():
+    return yavin.components.dashboard_card_expenses()
+
+
+@app.get("/dashboard-card/jar")
+def dashboard_card_jar():
+    return yavin.components.dashboard_card_jar()
+
+
+@app.get("/dashboard-card/library")
+def dashboard_card_library():
+    return yavin.components.dashboard_card_library()
+
+
+@app.get("/dashboard-card/movie-night")
+def dashboard_card_movie_night():
+    db: yavin.db.YavinDatabase = flask.g.db
+    next_pick = db.movie_people_next_pick()
+    if next_pick is None:
+        next_pick_person = "Unknown"
+    else:
+        next_pick_person = next_pick.get("person")
+    return yavin.components.dashboard_card_movie_night(next_pick_person)
+
+
+@app.get("/dashboard-card/phone")
+def dashboard_card_phone():
+    return yavin.components.dashboard_card_phone()
+
+
+@app.get("/dashboard-card/tithing")
+def dashboard_card_tithing():
+    return yavin.components.dashboard_card_tithing()
+
+
+@app.get("/dashboard-card/weight")
+def dashboard_card_weight():
+    return yavin.components.dashboard_card_weight()
 
 
 @app.get("/electricity")

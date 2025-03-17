@@ -342,6 +342,24 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         return self.q(sql)
 
+    def movie_people_next_pick(self):
+        sql = """
+            with l as (
+                select person_id, max(pick_date) last_pick_date
+                from movie_picks
+                group by person_id
+            ), p as (
+                select m.id, m.person, l.last_pick_date
+                from movie_people m
+                left join l on l.person_id = m.id
+            )
+            select id, person
+            from p
+            order by last_pick_date nulls first, id
+            limit 1
+        """
+        return self.q_one(sql)
+
     def movie_picks_delete(self, params: dict):
         sql = """
             delete from movie_picks
