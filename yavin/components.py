@@ -17,10 +17,8 @@ def dashboard_card(
     )
 
 
-def dashboard_card_balances() -> str:
-    return dashboard_card(
-        "Balances", flask.url_for("balances"), "Check account balances"
-    )
+def dashboard_card_balances(text: str) -> str:
+    return dashboard_card("Balances", flask.url_for("balances"), text)
 
 
 def dashboard_card_billboard(latest: str) -> str:

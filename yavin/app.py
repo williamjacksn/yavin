@@ -249,7 +249,9 @@ def captains_log_update():
 
 @app.get("/dashboard-card/balances")
 def dashboard_card_balances():
-    return yavin.components.dashboard_card_balances()
+    accounts_count = flask.g.db.balances_accounts_count()
+    text = f"Accounts: {accounts_count}"
+    return yavin.components.dashboard_card_balances(text)
 
 
 @app.get("/dashboard-card/billboard")

@@ -10,6 +10,13 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # balances
 
+    def balances_accounts_count(self) -> int:
+        sql = """
+            select count(*)
+            from balances_accounts
+        """
+        return int(self.q_val(sql))
+
     def balances_accounts_list(self):
         sql = """
             select
