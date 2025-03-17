@@ -258,7 +258,7 @@ def dashboard_card_billboard():
     if latest is None:
         text = "Unknown"
     else:
-        text = f'{latest.get("title")} by {latest.get("artist")}'
+        text = f"{latest.get('title')} by {latest.get('artist')}"
     return yavin.components.dashboard_card_billboard(text)
 
 
