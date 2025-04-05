@@ -3,6 +3,82 @@ import htpy
 import markupsafe
 
 
+def _base(title: str = "Yavin", content=None, end_of_body=None) -> htpy.html:
+    return htpy.html(lang="en")[
+        htpy.head[
+            htpy.meta(charset="utf-8"),
+            htpy.meta(
+                content="width=device-width, initial-scale=1, shrink-to-fit=no",
+                name="viewport",
+            ),
+            htpy.title[title],
+            htpy.link(
+                href=flask.url_for("static", filename="bootstrap-5.3.3.css"),
+                rel="stylesheet",
+            ),
+            htpy.link(
+                href=flask.url_for("static", filename="bootstrap-icons-1.11.3.css"),
+                rel="stylesheet",
+            ),
+        ],
+        htpy.body[
+            htpy.div(".container-fluid")[
+                htpy.div(".pt-3.row")[
+                    htpy.div(".col")[_breadcrumb(),],
+                    htpy.div(".col")[_sign_in(),],
+                ],
+                content,
+                _footer(),
+            ],
+            htpy.script(
+                src=flask.url_for("static", filename="bootstrap-5.3.3.bundle.js")
+            ),
+            htpy.script(src=flask.url_for("static", filename="htmx-2.0.4.js")),
+            htpy.script(src=flask.url_for("static", filename="data-href-clickable.js")),
+            end_of_body,
+        ],
+    ]
+
+
+def _breadcrumb() -> htpy.a:
+    return htpy.a(".btn.btn-outline-dark", href="#")[
+        htpy.strong[
+            htpy.i(".bi-house-fill"),
+            " Yavin",
+        ],
+    ]
+
+
+def _debug_layout() -> list[htpy.span]:
+    return [
+        htpy.span(".d-inline.d-sm-none")["xs"],
+        htpy.span(".d-none.d-sm-inline.d-md-none")["sm"],
+        htpy.span(".d-none.d-md-inline.d-lg-none")["md"],
+        htpy.span(".d-none.d-lg-inline.d-xl-none")["lg"],
+        htpy.span(".d-none.d-xl-inline.d-xxl-none")["xl"],
+        htpy.span(".d-none.d-xxl-inline")["xxl"],
+    ]
+
+
+def _footer() -> htpy.div:
+    return htpy.div(".pb-2.pt-3.row")[
+        htpy.div(".col")[
+            htpy.hr(".border-light"),
+            htpy.small(".text-body-secondary")[
+                flask.g.version,
+                _debug_layout(),
+            ],
+        ],
+    ]
+
+
+def _sign_in() -> htpy.a:
+    return htpy.a(".btn.btn-primary.float-end", href=flask.url_for("sign_in"))[
+        htpy.i(".bi-person-fill"),
+        " Sign in",
+    ]
+
+
 def dashboard_card(
     card_title: str, card_href: str = None, card_text: str = None
 ) -> str:
@@ -64,3 +140,7 @@ def dashboard_card_tithing() -> str:
 
 def dashboard_card_weight() -> str:
     return dashboard_card("Weight", flask.url_for("weight"), "Go")
+
+
+def index() -> str:
+    return htpy.render_node(_base())
