@@ -72,8 +72,8 @@ def before_request():
 def index():
     session_email = flask.session.get("email")
     if session_email is None:
-        return yavin.components.index()
-    flask.g.cards = [
+        return yavin.components.index_signed_out()
+    cards = [
         {
             "url": flask.url_for("dashboard_card_balances"),
             "visible": "balances" in flask.g.permissions
@@ -128,7 +128,7 @@ def index():
             or "admin" in flask.g.permissions,
         },
     ]
-    return flask.render_template("signed-in.html")
+    return yavin.components.index_signed_in(session_email, flask.g.permissions, cards)
 
 
 @app.get("/app-settings")

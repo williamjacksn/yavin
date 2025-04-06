@@ -1,9 +1,12 @@
 import flask
 import htpy
 import markupsafe
+import yavin.versions
 
 
-def _base(title: str = "Yavin", content=None, end_of_body=None) -> htpy.html:
+def _base(
+    title: str = "Yavin", sign_in_block=None, content=None, end_of_body=None
+) -> htpy.html:
     return htpy.html(lang="en")[
         htpy.head[
             htpy.meta(charset="utf-8"),
@@ -25,7 +28,7 @@ def _base(title: str = "Yavin", content=None, end_of_body=None) -> htpy.html:
             htpy.div(".container-fluid")[
                 htpy.div(".pt-3.row")[
                     htpy.div(".col")[_breadcrumb(),],
-                    htpy.div(".col")[_sign_in(),],
+                    htpy.div(".col")[sign_in_block or _sign_in(),],
                 ],
                 content,
                 _footer(),
@@ -49,15 +52,14 @@ def _breadcrumb() -> htpy.a:
     ]
 
 
-def _debug_layout() -> list[htpy.span]:
-    return [
-        htpy.span(".d-inline.d-sm-none")["xs"],
-        htpy.span(".d-none.d-sm-inline.d-md-none")["sm"],
-        htpy.span(".d-none.d-md-inline.d-lg-none")["md"],
-        htpy.span(".d-none.d-lg-inline.d-xl-none")["lg"],
-        htpy.span(".d-none.d-xl-inline.d-xxl-none")["xl"],
-        htpy.span(".d-none.d-xxl-inline")["xxl"],
-    ]
+_debug_layout = [
+    htpy.span(".d-inline.d-sm-none")["xs"],
+    htpy.span(".d-none.d-sm-inline.d-md-none")["sm"],
+    htpy.span(".d-none.d-md-inline.d-lg-none")["md"],
+    htpy.span(".d-none.d-lg-inline.d-xl-none")["lg"],
+    htpy.span(".d-none.d-xl-inline.d-xxl-none")["xl"],
+    htpy.span(".d-none.d-xxl-inline")["xxl"],
+]
 
 
 def _footer() -> htpy.div:
@@ -65,8 +67,8 @@ def _footer() -> htpy.div:
         htpy.div(".col")[
             htpy.hr(".border-light"),
             htpy.small(".text-body-secondary")[
-                flask.g.version,
-                _debug_layout(),
+                yavin.versions.app_version,
+                _debug_layout,
             ],
         ],
     ]
@@ -76,6 +78,27 @@ def _sign_in() -> htpy.a:
     return htpy.a(".btn.btn-primary.float-end", href=flask.url_for("sign_in"))[
         htpy.i(".bi-person-fill"),
         " Sign in",
+    ]
+
+
+def _user_menu(email: str, is_admin: bool) -> htpy.div:
+    return htpy.div(".dropdown.float-end")[
+        htpy.button(
+            ".btn.btn-primary.dropdown-toggle", data_bs_toggle="dropdown", type="button"
+        )[htpy.i(".bi-person-fill"),],
+        htpy.div(".dropdown-menu.dropdown-menu-right")[
+            htpy.h6(".dropdown-header")[email],
+            is_admin
+            and [
+                htpy.a(".dropdown-item", href=flask.url_for("app_settings"))[
+                    "App settings"
+                ],
+                htpy.a(".dropdown-item", href=flask.url_for("user_permissions"))[
+                    "User permissions"
+                ],
+            ],
+            htpy.a(".dropdown-item", href=flask.url_for("sign_out"))["Sign out"],
+        ],
     ]
 
 
@@ -142,5 +165,25 @@ def dashboard_card_weight() -> str:
     return dashboard_card("Weight", flask.url_for("weight"), "Go")
 
 
-def index() -> str:
+def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> str:
+    card_nodes = []
+    for card in cards:
+        if card.get("visible"):
+            card_nodes.append(
+                htpy.div(".col", hx_get=card.get("url"), hx_trigger="load")
+            )
+    content = htpy.div(
+        ".g-2.pt-3.row.row-cols-2.row-cols-md-3.row-cols-lg-4.row-cols-xl-5.row-cols-xxl-6"
+    )[card_nodes]
+    return signed_in(email, permissions, content)
+
+
+def index_signed_out() -> str:
     return htpy.render_node(_base())
+
+
+def signed_in(email: str, permissions: list[str], content=None) -> str:
+    is_admin = "admin" in permissions
+    return htpy.render_node(
+        _base(sign_in_block=_user_menu(email, is_admin), content=content)
+    )
