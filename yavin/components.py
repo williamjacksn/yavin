@@ -4,8 +4,16 @@ import markupsafe
 import yavin.versions
 
 
+def _back_to_home() -> htpy.a:
+    return _breadcrumb(flask.url_for("index"), "Home")
+
+
 def _base(
-    title: str = "Yavin", sign_in_block=None, content=None, end_of_body=None
+    title: str = "Yavin",
+    sign_in_block=None,
+    breadcrumb=None,
+    content=None,
+    end_of_body=None,
 ) -> htpy.html:
     return htpy.html(lang="en")[
         htpy.head[
@@ -27,11 +35,11 @@ def _base(
         htpy.body[
             htpy.div(".container-fluid")[
                 htpy.div(".pt-3.row")[
-                    htpy.div(".col")[_breadcrumb(),],
+                    htpy.div(".col")[breadcrumb or _breadcrumb(),],
                     htpy.div(".col")[sign_in_block or _sign_in(),],
                 ],
                 content,
-                _footer(),
+                _footer,
             ],
             htpy.script(
                 src=flask.url_for("static", filename="bootstrap-5.3.3.bundle.js")
@@ -43,16 +51,18 @@ def _base(
     ]
 
 
-def _breadcrumb() -> htpy.a:
-    return htpy.a(".btn.btn-outline-dark", href="#")[
+def _breadcrumb(href="#", label="Yavin") -> htpy.a:
+    icon_class = ".bi-house-fill" if label == "Yavin" else ".bi-chevron-left"
+    return htpy.a(".btn.btn-outline-dark", href=href)[
         htpy.strong[
-            htpy.i(".bi-house-fill"),
-            " Yavin",
+            htpy.i(icon_class),
+            f" {label}",
         ],
     ]
 
 
 _debug_layout = [
+    " ",
     htpy.span(".d-inline.d-sm-none")["xs"],
     htpy.span(".d-none.d-sm-inline.d-md-none")["sm"],
     htpy.span(".d-none.d-md-inline.d-lg-none")["md"],
@@ -62,16 +72,15 @@ _debug_layout = [
 ]
 
 
-def _footer() -> htpy.div:
-    return htpy.div(".pb-2.pt-3.row")[
-        htpy.div(".col")[
-            htpy.hr(".border-light"),
-            htpy.small(".text-body-secondary")[
-                yavin.versions.app_version,
-                _debug_layout,
-            ],
+_footer = htpy.div(".pb-2.pt-3.row")[
+    htpy.div(".col")[
+        htpy.hr,
+        htpy.small(".text-body-secondary")[
+            yavin.versions.app_version,
+            _debug_layout,
         ],
-    ]
+    ],
+]
 
 
 def _sign_in() -> htpy.a:
@@ -175,15 +184,29 @@ def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> st
     content = htpy.div(
         ".g-2.pt-3.row.row-cols-2.row-cols-md-3.row-cols-lg-4.row-cols-xl-5.row-cols-xxl-6"
     )[card_nodes]
-    return signed_in(email, permissions, content)
+    return signed_in(email, permissions, _breadcrumb(), content)
 
 
 def index_signed_out() -> str:
     return htpy.render_node(_base())
 
 
-def signed_in(email: str, permissions: list[str], content=None) -> str:
+def not_authorized(email: str, permissions: list[str]) -> str:
+    content = htpy.div(".row")[
+        htpy.div(".col")[
+            htpy.h1["Not authorized"],
+            htpy.p(".lead")["You are not authorized to view this page."],
+        ]
+    ]
+    return signed_in(email, permissions, _back_to_home(), content)
+
+
+def signed_in(email: str, permissions: list[str], breadcrumb=None, content=None) -> str:
     is_admin = "admin" in permissions
     return htpy.render_node(
-        _base(sign_in_block=_user_menu(email, is_admin), content=content)
+        _base(
+            sign_in_block=_user_menu(email, is_admin),
+            breadcrumb=breadcrumb,
+            content=content,
+        )
     )

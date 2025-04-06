@@ -49,7 +49,7 @@ def permission_required(permission: str):
                 return flask.redirect(flask.url_for("index"))
             if "admin" in flask.g.permissions or permission in flask.g.permissions:
                 return f(*args, **kwargs)
-            return flask.render_template("not-authorized.html")
+            return yavin.components.not_authorized(flask.g.email, flask.g.permissions)
 
         return decorated_function
 
