@@ -8,6 +8,7 @@ import httpx
 import lxml.html
 import logging
 import smtplib
+import yavin.components
 import yavin.db
 import yavin.settings
 import yavin.util
@@ -35,7 +36,7 @@ def _notify(subject: str, body: str):
         s.send_message(msg)
 
 
-def billboard_number_one_fetch(app: flask.Flask):
+def billboard_number_one_fetch():
     log.info("Fetching Billboard Hot 100 #1")
     url = "https://www.billboard.com/charts/hot-100/"
     resp = httpx.get(url)
@@ -57,11 +58,7 @@ def billboard_number_one_fetch(app: flask.Flask):
     else:
         db.billboard_insert(artist, title)
         subject = "New Billboard Hot 100 #1"
-        with app.app_context():
-            body = flask.render_template(
-                "email-billboard.html", artist=artist, title=title
-            )
-        _notify(subject, body)
+        _notify(subject, yavin.components.email_billboard(title, artist))
 
 
 def library_notify(app: flask.Flask):

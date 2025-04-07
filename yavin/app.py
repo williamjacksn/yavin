@@ -203,7 +203,7 @@ def balances_add_tx():
 def billboard():
     flask.g.latest = flask.g.db.billboard_get_latest()
     if flask.g.latest is None:
-        yavin.tasks.billboard_number_one_fetch(app)
+        yavin.tasks.billboard_number_one_fetch()
         flask.g.latest = flask.g.db.billboard_get_latest()
     return yavin.components.billboard()
 
@@ -671,7 +671,6 @@ def main():
             "interval",
             hours=24,
             start_date=yavin.util.in_two_minutes(),
-            args=[app],
         )
         yavin.tasks.scheduler.add_job(
             yavin.tasks.library_sync,

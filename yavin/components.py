@@ -552,6 +552,19 @@ def electricity() -> str:
     )
 
 
+def email_billboard(song_title: str, song_artist: str) -> str:
+    return htpy.render_node(
+        htpy.html(lang="en")[
+            htpy.body[
+                htpy.p["Hello,"],
+                htpy.p["There is a new Billboard Hot 100 #1 song!"],
+                htpy.p[htpy.strong[song_title], " by ", song_artist],
+                htpy.p["(This is an automated message.)"],
+            ]
+        ]
+    )
+
+
 def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> str:
     card_nodes = []
     for card in cards:
