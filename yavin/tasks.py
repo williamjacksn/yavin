@@ -61,7 +61,7 @@ def billboard_number_one_fetch():
         _notify(subject, yavin.components.email_billboard(title, artist))
 
 
-def library_notify(app: flask.Flask):
+def library_notify():
     log.info("Checking for due library items")
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
@@ -69,11 +69,7 @@ def library_notify(app: flask.Flask):
     if due_books:
         log.info("Sending notification email")
         subject = "Library alert"
-        with app.app_context():
-            body = flask.render_template(
-                "email-library-item-due.html", due_books=due_books
-            )
-        _notify(subject, body)
+        _notify(subject, yavin.components.email_library_item_due(due_books))
     else:
         log.info("No due library items found")
 

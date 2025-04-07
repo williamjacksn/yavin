@@ -565,6 +565,35 @@ def email_billboard(song_title: str, song_artist: str) -> str:
     )
 
 
+def email_library_item_due(due_books: list[dict]) -> str:
+    return htpy.render_node(
+        htpy.html(lang="en")[
+            htpy.body[
+                htpy.p["Hello,"],
+                htpy.p[
+                    "The following items are due (or possibly overdue) at the library today."
+                ],
+                htpy.ul[
+                    (
+                        htpy.li[
+                            htpy.em[b.get("title")],
+                            " (",
+                            b.get("medium"),
+                            ") is due on ",
+                            b.get("due").isoformat(),
+                            " (",
+                            b.get("account_name"),
+                            ")",
+                        ]
+                        for b in due_books
+                    )
+                ],
+                htpy.p["(This is an automated message.)"],
+            ]
+        ]
+    )
+
+
 def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> str:
     card_nodes = []
     for card in cards:

@@ -450,7 +450,7 @@ def library_accounts_delete():
 @permission_required("library")
 def library_notify_now():
     log.info("Got library notification request")
-    yavin.tasks.scheduler.add_job(yavin.tasks.library_notify, args=[app])
+    yavin.tasks.scheduler.add_job(yavin.tasks.library_notify)
     return flask.redirect(flask.url_for("library"))
 
 
@@ -679,7 +679,7 @@ def main():
             start_date=yavin.util.in_two_minutes(),
         )
         yavin.tasks.scheduler.add_job(
-            yavin.tasks.library_notify, "cron", day="*", hour="3", args=[app]
+            yavin.tasks.library_notify, "cron", day="*", hour="3"
         )
 
         waitress.serve(
