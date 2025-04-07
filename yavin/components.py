@@ -1,7 +1,12 @@
 import flask
 import htpy
 import markupsafe
+import yavin.util
 import yavin.versions
+
+
+def _back_to_balances() -> htpy.a:
+    return _breadcrumb(flask.url_for("balances"), "Balances")
 
 
 def _back_to_home() -> htpy.a:
@@ -202,6 +207,156 @@ def app_settings() -> str:
         _back_to_home(),
         content,
         "Yavin / App settings",
+    )
+
+
+def balances() -> str:
+    rows = []
+    for a in flask.g.accounts:
+        rows.append(
+            htpy.tr(
+                data_href=flask.url_for(
+                    "balances_detail", account_id=a.get("account_id")
+                ),
+                role="button",
+            )[
+                htpy.td[a.get("account_name")],
+                htpy.td(".text-end")[f"{a.get('account_balance'):,.2f}"],
+            ]
+        )
+    content = [
+        _page_title("Balances"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table.table-striped")[
+                    htpy.thead[
+                        htpy.tr[htpy.th["Account"], htpy.th(".text-end")["Balance"]]
+                    ],
+                    htpy.tbody[rows],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,
+        "Yavin / Balances",
+    )
+
+
+def balances_detail() -> str:
+    rows = []
+    for t in flask.g.transactions:
+        if t.get("tx_id"):
+            badge_class = (
+                "text-bg-success" if t.get("tx_value") >= 0 else "text-bg-danger"
+            )
+            rows.append(
+                htpy.tr[
+                    htpy.td[
+                        htpy.span(".badge.text-bg-secondary")[
+                            t.get("tx_date").isoformat()
+                        ],
+                        htpy.br,
+                        t.get("tx_description"),
+                    ],
+                    htpy.td(".text-end")[
+                        htpy.span(f".badge.{badge_class}")[
+                            f"$ {abs(t.get('tx_value')):,.2f}"
+                        ]
+                    ],
+                ]
+            )
+    modal_body_add_tx = htpy.div(".modal-body")[
+        htpy.form(
+            "#form-add-tx",
+            action=flask.url_for("balances_add_tx"),
+            method="post",
+        )[
+            htpy.input(
+                name="account-id",
+                type="hidden",
+                value=str(flask.g.account_id),
+            ),
+            htpy.div(".mb-3")[
+                htpy.label(".form-label", for_="tx-date")["Date"],
+                htpy.input(
+                    "#tx-date.form-control",
+                    name="tx-date",
+                    required=True,
+                    type="date",
+                    value=yavin.util.today().isoformat(),
+                ),
+            ],
+            htpy.div(".mb-3")[
+                htpy.label(".form-label", for_="tx-description")["Description"],
+                htpy.input(
+                    "#tx-description.form-control",
+                    name="tx-description",
+                    required=True,
+                    type="text",
+                ),
+            ],
+            htpy.div(".mb-3")[
+                htpy.label(".form-label", for_="tx-value")["Amount"],
+                htpy.input(
+                    "#tx-value.form-control",
+                    name="tx-value",
+                    required=True,
+                    step="0.01",
+                    type="number",
+                ),
+            ],
+        ]
+    ]
+    content = [
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.h1[flask.g.account_name],
+                htpy.p["Current balance: $ ", f"{flask.g.account_balance:,.2f}"],
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.a(
+                    ".btn.btn-success",
+                    data_bs_target="#modal-add-tx",
+                    data_bs_toggle="modal",
+                )["Add transaction"]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table.table-striped")[htpy.tbody[rows]]
+            ]
+        ],
+        htpy.div("#modal-add-tx.modal")[
+            htpy.div(".modal-dialog")[
+                htpy.div(".modal-content")[
+                    htpy.div(".modal-header")[
+                        htpy.h5(".modal-title")["Add a transaction"]
+                    ],
+                    modal_body_add_tx,
+                    htpy.div(".justify-content-between.modal-footer")[
+                        htpy.button(".btn.btn-secondary", data_bs_dismiss="modal")[
+                            "Cancel"
+                        ],
+                        htpy.button(".btn.btn-success", form="form-add-tx")[
+                            "Add transaction"
+                        ],
+                    ],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_balances(),
+        content,
+        f"Yavin / Balances / {flask.g.get('account_name')}",
     )
 
 

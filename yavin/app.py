@@ -171,7 +171,7 @@ def app_settings_update():
 @permission_required("balances")
 def balances():
     flask.g.accounts = flask.g.db.balances_accounts_list()
-    return flask.render_template("balances.html")
+    return yavin.components.balances()
 
 
 @app.get("/balances/<uuid:account_id>")
@@ -181,8 +181,7 @@ def balances_detail(account_id: uuid.UUID):
     flask.g.transactions = flask.g.db.balances_transactions_list(account_id)
     flask.g.account_name = flask.g.transactions[0].get("account_name")
     flask.g.account_balance = flask.g.transactions[0].get("account_balance")
-    flask.g.today = yavin.util.today()
-    return flask.render_template("balances-detail.html")
+    return yavin.components.balances_detail()
 
 
 @app.post("/balances/add-transaction")
