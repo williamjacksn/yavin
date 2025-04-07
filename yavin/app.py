@@ -319,7 +319,7 @@ def dashboard_card_weight():
 def electricity():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.electricity_list()
-    return flask.render_template("electricity.html")
+    return yavin.components.electricity()
 
 
 @app.post("/electricity/add")

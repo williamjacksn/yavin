@@ -450,6 +450,108 @@ def dashboard_card_weight() -> str:
     return dashboard_card("Weight", flask.url_for("weight"), "Go")
 
 
+def electricity() -> str:
+    rows = []
+    for r in flask.g.records:
+        rows.append(
+            htpy.tr[
+                htpy.td[r.get("bill_date").isoformat()],
+                htpy.td(".text-end")[r.get("kwh")],
+                htpy.td(".text-end")[int(r.get("avg_12_months"))],
+                htpy.td(".text-end")[f"$ {r.get('charge'):,.2f}"],
+                htpy.td(".text-end")[f"$ {r.get('bill'):,.2f}"],
+            ]
+        )
+    content = [
+        _page_title("Electricity"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.form(action=flask.url_for("electricity_add"), method="post")[
+                    htpy.div(".g-1.row")[
+                        htpy.div(".col-auto")[
+                            htpy.input(
+                                ".form-control",
+                                aria_label="When",
+                                name="bill_date",
+                                required=True,
+                                type="date",
+                            )
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.input(
+                                ".form-control",
+                                aria_label="kWh",
+                                min=0,
+                                name="kwh",
+                                placeholder="kWh",
+                                required=True,
+                                step=1,
+                                type="number",
+                            )
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.div(".input-group")[
+                                htpy.span(".input-group-text")["$"],
+                                htpy.input(
+                                    ".form-control",
+                                    aria_label="Charge",
+                                    min=0,
+                                    name="charge",
+                                    placeholder="Charge",
+                                    required=True,
+                                    step="0.01",
+                                    type="number",
+                                ),
+                            ]
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.div(".input-group")[
+                                htpy.span(".input-group-text")["$"],
+                                htpy.input(
+                                    ".form-control",
+                                    aria_label="Bill",
+                                    min=0,
+                                    name="bill",
+                                    placeholder="Bill",
+                                    required=True,
+                                    step="0.01",
+                                    type="number",
+                                ),
+                            ]
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.button(".btn.btn-success", type="submit")["Add"]
+                        ],
+                    ]
+                ]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table")[
+                    htpy.thead[
+                        htpy.tr[
+                            htpy.th["Date"],
+                            htpy.th(".text-end")["kWh"],
+                            htpy.th(".text-end")["12 month avg"],
+                            htpy.th(".text-end")["Charge"],
+                            htpy.th(".text-end")["Bill"],
+                        ]
+                    ],
+                    htpy.tbody[rows],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,
+        "Yavin / Electricity",
+    )
+
+
 def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> str:
     card_nodes = []
     for card in cards:
