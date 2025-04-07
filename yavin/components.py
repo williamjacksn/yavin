@@ -360,6 +360,33 @@ def balances_detail() -> str:
     )
 
 
+def billboard() -> str:
+    content = [
+        _page_title("Billboard Hot 100 #1"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.p[
+                    htpy.strong[flask.g.latest.get("title")],
+                    " by ",
+                    flask.g.latest.get("artist"),
+                ],
+                htpy.p[
+                    "Last fetched: ",
+                    yavin.util.clean_datetime(flask.g.latest.get("fetched_at")),
+                    " UTC",
+                ],
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,
+        "Yavin / Billboard Hot 100 #1",
+    )
+
+
 def dashboard_card(
     card_title: str, card_href: str = None, card_text: str = None
 ) -> str:

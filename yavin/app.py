@@ -205,7 +205,7 @@ def billboard():
     if flask.g.latest is None:
         yavin.tasks.billboard_number_one_fetch(app)
         flask.g.latest = flask.g.db.billboard_get_latest()
-    return flask.render_template("billboard.html")
+    return yavin.components.billboard()
 
 
 @app.get("/captains-log")
