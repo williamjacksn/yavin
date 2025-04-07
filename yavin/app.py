@@ -134,7 +134,7 @@ def index():
 @app.get("/app-settings")
 @permission_required("admin")
 def app_settings():
-    return flask.render_template("app-settings.html")
+    return yavin.components.app_settings()
 
 
 @app.post("/app-settings/update")

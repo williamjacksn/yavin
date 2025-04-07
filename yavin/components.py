@@ -39,7 +39,7 @@ def _base(
                     htpy.div(".col")[sign_in_block or _sign_in(),],
                 ],
                 content,
-                _footer,
+                _footer(),
             ],
             htpy.script(
                 src=flask.url_for("static", filename="bootstrap-5.3.3.bundle.js")
@@ -56,7 +56,8 @@ def _breadcrumb(href="#", label="Yavin") -> htpy.a:
     return htpy.a(".btn.btn-outline-dark", href=href)[
         htpy.strong[
             htpy.i(icon_class),
-            f" {label}",
+            " ",
+            label,
         ],
     ]
 
@@ -72,15 +73,20 @@ _debug_layout = [
 ]
 
 
-_footer = htpy.div(".pb-2.pt-3.row")[
-    htpy.div(".col")[
-        htpy.hr,
-        htpy.small(".text-body-secondary")[
-            yavin.versions.app_version,
-            _debug_layout,
+def _footer() -> htpy.div:
+    return htpy.div(".pb-2.pt-3.row")[
+        htpy.div(".col")[
+            htpy.hr,
+            htpy.small(".text-body-secondary")[
+                yavin.versions.app_version,
+                flask.g.app_settings.get("debug_layout") == "true" and _debug_layout,
+            ],
         ],
-    ],
-]
+    ]
+
+
+def _page_title(title: str) -> htpy.div:
+    return htpy.div(".pt-3.row")[htpy.div(".col")[htpy.h1[title]]]
 
 
 def _sign_in() -> htpy.a:
@@ -109,6 +115,94 @@ def _user_menu(email: str, is_admin: bool) -> htpy.div:
             htpy.a(".dropdown-item", href=flask.url_for("sign_out"))["Sign out"],
         ],
     ]
+
+
+def app_settings() -> str:
+    fs_expenses = htpy.fieldset[
+        htpy.legend["Expenses"],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="expenses_db")["Expenses database path"],
+            htpy.input(
+                "#expenses_db.form-control",
+                name="expenses_db",
+                type="text",
+                value=flask.g.app_settings.get("expenses_db"),
+            ),
+        ],
+    ]
+    fs_smtp = htpy.fieldset[
+        htpy.legend["SMTP settings"],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="smtp_server")["SMTP server"],
+            htpy.input(
+                "#smtp_server.form-control",
+                name="smtp_server",
+                type="text",
+                value=flask.g.app_settings.get("smtp_server"),
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="smtp_username")["SMTP username"],
+            htpy.input(
+                "#smtp_username.form-control",
+                name="smtp_username",
+                type="text",
+                value=flask.g.app_settings.get("smtp_username"),
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="smtp_password")["SMTP password"],
+            htpy.input(
+                "#smtp_password.form-control",
+                name="smtp_password",
+                type="password",
+                value=flask.g.app_settings.get("smtp_password"),
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="smtp_from_address")["SMTP from address"],
+            htpy.input(
+                "#smtp_from_address.form-control",
+                name="smtp_from_address",
+                type="text",
+                value=flask.g.app_settings.get("smtp_from_address"),
+            ),
+        ],
+    ]
+    fs_other = htpy.fieldset[
+        htpy.legend["Other settings"],
+        htpy.div(".form-check.mb-3")[
+            htpy.input(
+                "#debug_layout.form-check-input",
+                name="debug_layout",
+                type="checkbox",
+                checked=(flask.g.app_settings.get("debug_layout") == "true"),
+            ),
+            htpy.label(".form-check-label", for_="debug_layout")[
+                "Enable debug layout hints"
+            ],
+        ],
+    ]
+    content = [
+        _page_title("App settings"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col-12.col-sm-10.col-md-8.col-lg-7.col-xl-4")[
+                htpy.form(action=flask.url_for("app_settings_update"), method="post")[
+                    fs_expenses,
+                    fs_smtp,
+                    fs_other,
+                    htpy.button(".btn.btn-primary", type="submit")["Save"],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,
+        "Yavin / App settings",
+    )
 
 
 def dashboard_card(
@@ -201,10 +295,13 @@ def not_authorized(email: str, permissions: list[str]) -> str:
     return signed_in(email, permissions, _back_to_home(), content)
 
 
-def signed_in(email: str, permissions: list[str], breadcrumb=None, content=None) -> str:
+def signed_in(
+    email: str, permissions: list[str], breadcrumb=None, content=None, title=None
+) -> str:
     is_admin = "admin" in permissions
     return htpy.render_node(
         _base(
+            title,
             sign_in_block=_user_menu(email, is_admin),
             breadcrumb=breadcrumb,
             content=content,
