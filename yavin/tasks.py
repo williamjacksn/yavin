@@ -3,7 +3,6 @@ import bibliocommons
 import biblionix
 import email.message
 import email.utils
-import flask
 import httpx
 import lxml.html
 import logging
