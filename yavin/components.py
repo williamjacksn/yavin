@@ -700,6 +700,78 @@ def index_signed_out() -> str:
     return htpy.render_node(_base())
 
 
+def jar() -> str:
+    content = [
+        _page_title("Jar"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.form(action=flask.url_for("jar_add", method="post"))[
+                    htpy.div(".g-1.row")[
+                        htpy.div(".col-auto")[
+                            htpy.input(
+                                ".form-control",
+                                name="entry_date",
+                                title="Entry date",
+                                type="date",
+                                value=yavin.util.today().isoformat(),
+                            )
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.button(".btn.btn-success", type="submit")["Save"]
+                        ],
+                    ]
+                ]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.h4["Days since last entry: ", flask.g.days_since_last]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table")[
+                    htpy.thead[htpy.tr[htpy.th["Date"]]],
+                    htpy.tbody(hx_post=flask.url_for("jar_rows"), hx_trigger="load")[
+                        htpy.tr[
+                            htpy.td(".py-3.text-center")[
+                                htpy.span(
+                                    ".htmx-indicator.spinner-border.spinner-border-sm"
+                                )
+                            ]
+                        ]
+                    ],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Jar"
+    )
+
+
+def jar_rows() -> str:
+    rows = []
+    for i, r in enumerate(flask.g.rows):
+        if i < 11:
+            rows.append(htpy.tr[htpy.td[r.get("entry_date").isoformat()]])
+        else:
+            rows.append(
+                htpy.tr[
+                    htpy.td(
+                        ".py-3.text-center",
+                        hx_post=flask.url_for("jar_rows", page=flask.g.page + 1),
+                        hx_swap="outerHTML",
+                        hx_target="closest tr",
+                        hx_trigger="revealed",
+                    )[htpy.span(".htmx-indicator.spinner-border.spinner-border-sm")]
+                ]
+            )
+    if not rows:
+        rows.append(htpy.tr(".text-center")[htpy.td["No entries found."]])
+    return htpy.render_node(rows)
+
+
 def not_authorized(email: str, permissions: list[str]) -> str:
     content = htpy.div(".row")[
         htpy.div(".col")[

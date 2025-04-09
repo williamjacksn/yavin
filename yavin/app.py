@@ -383,7 +383,7 @@ def jar():
     flask.g.days_since_last = db.jar_entries_days_since_last()
     app.logger.debug(f"Days since last jar entry: {flask.g.days_since_last}")
     flask.g.jar_entries = db.jar_entries_list()
-    return flask.render_template("jar.html")
+    return yavin.components.jar()
 
 
 @app.post("/jar/add")
@@ -402,7 +402,7 @@ def jar_rows():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.page = int(flask.request.values.get("page", 1))
     flask.g.rows = db.jar_entries_list(flask.g.page)
-    return flask.render_template("jar-rows.html")
+    return yavin.components.jar_rows()
 
 
 @app.get("/library")
