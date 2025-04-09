@@ -594,6 +594,95 @@ def email_library_item_due(due_books: list[dict]) -> str:
     )
 
 
+def expenses() -> str:
+    expense_rows = []
+    for e in flask.g.expenses:
+        expense_rows.append(
+            htpy.tr[
+                htpy.td[
+                    htpy.div(".g-1.justify-content-between.row")[
+                        htpy.div(".col-auto")[
+                            e["description"],
+                            htpy.br,
+                            e["memo"] and htpy.small[e["memo"]],
+                        ],
+                        htpy.div(".col-auto.text-end")[
+                            htpy.strong[f"$ {e['amount']:,.2f}"]
+                        ],
+                    ],
+                    htpy.div(".g-1.justify-content-between.row")[
+                        htpy.div(".col-auto")[
+                            htpy.span(".badge.bg-primary")[e["account"][13:]]
+                        ],
+                        htpy.div(".col-auto.text-body-secondary.text-end")[
+                            e["post_date"][:10]
+                        ],
+                    ],
+                ]
+            ]
+        )
+    content = [
+        _page_title("Expenses"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.form[
+                    htpy.div(".g-1.row")[
+                        htpy.div(".col-auto")[
+                            htpy.div(".input-group")[
+                                htpy.span(".input-group-text")["from"],
+                                htpy.input(
+                                    ".form-control",
+                                    aria_label="Start date",
+                                    name="start_date",
+                                    type="date",
+                                    value=flask.g.start_date.isoformat(),
+                                ),
+                            ]
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.div(".input-group")[
+                                htpy.span(".input-group-text")["to"],
+                                htpy.input(
+                                    ".form-control",
+                                    aria_label="End date",
+                                    name="end_date",
+                                    type="date",
+                                    value=flask.g.end_date.isoformat(),
+                                ),
+                            ]
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.button(".btn.btn-success", type="submit")["Go"]
+                        ],
+                    ]
+                ]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col.col-sm-8.col-md-6.col-lg-5.col-xl-4.col-xxl-3")[
+                htpy.table(".table.table-striped")[
+                    htpy.tbody[
+                        htpy.tr[
+                            htpy.td[
+                                htpy.div(".g-1.justify-content-between.row")[
+                                    htpy.div(".col-auto")[htpy.strong["Total"]],
+                                    htpy.div(".col-auto")[
+                                        htpy.strong[f"$ {flask.g.total:,.2f}"]
+                                    ],
+                                ]
+                            ]
+                        ],
+                        expense_rows,
+                    ]
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Expenses"
+    )
+
+
 def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> str:
     card_nodes = []
     for card in cards:

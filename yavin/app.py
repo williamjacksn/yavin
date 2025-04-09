@@ -372,7 +372,7 @@ def expenses():
         "Root Account:Expenses%", start_date, end_date
     )
     flask.g.total = sum([e["amount"] for e in flask.g.expenses], 0)
-    return flask.render_template("expenses.html")
+    return yavin.components.expenses()
 
 
 @app.get("/jar")
