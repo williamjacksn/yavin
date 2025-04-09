@@ -1208,3 +1208,34 @@ def tithing() -> str:
     return signed_in(
         flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Tithing"
     )
+
+
+def user_permissions() -> str:
+    content = [
+        _page_title("User permissions"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col-12.col-sm-10.col-md-8.col-lg-7.col-xl-4")[
+                htpy.table(".table")[
+                    htpy.thead[htpy.tr[htpy.th["Email"], htpy.th["Permissions"]]],
+                    htpy.tbody[
+                        (
+                            htpy.tr[
+                                htpy.td[u.get("email")],
+                                htpy.td[
+                                    (htpy.code[p, " "] for p in u.get("permissions"))
+                                ],
+                            ]
+                            for u in flask.g.users
+                        )
+                    ],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,
+        "Yavin / User permissions",
+    )
