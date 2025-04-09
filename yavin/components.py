@@ -820,20 +820,20 @@ def library() -> str:
 
 def library_accounts() -> str:
     rows = []
-    for l in flask.g.library_credentials:
+    for cred in flask.g.library_credentials:
         rows.append(
             htpy.tr[
-                htpy.td[l.get("display_name")],
-                htpy.td[l.get("library")],
-                htpy.td[l.get("library_type")],
-                htpy.td[l.get("username")],
+                htpy.td[cred.get("display_name")],
+                htpy.td[cred.get("library")],
+                htpy.td[cred.get("library_type")],
+                htpy.td[cred.get("username")],
                 htpy.td["***"],
-                htpy.td[l.get("balance"), markupsafe.Markup("&cent;")],
+                htpy.td[cred.get("balance"), markupsafe.Markup("&cent;")],
                 htpy.td[
                     htpy.form(
                         action=flask.url_for("library_accounts_delete"), method="post"
                     )[
-                        htpy.input(name="id", type="hidden", value=str(l.get("id"))),
+                        htpy.input(name="id", type="hidden", value=str(cred.get("id"))),
                         htpy.button(".btn.btn-danger.btn-sm", type="submit")[
                             htpy.i(".bi-trash-fill")
                         ],
