@@ -410,7 +410,7 @@ def jar_rows():
 def library():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.library_books = db.library_books_list()
-    return flask.render_template("library.html")
+    return yavin.components.library()
 
 
 @app.get("/library/accounts")

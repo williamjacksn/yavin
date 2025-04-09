@@ -772,6 +772,48 @@ def jar_rows() -> str:
     return htpy.render_node(rows)
 
 
+def library() -> str:
+    rows = []
+    for b in flask.g.library_books:
+        rows.append(
+            htpy.tr[
+                htpy.td[b.due.isoformat()],
+                htpy.td[htpy.span(".badge.bg-dark")[b.medium], " ", b.title],
+                htpy.td[b.display_name],
+            ]
+        )
+    content = [
+        _page_title("Library"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.a(
+                    ".btn.btn-primary.mb-2.me-1", href=flask.url_for("library_accounts")
+                )[htpy.i(".bi-person-badge"), " Manage accounts"],
+                htpy.a(
+                    ".btn.btn-primary.mb-2.me-1", href=flask.url_for("library_sync_now")
+                )[htpy.i(".bi-arrow-repeat"), " Sync now"],
+                htpy.a(
+                    ".btn.btn-primary.mb-2.me-1",
+                    href=flask.url_for("library_notify_now"),
+                )[htpy.i(".bi-bell"), " Notify now"],
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table")[
+                    htpy.thead[
+                        htpy.tr[htpy.th["Due"], htpy.th["Title"], htpy.th["Account"]]
+                    ],
+                    htpy.tbody[rows],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Library"
+    )
+
+
 def not_authorized(email: str, permissions: list[str]) -> str:
     content = htpy.div(".row")[
         htpy.div(".col")[

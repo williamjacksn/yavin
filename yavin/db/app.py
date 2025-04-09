@@ -303,6 +303,7 @@ class YavinDatabase(fort.PostgresDatabase):
             select display_name, title, due, renewable, item_id, medium
             from library_books
             join library_credentials on library_credentials.id = library_books.credential_id
+            order by due, title
         """
         return self.q(sql)
 
