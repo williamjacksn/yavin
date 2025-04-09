@@ -697,7 +697,7 @@ def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> st
     content = htpy.div(
         ".g-2.pt-3.row.row-cols-2.row-cols-md-3.row-cols-lg-4.row-cols-xl-5.row-cols-xxl-6"
     )[card_nodes]
-    return signed_in(email, permissions, _breadcrumb(), content)
+    return signed_in(email, permissions, _breadcrumb(), content, "Yavin")
 
 
 def index_signed_out() -> str:
