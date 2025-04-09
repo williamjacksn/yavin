@@ -13,6 +13,10 @@ def _back_to_home() -> htpy.a:
     return _breadcrumb(flask.url_for("index"), "Home")
 
 
+def _back_to_library() -> htpy.a:
+    return _breadcrumb(flask.url_for("library"), "Library")
+
+
 def _base(
     title: str = "Yavin",
     sign_in_block=None,
@@ -811,6 +815,124 @@ def library() -> str:
     ]
     return signed_in(
         flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Library"
+    )
+
+
+def library_accounts() -> str:
+    rows = []
+    for l in flask.g.library_credentials:
+        rows.append(
+            htpy.tr[
+                htpy.td[l.get("display_name")],
+                htpy.td[l.get("library")],
+                htpy.td[l.get("library_type")],
+                htpy.td[l.get("username")],
+                htpy.td["***"],
+                htpy.td[l.get("balance"), markupsafe.Markup("&cent;")],
+                htpy.td[
+                    htpy.form(
+                        action=flask.url_for("library_accounts_delete"), method="post"
+                    )[
+                        htpy.input(name="id", type="hidden", value=str(l.get("id"))),
+                        htpy.button(".btn.btn-danger.btn-sm", type="submit")[
+                            htpy.i(".bi-trash-fill")
+                        ],
+                    ]
+                ],
+            ]
+        )
+    form_row = htpy.tr[
+        htpy.td[
+            htpy.form(
+                "#form-add-library",
+                action=flask.url_for("library_accounts_add"),
+                method="post",
+            )[
+                htpy.input(
+                    ".form-control",
+                    aria_label="Name",
+                    name="display_name",
+                    placeholder="Name",
+                    required=True,
+                    type="text",
+                )
+            ]
+        ],
+        htpy.td[
+            htpy.input(
+                ".form-control",
+                aria_label="Library",
+                form="form-add-library",
+                name="library",
+                placeholder="Library",
+                required=True,
+                type="text",
+            )
+        ],
+        htpy.td[
+            htpy.select(
+                ".form-select",
+                aria_label="Library type",
+                form="form-add-library",
+                name="library_type",
+            )[htpy.option["bibliocommons"], htpy.option(selected=True)["biblionix"]]
+        ],
+        htpy.td[
+            htpy.input(
+                ".form-control",
+                aria_label="Username",
+                form="form-add-library",
+                name="username",
+                placeholder="Username",
+                required=True,
+                type="text",
+            )
+        ],
+        htpy.td[
+            htpy.input(
+                ".form-control",
+                aria_label="Password",
+                form="form-add-library",
+                name="password",
+                placeholder="Password",
+                required=True,
+                type="password",
+            )
+        ],
+        htpy.td,
+        htpy.td[
+            htpy.button(".btn.btn-success", form="form-add-library", type="submit")[
+                htpy.i(".bi-plus-circle")
+            ]
+        ],
+    ]
+    content = [
+        _page_title("Library accounts"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table")[
+                    htpy.thead[
+                        htpy.tr[
+                            htpy.th["Name"],
+                            htpy.th["Library"],
+                            htpy.th["Type"],
+                            htpy.th["Username"],
+                            htpy.th["Password"],
+                            htpy.th["Balance"],
+                            htpy.th["Actions"],
+                        ]
+                    ],
+                    htpy.tbody[rows, form_row],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_library(),
+        content,
+        "Yavin / Library accounts",
     )
 
 

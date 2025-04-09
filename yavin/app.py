@@ -418,7 +418,7 @@ def library():
 def library_accounts():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.library_credentials = db.library_credentials_list()
-    return flask.render_template("library-accounts.html")
+    return yavin.components.library_accounts()
 
 
 @app.post("/library/accounts/add")
