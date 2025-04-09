@@ -551,7 +551,7 @@ def tithing():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.tithing_owed = db.tithing_get_current_owed()
     flask.g.transactions = db.tithing_income_list_unpaid()
-    return flask.render_template("tithing.html")
+    return yavin.components.tithing()
 
 
 @app.post("/tithing/income/add")

@@ -1081,3 +1081,130 @@ def signed_in(
             content=content,
         )
     )
+
+
+def tithing() -> str:
+    content = [
+        _page_title("Tithing"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.p[
+                    "Current tithing owed: ",
+                    htpy.strong[f"$ {flask.g.tithing_owed:,.2f}"],
+                ]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.a(
+                    ".btn.btn-success.mb-1.me-1",
+                    data_bs_toggle="modal",
+                    href="#modal-add-tx",
+                )[htpy.i(".bi-piggy-bank"), " Add income transaction"],
+                htpy.a(
+                    ".btn.btn-primary.mb-1.me-1",
+                    data_bs_toggle="modal",
+                    href="#modal-mark-paid",
+                )[htpy.i(".bi-cash-coin"), " Mark tithing paid"],
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table.table-striped")[
+                    htpy.thead[
+                        htpy.tr[
+                            htpy.th["Date"],
+                            htpy.th["Description"],
+                            htpy.th(".text-end")["Amount"],
+                        ]
+                    ],
+                    htpy.tbody[
+                        (
+                            htpy.tr[
+                                htpy.td[t.get("date").isoformat()],
+                                htpy.td[t.get("description")],
+                                htpy.td(".text-end")[f"$ {t.get('amount'):,.2f}"],
+                            ]
+                            for t in flask.g.transactions
+                        )
+                    ],
+                ]
+            ]
+        ],
+        htpy.div("#modal-add-tx.modal")[
+            htpy.div(".modal-dialog")[
+                htpy.div(".modal-content")[
+                    htpy.div(".modal-header")[
+                        htpy.h5(".modal-title")["Add a transaction"]
+                    ],
+                    htpy.div(".modal-body")[
+                        htpy.form(
+                            "#form-add-tx",
+                            action=flask.url_for("tithing_income_add"),
+                            method="post",
+                        )[
+                            htpy.div(".mb-3")[
+                                htpy.label(".form-label", for_="tx-date")["Date"],
+                                htpy.input(
+                                    "#tx-date.form-control",
+                                    name="tx-date",
+                                    required=True,
+                                    type="date",
+                                    value=yavin.util.today().isoformat(),
+                                ),
+                            ],
+                            htpy.div(".mb-3")[
+                                htpy.label(".form-label", for_="tx-description")[
+                                    "Description"
+                                ],
+                                htpy.input(
+                                    "#tx-description.form-control",
+                                    name="tx-description",
+                                    required=True,
+                                    type="text",
+                                ),
+                            ],
+                            htpy.div(".mb-3")[
+                                htpy.label(".form-label", for_="tx-value")["Amount"],
+                                htpy.input(
+                                    "#tx-value.form-control",
+                                    name="tx-value",
+                                    required=True,
+                                    step="0.01",
+                                    type="number",
+                                ),
+                            ],
+                        ]
+                    ],
+                    htpy.div(".justify-content-between.modal-footer")[
+                        htpy.button(".btn.btn-secondary", data_bs_dismiss="modal")[
+                            "Cancel"
+                        ],
+                        htpy.button(
+                            ".btn.btn-success", form="form-add-tx", type="submit"
+                        )["Add transaction"],
+                    ],
+                ]
+            ]
+        ],
+        htpy.div("#modal-mark-paid.modal")[
+            htpy.div(".modal-dialog")[
+                htpy.div(".modal-content")[
+                    htpy.div(".modal-header")[
+                        htpy.h5(".modal-title")["Mark all tithing paid"]
+                    ],
+                    htpy.div(".justify-content-between.modal-footer")[
+                        htpy.button(".btn.btn-secondary", data_bs_dismiss="modal")[
+                            "Cancel"
+                        ],
+                        htpy.form(
+                            action=flask.url_for("tithing_income_paid"), method="post"
+                        )[htpy.button(".btn.btn-success", type="submit")["Apply"]],
+                    ],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Tithing"
+    )
