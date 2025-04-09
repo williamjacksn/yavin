@@ -946,6 +946,129 @@ def not_authorized(email: str, permissions: list[str]) -> str:
     return signed_in(email, permissions, _back_to_home(), content)
 
 
+def phone() -> str:
+    rows = (
+        htpy.tr[
+            htpy.td[record.get("start_date").isoformat()],
+            htpy.td[record.get("end_date").isoformat()],
+            htpy.td(".text-end")[record.get("minutes")],
+            htpy.td(".text-end")[record.get("messages")],
+            htpy.td(".text-end")[record.get("megabytes")],
+        ]
+        for record in flask.g.records
+    )
+    form = htpy.form(
+        "#form-add-phone-usage", action=flask.url_for("phone_add"), method="post"
+    )[
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="start-date")["Start date"],
+            htpy.input(
+                "#start-date.form-control",
+                name="start-date",
+                required=True,
+                type="date",
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="end-date")["End date"],
+            htpy.input(
+                "#end-date.form-control",
+                name="end-date",
+                required=True,
+                type="date",
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="minutes")["Minutes"],
+            htpy.input(
+                "#minutes.form-control",
+                min=0,
+                name="minutes",
+                required=True,
+                step=1,
+                type="number",
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="messages")["Messages"],
+            htpy.input(
+                "#messages.form-control",
+                min=0,
+                name="messages",
+                required=True,
+                step=1,
+                type="number",
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="megabytes")["Megabytes"],
+            htpy.input(
+                "#megabytes.form-control",
+                min=0,
+                name="megabytes",
+                required=True,
+                step=1,
+                type="number",
+            ),
+        ],
+    ]
+    content = [
+        _page_title("Phone usage"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.a(
+                    ".btn.btn-primary",
+                    data_bs_toggle="modal",
+                    href="#modal-add-phone-usage",
+                )["Add usage"]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table")[
+                    htpy.thead[
+                        htpy.tr[
+                            htpy.th["Start date"],
+                            htpy.th["End date"],
+                            htpy.th(".text-end")["Minutes"],
+                            htpy.th(".text-end")["Messages"],
+                            htpy.th(".text-end")["Megabytes"],
+                        ]
+                    ],
+                    htpy.tbody[rows],
+                ]
+            ]
+        ],
+        htpy.div("#modal-add-phone-usage.modal")[
+            htpy.div(".modal-dialog")[
+                htpy.div(".modal-content")[
+                    htpy.div(".modal-header")[
+                        htpy.h5(".modal-title")["Add phone usage"]
+                    ],
+                    htpy.div(".modal-body")[form],
+                    htpy.div(".justify-content-between.modal-footer")[
+                        htpy.button(
+                            ".btn.btn-secondary", data_bs_dismiss="modal", type="button"
+                        )["Cancel"],
+                        htpy.button(
+                            ".btn.btn-success",
+                            form="form-add-phone-usage",
+                            type="submit",
+                        )["Add usage"],
+                    ],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,
+        "Yavin / Phone usage",
+    )
+
+
 def signed_in(
     email: str, permissions: list[str], breadcrumb=None, content=None, title=None
 ) -> str:

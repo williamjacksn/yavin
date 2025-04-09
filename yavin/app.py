@@ -525,7 +525,7 @@ def movie_night_edit_pick():
 def phone():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.phone_usage_list()
-    return flask.render_template("phone.html")
+    return yavin.components.phone()
 
 
 @app.post("/phone/add")
