@@ -360,6 +360,7 @@ class YavinDatabase(fort.PostgresDatabase):
             from movie_people
             left join movie_picks on movie_people.id = movie_picks.person_id
             group by person, movie_people.id
+            order by person, pick_order
         """
         return self.q(sql)
 
@@ -387,6 +388,15 @@ class YavinDatabase(fort.PostgresDatabase):
             where id = %(id)s
         """
         self.u(sql, params)
+
+    def movie_picks_get(self, pick_id: uuid.UUID) -> dict | None:
+        sql = """
+            select id, person_id, pick_date, pick_text, pick_url
+            from movie_picks
+            where id = %(id)s
+        """
+        params = {"id": pick_id}
+        return self.q_one(sql, params)
 
     def movie_picks_insert(self, params: dict):
         sql = """

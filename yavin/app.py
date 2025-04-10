@@ -481,10 +481,9 @@ def library_sync_now():
 @permission_required("movie-night")
 def movie_night():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.people = db.movie_people_list()
-    flask.g.picks = db.movie_picks_list()
-    flask.g.today = yavin.util.today()
-    return flask.render_template("movie-night.html")
+    people = db.movie_people_list() or []
+    picks = db.movie_picks_list() or []
+    return yavin.components.movie_night(picks, people)
 
 
 @app.post("/movie-night/add-person")
@@ -533,6 +532,19 @@ def movie_night_edit_pick():
     }
     db.movie_picks_update(params)
     return flask.redirect(flask.url_for("movie_night"))
+
+
+@app.post("/movie-night/modal/pick")
+def movie_night_modal_pick():
+    db: yavin.db.YavinDatabase = flask.g.db
+    people = db.movie_people_list()
+    if "pick-id" in flask.request.values:
+        pick_id = uuid.UUID(flask.request.values.get("pick-id"))
+        pick = db.movie_picks_get(pick_id)
+        log.debug(people)
+        log.debug(pick)
+        return yavin.components.movie_night_modal_pick(people, pick)
+    return yavin.components.movie_night_modal_pick(people)
 
 
 @app.get("/phone")

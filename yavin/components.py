@@ -1051,6 +1051,204 @@ def library_accounts() -> str:
     )
 
 
+def movie_night(picks: list[dict], people: list[dict]) -> str:
+    title = "Movie night"
+    content = [
+        _page_title(title),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.button(
+                    ".btn.btn-primary.me-1",
+                    data_bs_target="#modal-pick",
+                    data_bs_toggle="modal",
+                    hx_post=flask.url_for("movie_night_modal_pick"),
+                    hx_target="#modal-pick-dialog",
+                )["Add pick"],
+                htpy.a(
+                    ".btn.btn-primary",
+                    data_bs_toggle="modal",
+                    href="#modal-manage-people",
+                )["Manage people"],
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table.table-borderless")[
+                    htpy.tbody[
+                        (
+                            htpy.tr[
+                                htpy.td[
+                                    pick.get("person"),
+                                    " picked ",
+                                    htpy.a(
+                                        href=pick.get("pick_url"),
+                                        rel="noopener",
+                                        target="_blank",
+                                    )[pick.get("pick_text")]
+                                    if pick.get("pick_url")
+                                    else pick.get("pick_text"),
+                                    " on ",
+                                    pick.get("pick_date").strftime("%B "),
+                                    pick.get("pick_date").day,
+                                    ", ",
+                                    pick.get("pick_date").year,
+                                    ".",
+                                ],
+                                htpy.td(".text-end")[
+                                    htpy.button(
+                                        ".btn.btn-primary.btn-sm",
+                                        data_bs_target="#modal-pick",
+                                        data_bs_toggle="modal",
+                                        hx_post=flask.url_for("movie_night_modal_pick"),
+                                        hx_target="#modal-pick-dialog",
+                                        name="pick-id",
+                                        value=str(pick.get("id")),
+                                    )[htpy.i(".bi-pencil-fill")]
+                                ],
+                            ]
+                            for pick in picks
+                        )
+                    ]
+                ]
+            ]
+        ],
+        htpy.div("#modal-pick.modal")[htpy.div("#modal-pick-dialog.modal-dialog")],
+        htpy.div("#modal-manage-people.modal")[
+            htpy.div(".modal-dialog")[
+                htpy.div(".modal-content")[
+                    htpy.div(".modal-header")[htpy.h5(".modal-title")["People"]],
+                    htpy.div(".modal-body")[
+                        htpy.table(".table")[
+                            htpy.thead[htpy.tr[htpy.th["Name"], htpy.th]],
+                            htpy.tbody[
+                                (
+                                    htpy.tr[htpy.td[p.get("person")], htpy.td]
+                                    for p in people
+                                ),
+                                htpy.tr[
+                                    htpy.td[
+                                        htpy.form(
+                                            "#form-add-person",
+                                            action=flask.url_for(
+                                                "movie_night_add_person"
+                                            ),
+                                            method="post",
+                                        )[
+                                            htpy.input(
+                                                ".form-control",
+                                                aria_label="Name",
+                                                name="person",
+                                                placeholder="Name",
+                                                required=True,
+                                                type="text",
+                                            )
+                                        ]
+                                    ],
+                                    htpy.td(".text-end")[
+                                        htpy.button(
+                                            ".btn.btn-success",
+                                            form="form-add-person",
+                                            type="submit",
+                                        )["Add"]
+                                    ],
+                                ],
+                            ],
+                        ]
+                    ],
+                    htpy.div(".modal-footer")[
+                        htpy.button(
+                            ".btn.btn-secondary", data_bs_dismiss="modal", type="button"
+                        )["Cancel"]
+                    ],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email, flask.g.permissions, _back_to_home(), content, f"Yavin / {title}"
+    )
+
+
+def movie_night_modal_pick(people: list[dict], pick: dict = None) -> str:
+    content = htpy.div(".modal-content")[
+        htpy.div(".modal-header")[
+            htpy.h5(".modal-title")[
+                "Edit this movie pick" if pick else "Add a movie pick"
+            ]
+        ],
+        htpy.div(".modal-body")[
+            htpy.form(
+                "#form-pick",
+                action=flask.url_for(
+                    "movie_night_edit_pick" if pick else "movie_night_add_pick"
+                ),
+                method="post",
+            )[
+                pick
+                and htpy.input(name="id", type="hidden", value=str(pick.get("id"))),
+                htpy.div(".mb-3")[
+                    htpy.label(".form-label", for_="pick-date")["When"],
+                    htpy.input(
+                        "#pick-date.form-control",
+                        name="pick_date",
+                        required=True,
+                        type="date",
+                        value=pick.get("pick_date").isoformat()
+                        if pick
+                        else yavin.util.today().isoformat(),
+                    ),
+                ],
+                htpy.div(".mb-3")[
+                    htpy.label(".form-label", for_="person-id")["Who"],
+                    htpy.select(
+                        "#person-id.form-select", name="person_id", required=True
+                    )[
+                        (
+                            htpy.option(
+                                selected=pick.get("person_id") == p.get("id")
+                                if pick
+                                else p.get("pick_order") == 1,
+                                value=str(p.get("id")),
+                            )[p.get("person")]
+                            for p in people
+                        )
+                    ],
+                ],
+                htpy.div(".mb-3")[
+                    htpy.label(".form-label", for_="pick-text")["What"],
+                    htpy.input(
+                        "#pick-text.form-control",
+                        name="pick_text",
+                        required=True,
+                        type="text",
+                        value=pick and pick.get("pick_text"),
+                    ),
+                ],
+                htpy.div(".mb-3")[
+                    htpy.label(".form-label", for_="pick-url")["URL"],
+                    htpy.input(
+                        "#pick-url.form-control",
+                        name="pick_url",
+                        type="text",
+                        value=pick and pick.get("pick_url"),
+                    ),
+                ],
+            ]
+        ],
+        htpy.div(".justify-content-between.modal-footer")[
+            htpy.button(".btn.btn-secondary", data_bs_dismiss="modal")["Cancel"],
+            pick
+            and htpy.button(
+                ".btn.btn-danger",
+                form="form-pick",
+                formaction=flask.url_for("movie_night_delete_pick"),
+            )["Delete"],
+            htpy.button(".btn.btn-success", form="form-pick")["Save"],
+        ],
+    ]
+    return htpy.render_node(content)
+
+
 def not_authorized(email: str, permissions: list[str]) -> str:
     content = htpy.div(".row")[
         htpy.div(".col")[
