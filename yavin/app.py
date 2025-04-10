@@ -15,10 +15,9 @@ import yavin.db
 import yavin.settings
 import yavin.tasks
 import yavin.util
+import yavin.versions
 
 log = logging.getLogger(__name__)
-
-__version__ = "2024.8"
 
 settings = yavin.settings.Settings()
 
@@ -61,7 +60,6 @@ def before_request():
     flask.g.db = yavin.db.YavinDatabase(settings.dsn)
     flask.g.settings = settings
     flask.g.app_settings = flask.g.db.settings_list()
-    flask.g.version = __version__
     flask.g.email = flask.session.get("email")
     flask.g.permissions = flask.g.db.user_permissions_get(flask.g.email)
 
@@ -682,7 +680,7 @@ def sign_out():
 
 
 def main():
-    log.info(f"Welcome to Yavin {__version__}")
+    log.info(f"Welcome to Yavin {yavin.versions.app_version}")
     if settings.dsn is None:
         log.critical(
             "Missing environment variable DSN; I cannot start without a database"
