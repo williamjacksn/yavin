@@ -1,8 +1,11 @@
 import flask
 import htpy
+import logging
 import markupsafe
 import yavin.util
 import yavin.versions
+
+log = logging.getLogger(__name__)
 
 
 def _back_to_balances() -> htpy.a:
@@ -1238,4 +1241,81 @@ def user_permissions() -> str:
         _back_to_home(),
         content,
         "Yavin / User permissions",
+    )
+
+
+def weight() -> str:
+    messages = flask.get_flashed_messages(with_categories=True)
+    log.debug(messages)
+    content = [
+        _page_title("Weight"),
+        messages
+        and htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                (
+                    htpy.div(f".alert.alert-dismissible.{category}")[
+                        htpy.button(
+                            ".btn-close", data_bs_dismiss="alert", type="button"
+                        ),
+                        message,
+                    ]
+                    for category, message in messages
+                )
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.form(action=flask.url_for("weight_add"), method="post")[
+                    htpy.div(".g-1.row")[
+                        htpy.div(".col-auto")[
+                            htpy.input(
+                                ".form-control",
+                                name="entry_date",
+                                required=True,
+                                title="Entry date",
+                                type="date",
+                                value=yavin.util.today().isoformat(),
+                            )
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.div(".input-group")[
+                                htpy.input(
+                                    ".form-control",
+                                    min=1,
+                                    name="weight",
+                                    required=True,
+                                    step="any",
+                                    title="Weight",
+                                    type="number",
+                                    value=str(flask.g.default_weight),
+                                ),
+                                htpy.span(".input-group-text")["lbs"],
+                            ]
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.button(".btn.btn-success", type="submit")["Save"]
+                        ],
+                    ]
+                ]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table")[
+                    htpy.thead[htpy.tr[htpy.th["Date"], htpy.th["Weight"]]],
+                    htpy.tbody[
+                        (
+                            htpy.tr[
+                                htpy.td[entry.get("entry_date").isoformat()],
+                                htpy.td[str(entry.get("weight"))],
+                            ]
+                            for entry in flask.g.weight_entries
+                        )
+                    ],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Weight"
     )

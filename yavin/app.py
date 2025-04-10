@@ -587,7 +587,7 @@ def weight():
     flask.g.today = yavin.util.today()
     flask.g.default_weight = db.weight_entries_get_most_recent()
     flask.g.weight_entries = db.weight_entries_list()
-    return flask.render_template("weight.html")
+    return yavin.components.weight()
 
 
 @app.post("/weight/add")
@@ -595,11 +595,15 @@ def weight():
 def weight_add():
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get("entry_date"))
-    entry_weight = flask.request.form.get("weight")
-    log.info(f"Attempting to add new weight entry for {entry_date}: {entry_weight} lbs")
-    msg = db.weight_entries_insert(entry_date, decimal.Decimal(entry_weight))
-    if msg is not None:
-        flask.flash(msg, "alert-danger")
+    current = db.weight_entries_get_for_date(entry_date)
+    if current is None:
+        entry_weight = flask.request.form.get("weight")
+        log.info(f"Adding new weight entry for {entry_date}: {entry_weight} lbs")
+        db.weight_entries_insert(entry_date, decimal.Decimal(entry_weight))
+    else:
+        flask.flash(
+            f"There is already a weight entry for {entry_date}.", "alert-danger"
+        )
     return flask.redirect(flask.url_for("weight"))
 
 

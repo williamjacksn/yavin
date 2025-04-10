@@ -553,6 +553,17 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # weight
 
+    def weight_entries_get_for_date(
+        self, entry_date: datetime.date
+    ) -> decimal.Decimal | None:
+        sql = """
+            select entry_date, weight
+            from weight_entries
+            where entry_date = %(entry_date)s
+        """
+        params = {"entry_date": entry_date}
+        return self.q_val(sql, params)
+
     def weight_entries_get_most_recent(self) -> float:
         sql = """
             select weight
@@ -568,12 +579,10 @@ class YavinDatabase(fort.PostgresDatabase):
         sql = """
             insert into weight_entries (entry_date, weight)
             values (%(entry_date)s, %(weight)s)
+            on conflict (entry_date) do nothing
         """
         params = {"entry_date": entry_date, "weight": weight}
-        try:
-            self.u(sql, params)
-        except psycopg2.IntegrityError:
-            return f"There is already a weight entry for {entry_date}."
+        self.u(sql, params)
 
     def weight_entries_list(self, limit: int = 10) -> list[dict]:
         sql = """
