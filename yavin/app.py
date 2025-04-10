@@ -37,8 +37,6 @@ app.config.update(
 if settings.scheme == "https":
     app.config["SESSION_COOKIE_SECURE"] = True
 
-app.jinja_env.filters["datetime"] = yavin.util.clean_datetime
-
 
 def permission_required(permission: str):
     def decorator(f):
