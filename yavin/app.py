@@ -213,7 +213,7 @@ def billboard():
 def captains_log():
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.captains_log_list()
-    return flask.render_template("captains-log.html")
+    return yavin.components.captains_log()
 
 
 @app.post("/captains-log/delete")
@@ -235,6 +235,21 @@ def captains_log_incoming():
         db.captains_log_insert(log_text)
         return "Log recorded."
     return "Authorization failure."
+
+
+@app.post("/captains-log/modal/delete")
+def captains_log_modal_delete():
+    return yavin.components.captains_log_modal_delete(
+        flask.request.values.get("log-id")
+    )
+
+
+@app.post("/captains-log/modal/edit")
+def captains_log_modal_edit():
+    db: yavin.db.YavinDatabase = flask.g.db
+    log_id = uuid.UUID(flask.request.values.get("log-id"))
+    log_entry = db.captains_log_get(log_id)
+    return yavin.components.captains_log_modal_edit(log_entry)
 
 
 @app.post("/captains-log/update")
