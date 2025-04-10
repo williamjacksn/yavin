@@ -1,3 +1,5 @@
+import decimal
+
 import flask
 import htpy
 import logging
@@ -565,8 +567,8 @@ def dashboard_card_tithing() -> str:
     return dashboard_card("Tithing", flask.url_for("tithing"), "Go")
 
 
-def dashboard_card_weight() -> str:
-    return dashboard_card("Weight", flask.url_for("weight"), "Go")
+def dashboard_card_weight(text: str) -> str:
+    return dashboard_card("Weight", flask.url_for("weight"), text)
 
 
 def electricity() -> str:
@@ -1554,7 +1556,7 @@ def user_permissions() -> str:
     )
 
 
-def weight() -> str:
+def weight(weight_entries: list[dict], default_weight: decimal.Decimal) -> str:
     messages = flask.get_flashed_messages(with_categories=True)
     log.debug(messages)
     content = [
@@ -1597,7 +1599,7 @@ def weight() -> str:
                                     step="any",
                                     title="Weight",
                                     type="number",
-                                    value=str(flask.g.default_weight),
+                                    value=str(default_weight),
                                 ),
                                 htpy.span(".input-group-text")["lbs"],
                             ]
@@ -1619,7 +1621,7 @@ def weight() -> str:
                                 htpy.td[entry.get("entry_date").isoformat()],
                                 htpy.td[str(entry.get("weight"))],
                             ]
-                            for entry in flask.g.weight_entries
+                            for entry in weight_entries
                         )
                     ],
                 ]

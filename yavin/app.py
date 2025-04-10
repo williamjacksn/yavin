@@ -322,7 +322,13 @@ def dashboard_card_tithing():
 
 @app.get("/dashboard-card/weight")
 def dashboard_card_weight():
-    return yavin.components.dashboard_card_weight()
+    db: flask.db.YavinDatabase = flask.g.db
+    most_recent = db.weight_entries_get_most_recent()
+    if most_recent is None:
+        text = "No weight entries"
+    else:
+        text = f"{most_recent.get('weight')} on {most_recent.get('entry_date')}"
+    return yavin.components.dashboard_card_weight(text)
 
 
 @app.get("/electricity")
@@ -607,10 +613,9 @@ def user_permissions():
 @permission_required("weight")
 def weight():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.today = yavin.util.today()
-    flask.g.default_weight = db.weight_entries_get_most_recent()
-    flask.g.weight_entries = db.weight_entries_list()
-    return yavin.components.weight()
+    weight_entries = db.weight_entries_list()
+    default_weight = weight_entries[0].get("weight") if weight_entries else 0
+    return yavin.components.weight(weight_entries, default_weight)
 
 
 @app.post("/weight/add")

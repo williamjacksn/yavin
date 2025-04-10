@@ -587,16 +587,14 @@ class YavinDatabase(fort.PostgresDatabase):
         params = {"entry_date": entry_date}
         return self.q_val(sql, params)
 
-    def weight_entries_get_most_recent(self) -> float:
+    def weight_entries_get_most_recent(self) -> dict | None:
         sql = """
-            select weight
+            select entry_date, weight
             from weight_entries
             order by entry_date desc
+            limit 1
         """
-        row = self.q_one(sql)
-        if row is None:
-            return 0
-        return row["weight"]
+        return self.q_one(sql)
 
     def weight_entries_insert(self, entry_date: datetime.date, weight: decimal.Decimal):
         sql = """
