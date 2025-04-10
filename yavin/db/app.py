@@ -1,7 +1,6 @@
 import datetime
 import decimal
 import fort
-import psycopg2
 import uuid
 
 
