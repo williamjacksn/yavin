@@ -1,5 +1,4 @@
 import decimal
-
 import flask
 import htpy
 import logging
