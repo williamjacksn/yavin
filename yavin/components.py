@@ -825,7 +825,7 @@ def jar() -> str:
         _page_title("Jar"),
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
-                htpy.form(action=flask.url_for("jar_add", method="post"))[
+                htpy.form(action=flask.url_for("jar_add"), method="post")[
                     htpy.div(".g-1.row")[
                         htpy.div(".col-auto")[
                             htpy.input(
