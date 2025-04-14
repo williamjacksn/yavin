@@ -30,7 +30,7 @@ fort==2024.2
     # via -r requirements.in
 h11==0.14.0
     # via httpcore
-htpy==25.4.0
+htpy==25.4.1
     # via -r requirements.in
 httpcore==1.0.7
     # via httpx
