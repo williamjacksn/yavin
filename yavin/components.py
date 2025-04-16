@@ -471,7 +471,7 @@ def captains_log_modal_delete(log_id: str) -> str:
             ],
         ],
     ]
-    return htpy.render_node(content)
+    return str(content)
 
 
 def captains_log_modal_edit(log_entry: dict) -> str:
@@ -504,24 +504,23 @@ def captains_log_modal_edit(log_entry: dict) -> str:
             htpy.button(".btn.btn-success", form="form-edit", type="submit")["Save"],
         ],
     ]
-    return htpy.render_node(content)
+    return str(content)
 
 
 def dashboard_card(
     card_title: str, card_href: str = None, card_text: str = None
 ) -> str:
-    return htpy.render_node(
-        htpy.div(".card.h-100")[
-            htpy.div(".card-body")[
-                htpy.h5(".card-title")[markupsafe.Markup(card_title)],
-                card_href
-                and htpy.a(
-                    ".card-link.stretched-link.text-decoration-none.text-reset",
-                    href=card_href,
-                )[card_text],
-            ]
+    content = htpy.div(".card.h-100")[
+        htpy.div(".card-body")[
+            htpy.h5(".card-title")[markupsafe.Markup(card_title)],
+            card_href
+            and htpy.a(
+                ".card-link.stretched-link.text-decoration-none.text-reset",
+                href=card_href,
+            )[card_text],
         ]
-    )
+    ]
+    return str(content)
 
 
 def dashboard_card_balances(text: str) -> str:
@@ -673,45 +672,43 @@ def electricity() -> str:
 
 
 def email_billboard(song_title: str, song_artist: str) -> str:
-    return htpy.render_node(
-        htpy.html(lang="en")[
-            htpy.body[
-                htpy.p["Hello,"],
-                htpy.p["There is a new Billboard Hot 100 #1 song!"],
-                htpy.p[htpy.strong[song_title], " by ", song_artist],
-                htpy.p["(This is an automated message.)"],
-            ]
+    content = htpy.html(lang="en")[
+        htpy.body[
+            htpy.p["Hello,"],
+            htpy.p["There is a new Billboard Hot 100 #1 song!"],
+            htpy.p[htpy.strong[song_title], " by ", song_artist],
+            htpy.p["(This is an automated message.)"],
         ]
-    )
+    ]
+    return str(content)
 
 
 def email_library_item_due(due_books: list[dict]) -> str:
-    return htpy.render_node(
-        htpy.html(lang="en")[
-            htpy.body[
-                htpy.p["Hello,"],
-                htpy.p[
-                    "The following items are due (or possibly overdue) at the library today."
-                ],
-                htpy.ul[
-                    (
-                        htpy.li[
-                            htpy.em[b.get("title")],
-                            " (",
-                            b.get("medium"),
-                            ") is due on ",
-                            b.get("due").isoformat(),
-                            " (",
-                            b.get("account_name"),
-                            ")",
-                        ]
-                        for b in due_books
-                    )
-                ],
-                htpy.p["(This is an automated message.)"],
-            ]
+    content = htpy.html(lang="en")[
+        htpy.body[
+            htpy.p["Hello,"],
+            htpy.p[
+                "The following items are due (or possibly overdue) at the library today."
+            ],
+            htpy.ul[
+                (
+                    htpy.li[
+                        htpy.em[b.get("title")],
+                        " (",
+                        b.get("medium"),
+                        ") is due on ",
+                        b.get("due").isoformat(),
+                        " (",
+                        b.get("account_name"),
+                        ")",
+                    ]
+                    for b in due_books
+                )
+            ],
+            htpy.p["(This is an automated message.)"],
         ]
-    )
+    ]
+    return str(content)
 
 
 def expenses() -> str:
@@ -817,7 +814,7 @@ def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> st
 
 
 def index_signed_out() -> str:
-    return htpy.render_node(_base())
+    return str(_base())
 
 
 def jar() -> str:
@@ -889,7 +886,7 @@ def jar_rows() -> str:
             )
     if not rows:
         rows.append(htpy.tr(".text-center")[htpy.td["No entries found."]])
-    return htpy.render_node(rows)
+    return str(rows)
 
 
 def library() -> str:
@@ -1247,7 +1244,7 @@ def movie_night_modal_pick(people: list[dict], pick: dict = None) -> str:
             htpy.button(".btn.btn-success", form="form-pick")["Save"],
         ],
     ]
-    return htpy.render_node(content)
+    return str(content)
 
 
 def not_authorized(email: str, permissions: list[str]) -> str:
@@ -1387,14 +1384,13 @@ def signed_in(
     email: str, permissions: list[str], breadcrumb=None, content=None, title=None
 ) -> str:
     is_admin = "admin" in permissions
-    return htpy.render_node(
-        _base(
-            title,
-            sign_in_block=_user_menu(email, is_admin),
-            breadcrumb=breadcrumb,
-            content=content,
-        )
+    content = _base(
+        title,
+        sign_in_block=_user_menu(email, is_admin),
+        breadcrumb=breadcrumb,
+        content=content,
     )
+    return str(content)
 
 
 def tithing() -> str:
