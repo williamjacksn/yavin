@@ -37,7 +37,7 @@ def _base(
             ),
             htpy.title[markupsafe.Markup(title)],
             htpy.link(
-                href=flask.url_for("static", filename="bootstrap-5.3.3.css"),
+                href=flask.url_for("static", filename="bootstrap-5.3.5.css"),
                 rel="stylesheet",
             ),
             htpy.link(
@@ -55,7 +55,7 @@ def _base(
                 _footer(),
             ],
             htpy.script(
-                src=flask.url_for("static", filename="bootstrap-5.3.3.bundle.js")
+                src=flask.url_for("static", filename="bootstrap-5.3.5.bundle.js")
             ),
             htpy.script(src=flask.url_for("static", filename="htmx-2.0.4.js")),
             htpy.script(src=flask.url_for("static", filename="data-href-clickable.js")),
