@@ -886,7 +886,7 @@ def jar_rows() -> str:
             )
     if not rows:
         rows.append(htpy.tr(".text-center")[htpy.td["No entries found."]])
-    return str(rows)
+    return str(htpy.fragment[rows])
 
 
 def library() -> str:
