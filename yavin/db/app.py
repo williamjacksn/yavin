@@ -413,6 +413,7 @@ class YavinDatabase(fort.PostgresDatabase):
             select movie_picks.id, pick_date, person_id, person, pick_text, pick_url
             from movie_picks
             join movie_people on movie_picks.person_id = movie_people.id
+            order by pick_date desc, movie_picks.id
         """
         return self.q(sql)
 
