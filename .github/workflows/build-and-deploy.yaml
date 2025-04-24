@@ -9,6 +9,8 @@ on:
       - master
   workflow_dispatch:
 
+permissions: {}
+
 env:
   image_name: ghcr.io/${{ github.repository }}
 
