@@ -1,4 +1,5 @@
 version: 2
+enable-beta-ecosystems: true
 updates:
   - package-ecosystem: docker
     directory: /
@@ -16,5 +17,11 @@ updates:
     directory: /
     allow:
       - dependency-type: all
+    schedule:
+      interval: daily
+  - package-ecosystem: uv
+    allow:
+      - dependency-type: all
+    directory: /
     schedule:
       interval: daily
