@@ -29,16 +29,16 @@ wheels = [
 
 [[package]]
 name = "bibliocommons"
-version = "2025.0"
+version = "2025.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssselect" },
     { name = "httpx" },
     { name = "lxml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a7/42/170a5273f5a7e66da10a6d4cd8e9f529cca456bc9be99c1a694fe53ab1e5/bibliocommons-2025.0.tar.gz", hash = "sha256:86c45f1bd22efb7f3ce018fee457233aef7d04093cfae1ee6f08d32e34cecde4", size = 2315, upload-time = "2025-02-11T18:40:28.561Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/ac/ae68d4c6a6755faa12458c2b1629d2ab2eef64c8bb5e28c88d4b3714aefd/bibliocommons-2025.1.tar.gz", hash = "sha256:f0382d52d84a4c7af0394ee1a00fe2311d44697b32d777ac656fc845e67cef12", size = 2353, upload-time = "2025-04-28T17:55:15.301Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/4d/5ca9ad2ab439d55375dab2a5ba8365ad56abc9b8151ffaec8c51615a599a/bibliocommons-2025.0-py3-none-any.whl", hash = "sha256:4bd247b60a89a8150af9d87739eb71cd2dea5010da4a4d42bd6838d478f463cc", size = 2423, upload-time = "2025-02-11T18:40:26.543Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/aa/99d2320a2adfa22246e48e3ad4677167d977d7371bf595a96d7aa0b4426e/bibliocommons-2025.1-py3-none-any.whl", hash = "sha256:ec3859d44f650095ce0e91903914b038912646d8fc0b858a3c2a04571897c007", size = 2427, upload-time = "2025-04-28T17:55:14.133Z" },
 ]
 
 [[package]]
