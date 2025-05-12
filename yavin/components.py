@@ -4,7 +4,7 @@ import htpy
 import logging
 import markupsafe
 import yavin.util
-import yavin.versions
+import yavin.versions as v
 
 log = logging.getLogger(__name__)
 
@@ -37,11 +37,11 @@ def _base(
             ),
             htpy.title[markupsafe.Markup(title)],
             htpy.link(
-                href=flask.url_for("static", filename="bootstrap-5.3.6.css"),
+                href=flask.url_for("static", filename=f"bootstrap-{v.bs}.css"),
                 rel="stylesheet",
             ),
             htpy.link(
-                href=flask.url_for("static", filename="bootstrap-icons-1.11.3.css"),
+                href=flask.url_for("static", filename=f"bootstrap-icons-{v.bi}.css"),
                 rel="stylesheet",
             ),
         ],
@@ -55,9 +55,9 @@ def _base(
                 _footer(),
             ],
             htpy.script(
-                src=flask.url_for("static", filename="bootstrap-5.3.6.bundle.js")
+                src=flask.url_for("static", filename=f"bootstrap-{v.bs}.bundle.js")
             ),
-            htpy.script(src=flask.url_for("static", filename="htmx-2.0.4.js")),
+            htpy.script(src=flask.url_for("static", filename=f"htmx-{v.hx}.js")),
             htpy.script(src=flask.url_for("static", filename="data-href-clickable.js")),
             end_of_body,
         ],
@@ -91,7 +91,7 @@ def _footer() -> htpy.div:
         htpy.div(".col")[
             htpy.hr,
             htpy.small(".text-body-secondary")[
-                yavin.versions.app_version,
+                v.app_version,
                 flask.g.app_settings.get("debug_layout") == "true" and _debug_layout,
             ],
         ],

@@ -22,6 +22,7 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.source="https://github.com/williamjacksn/yavin" \
       org.opencontainers.image.title="Yavin"
 
+COPY --chown=python:python package.json /home/python/yavin/package.json
 COPY --chown=python:python run.py /home/python/yavin/run.py
 COPY --chown=python:python yavin /home/python/yavin/yavin
 
