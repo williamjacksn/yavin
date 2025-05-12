@@ -13,12 +13,6 @@ updates:
     directory: /
     schedule:
       interval: daily
-  - package-ecosystem: pip
-    directory: /
-    allow:
-      - dependency-type: all
-    schedule:
-      interval: daily
   - package-ecosystem: uv
     allow:
       - dependency-type: all
