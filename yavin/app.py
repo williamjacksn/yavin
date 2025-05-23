@@ -291,7 +291,9 @@ def dashboard_card_expenses():
 
 @app.get("/dashboard-card/jar")
 def dashboard_card_jar():
-    return yavin.components.dashboard_card_jar()
+    db: yavin.db.YavinDatabase = flask.g.db
+    days_since_last = db.jar_entries_days_since_last()
+    return yavin.components.dashboard_card_jar(days_since_last)
 
 
 @app.get("/dashboard-card/library")

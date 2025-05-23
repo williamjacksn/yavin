@@ -543,8 +543,10 @@ def dashboard_card_expenses() -> str:
     return dashboard_card("Expenses", flask.url_for("expenses"), "Go")
 
 
-def dashboard_card_jar() -> str:
-    return dashboard_card("Jar", flask.url_for("jar"), "Go")
+def dashboard_card_jar(days_since_last: int) -> str:
+    plural = "" if days_since_last == 1 else "s"
+    card_text = f"{days_since_last} day{plural} ago"
+    return dashboard_card("Jar", flask.url_for("jar"), card_text)
 
 
 def dashboard_card_library() -> str:
