@@ -486,7 +486,7 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # tithing
 
-    def tithing_get_current_owed(self):
+    def tithing_get_current_owed(self) -> decimal.Decimal:
         sql = """
             select round(coalesce(sum(amount), 0) * 0.1, 2) tithing_owed
             from tithing_income

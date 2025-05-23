@@ -319,7 +319,9 @@ def dashboard_card_phone():
 
 @app.get("/dashboard-card/tithing")
 def dashboard_card_tithing():
-    return yavin.components.dashboard_card_tithing()
+    db: yavin.db.YavinDatabase = flask.g.db
+    tithing_owed = db.tithing_get_current_owed()
+    return yavin.components.dashboard_card_tithing(tithing_owed)
 
 
 @app.get("/dashboard-card/weight")
