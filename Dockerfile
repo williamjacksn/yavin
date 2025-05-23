@@ -16,6 +16,7 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.source="https://github.com/williamjacksn/yavin" \
       org.opencontainers.image.title="Yavin"
 
-COPY --chown=python:python package.json run.py yavin ./
+COPY --chown=python:python package.json run.py ./
+COPY --chown=python:python yavin ./yavin
 
 ENTRYPOINT ["/usr/local/bin/uv", "run", "run.py"]
