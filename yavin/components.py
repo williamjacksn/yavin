@@ -564,7 +564,7 @@ def dashboard_card_phone() -> str:
 
 
 def dashboard_card_tithing(tithing_owed: decimal.Decimal) -> str:
-    card_text = f"Currently owed: $ {tithing_owed:,.2f}"
+    card_text = f"Currently owed: ${tithing_owed:,.2f}"
     return dashboard_card("Tithing", flask.url_for("tithing"), card_text)
 
 
