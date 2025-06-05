@@ -1,5 +1,5 @@
-import json
 import pathlib
+import gen
 
 
 def update(ecosystem: str) -> dict:
@@ -17,5 +17,4 @@ content = {
     "updates": [update(e) for e in ecosystems],
 }
 
-target = pathlib.Path(".github/dependabot.yaml")
-target.write_text(json.dumps(content, indent=2, sort_keys=True))
+gen.gen(content, pathlib.Path(".github/dependabot.yaml"))

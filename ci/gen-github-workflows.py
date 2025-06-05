@@ -1,9 +1,5 @@
-import json
 import pathlib
-
-
-def gen(content: dict, target: pathlib.Path):
-    target.write_text(json.dumps(content, indent=2, sort_keys=True), newline="\n")
+import gen
 
 
 build_and_deploy = {
@@ -80,7 +76,7 @@ build_and_deploy = {
     },
 }
 
-gen(build_and_deploy, pathlib.Path(".github/workflows/build-and-deploy.yaml"))
+gen.gen(build_and_deploy, pathlib.Path(".github/workflows/build-and-deploy.yaml"))
 
 ruff = {
     "name": "Ruff",
@@ -110,4 +106,4 @@ ruff = {
     },
 }
 
-gen(ruff, pathlib.Path(".github/workflows/ruff.yaml"))
+gen.gen(ruff, pathlib.Path(".github/workflows/ruff.yaml"))
