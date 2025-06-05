@@ -1,7 +1,12 @@
 import json
 import pathlib
 
-workflow = {
+
+def gen(content: dict, target: pathlib.Path):
+    target.write_text(json.dumps(content, indent=2, sort_keys=True), newline="\n")
+
+
+build_and_deploy = {
     "name": "Build and deploy app",
     "on": {
         "pull_request": {"branches": ["master"]},
@@ -75,5 +80,34 @@ workflow = {
     },
 }
 
-target = pathlib.Path(".github/workflows/build-and-deploy.yaml")
-target.write_text(json.dumps(workflow, indent=2, sort_keys=True))
+gen(build_and_deploy, pathlib.Path(".github/workflows/build-and-deploy.yaml"))
+
+ruff = {
+    "name": "Ruff",
+    "on": {"pull_request": {"branches": ["master"]}, "push": {"branches": ["master"]}},
+    "permissions": {"contents": "read"},
+    "env": {
+        "_workflow_file_generator": "ci/gen-github-workflows.py",
+    },
+    "jobs": {
+        "ruff": {
+            "name": "Run ruff linting and formatting checks",
+            "runs-on": "ubuntu-latest",
+            "steps": [
+                {"name": "Check out repository", "uses": "actions/checkout@v4"},
+                {
+                    "name": "Run ruff check",
+                    "uses": "astral-sh/ruff-action@v3",
+                    "with": {"args": "check --output-format=github"},
+                },
+                {
+                    "name": "Run ruff format",
+                    "uses": "astral-sh/ruff-action@v3",
+                    "with": {"args": "format --check"},
+                },
+            ],
+        }
+    },
+}
+
+gen(ruff, pathlib.Path(".github/workflows/ruff.yaml"))
