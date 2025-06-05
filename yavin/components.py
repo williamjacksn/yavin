@@ -818,7 +818,7 @@ def favicon() -> str:
     )
     content = htpy.svg(
         ".bi.bi-speedometer",
-        fill="currentColor",
+        fill="#441199",
         height="16",
         viewBox="0 0 16 16",
         width="16",
