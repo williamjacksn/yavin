@@ -396,6 +396,11 @@ def expenses():
     return yavin.components.expenses()
 
 
+@app.get("/favicon.svg")
+def favicon():
+    return flask.Response(yavin.components.favicon(), mimetype="image/svg+xml")
+
+
 @app.get("/jar")
 @permission_required("jar")
 def jar():
