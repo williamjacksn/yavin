@@ -921,7 +921,7 @@ def library() -> str:
     for b in flask.g.library_books:
         rows.append(
             htpy.tr[
-                htpy.td[b.due.isoformat()],
+                htpy.td[b.get("due").isoformat()],
                 htpy.td[htpy.span(".badge.bg-dark")[b.medium], " ", b.title],
                 htpy.td[b.display_name],
             ]
