@@ -925,7 +925,7 @@ def library() -> str:
                 htpy.td[
                     htpy.span(".badge.bg-dark")[b.get("medium")], " ", b.get("title")
                 ],
-                htpy.td[b.display_name],
+                htpy.td[b.get("display_name")],
             ]
         )
     content = [
