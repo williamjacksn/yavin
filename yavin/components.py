@@ -922,7 +922,9 @@ def library() -> str:
         rows.append(
             htpy.tr[
                 htpy.td[b.get("due").isoformat()],
-                htpy.td[htpy.span(".badge.bg-dark")[b.medium], " ", b.title],
+                htpy.td[
+                    htpy.span(".badge.bg-dark")[b.get("medium")], " ", b.get("title")
+                ],
                 htpy.td[b.display_name],
             ]
         )
