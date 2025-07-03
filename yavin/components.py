@@ -38,11 +38,11 @@ def _base(
             htpy.title[markupsafe.Markup(title)],
             htpy.link(href=flask.url_for("favicon"), rel="icon"),
             htpy.link(
-                href=flask.url_for("static", filename=f"bootstrap-{v.bs}.css"),
+                href=f"{_cdn}/bootstrap@{v.bs}/dist/css/bootstrap.min.css",
                 rel="stylesheet",
             ),
             htpy.link(
-                href=flask.url_for("static", filename=f"bootstrap-icons-{v.bi}.css"),
+                href=f"{_cdn}/bootstrap-icons@{v.bi}/font/bootstrap-icons.min.css",
                 rel="stylesheet",
             ),
         ],
@@ -55,10 +55,8 @@ def _base(
                 content,
                 _footer(),
             ],
-            htpy.script(
-                src=flask.url_for("static", filename=f"bootstrap-{v.bs}.bundle.js")
-            ),
-            htpy.script(src=flask.url_for("static", filename=f"htmx-{v.hx}.js")),
+            htpy.script(src=f"{_cdn}/bootstrap@{v.bs}/dist/js/bootstrap.bundle.min.js"),
+            htpy.script(src=f"{_cdn}/htmx.org@{v.hx}/dist/htmx.js"),
             htpy.script(src=flask.url_for("static", filename="data-href-clickable.js")),
             end_of_body,
         ],
@@ -74,6 +72,9 @@ def _breadcrumb(href="#", label="Yavin") -> htpy.a:
             label,
         ],
     ]
+
+
+_cdn = "https://cdn.jsdelivr.net/npm"
 
 
 _debug_layout = [
