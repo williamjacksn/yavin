@@ -1,4 +1,3 @@
-import pathlib
 import gen
 
 
@@ -17,4 +16,4 @@ content = {
     "updates": [update(e) for e in ecosystems],
 }
 
-gen.gen(content, pathlib.Path(".github/dependabot.yaml"))
+gen.gen(content, ".github/dependabot.yaml")

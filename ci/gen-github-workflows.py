@@ -1,4 +1,3 @@
-import pathlib
 import gen
 
 
@@ -76,7 +75,7 @@ build_and_deploy = {
     },
 }
 
-gen.gen(build_and_deploy, pathlib.Path(".github/workflows/build-and-deploy.yaml"))
+gen.gen(build_and_deploy, ".github/workflows/build-and-deploy.yaml")
 
 ruff = {
     "name": "Ruff",
@@ -106,4 +105,4 @@ ruff = {
     },
 }
 
-gen.gen(ruff, pathlib.Path(".github/workflows/ruff.yaml"))
+gen.gen(ruff, ".github/workflows/ruff.yaml")
