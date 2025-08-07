@@ -42,12 +42,12 @@ def billboard_number_one_fetch():
     resp.raise_for_status()
     doc = lxml.html.document_fromstring(resp.content)
 
-    title_h3 = doc.cssselect("h3")[0]
-    title = str(title_h3.text_content()).strip()
+    title_el = doc.cssselect("li.a-chart-result-item-container h3")[0]
+    title = str(title_el.text_content()).strip()
 
-    div = title_h3.getparent()
-    artist_p = div.cssselect("p")[0]
-    artist = str(artist_p.text_content()).strip()
+    title_parent = title_el.getparent()
+    artist_el = title_parent.cssselect("a")[0]
+    artist = str(artist_el.text_content()).strip()
 
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
