@@ -9,15 +9,15 @@ import yavin.versions as v
 log = logging.getLogger(__name__)
 
 
-def _back_to_balances() -> htpy.a:
+def _back_to_balances() -> htpy.Element:
     return _breadcrumb(flask.url_for("balances"), "Balances")
 
 
-def _back_to_home() -> htpy.a:
+def _back_to_home() -> htpy.Element:
     return _breadcrumb(flask.url_for("index"), "Home")
 
 
-def _back_to_library() -> htpy.a:
+def _back_to_library() -> htpy.Element:
     return _breadcrumb(flask.url_for("library"), "Library")
 
 
@@ -27,7 +27,7 @@ def _base(
     breadcrumb=None,
     content=None,
     end_of_body=None,
-) -> htpy.html:
+) -> htpy.Element:
     return htpy.html(lang="en")[
         htpy.head[
             htpy.meta(charset="utf-8"),
@@ -63,7 +63,7 @@ def _base(
     ]
 
 
-def _breadcrumb(href="#", label="Yavin") -> htpy.a:
+def _breadcrumb(href="#", label="Yavin") -> htpy.Element:
     icon_class = ".bi-house-fill" if label == "Yavin" else ".bi-chevron-left"
     return htpy.a(".btn.btn-outline-dark", href=href)[
         htpy.strong[
@@ -88,7 +88,7 @@ _debug_layout = [
 ]
 
 
-def _footer() -> htpy.div:
+def _footer() -> htpy.Element:
     return htpy.div(".pb-2.pt-3.row")[
         htpy.div(".col")[
             htpy.hr,
@@ -100,18 +100,18 @@ def _footer() -> htpy.div:
     ]
 
 
-def _page_title(title: str) -> htpy.div:
+def _page_title(title: str) -> htpy.Element:
     return htpy.div(".pt-3.row")[htpy.div(".col")[htpy.h1[markupsafe.Markup(title)]]]
 
 
-def _sign_in() -> htpy.a:
+def _sign_in() -> htpy.Element:
     return htpy.a(".btn.btn-primary.float-end", href=flask.url_for("sign_in"))[
         htpy.i(".bi-person-fill"),
         " Sign in",
     ]
 
 
-def _user_menu(email: str, is_admin: bool) -> htpy.div:
+def _user_menu(email: str, is_admin: bool) -> htpy.Element:
     return htpy.div(".dropdown.float-end")[
         htpy.button(
             ".btn.btn-primary.dropdown-toggle", data_bs_toggle="dropdown", type="button"
