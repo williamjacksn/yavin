@@ -310,7 +310,7 @@ class YavinDatabase(fort.PostgresDatabase):
                 count(*) filter (where due < current_date) overdue_count
             from library_books
         """
-        return self.q(sql)
+        return self.q_one(sql)
 
     def library_books_insert(self, params: dict):
         sql = """
