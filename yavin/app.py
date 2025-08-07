@@ -298,7 +298,11 @@ def dashboard_card_jar():
 
 @app.get("/dashboard-card/library")
 def dashboard_card_library():
-    return yavin.components.dashboard_card_library()
+    db: yavin.db.YavinDatabase = flask.g.db
+    counts = db.library_books_count()
+    return yavin.components.dashboard_card_library(
+        counts.get("books_count"), counts.get("overdue_count")
+    )
 
 
 @app.get("/dashboard-card/movie-night")

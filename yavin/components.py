@@ -551,8 +551,12 @@ def dashboard_card_jar(days_since_last: int) -> str:
     return dashboard_card("Jar", flask.url_for("jar"), card_text)
 
 
-def dashboard_card_library() -> str:
-    return dashboard_card("Library", flask.url_for("library"), "Go")
+def dashboard_card_library(books_count: int, overdue_count: int) -> str:
+    plural = "" if books_count == 1 else "s"
+    card_text = f"{books_count} book{plural}"
+    if overdue_count > 0:
+        card_text = f"{card_text}, {overdue_count} overdue"
+    return dashboard_card("Library", flask.url_for("library"), card_text)
 
 
 def dashboard_card_movie_night(next_pick: str) -> str:

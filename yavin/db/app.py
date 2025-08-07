@@ -303,6 +303,15 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         self.u(sql, params)
 
+    def library_books_count(self):
+        sql = """
+            select
+                count(*) books_count,
+                count(*) filter (where due < current_date) overdue_count
+            from library_books
+        """
+        return self.q(sql)
+
     def library_books_insert(self, params: dict):
         sql = """
             insert into library_books (id, credential_id, title, due, renewable, item_id, medium)
