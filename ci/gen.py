@@ -150,6 +150,22 @@ def gen_deploy_workflow():
     gen(content, target)
 
 
+def gen_package_json():
+    target = "package.json"
+    content = {
+        "name": "yavin",
+        "version": "1.0.0",
+        "license": "UNLICENSED",
+        "private": True,
+        "dependencies": {
+            "bootstrap": "5.3.7",
+            "bootstrap-icons": "1.13.1",
+            "htmx.org": "2.0.6",
+        },
+    }
+    gen(content, target)
+
+
 def gen_ruff_workflow():
     target = ".github/workflows/ruff.yaml"
     content = {
@@ -189,6 +205,7 @@ def main():
     gen_compose()
     gen_dependabot()
     gen_deploy_workflow()
+    gen_package_json()
     gen_ruff_workflow()
 
 

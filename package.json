@@ -1,11 +1,11 @@
 {
-  "name": "yavin",
-  "version": "1.0.0",
-  "license": "UNLICENSED",
-  "private": true,
   "dependencies": {
     "bootstrap": "5.3.7",
     "bootstrap-icons": "1.13.1",
     "htmx.org": "2.0.6"
-  }
+  },
+  "license": "UNLICENSED",
+  "name": "yavin",
+  "private": true,
+  "version": "1.0.0"
 }
