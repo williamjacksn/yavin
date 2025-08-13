@@ -15,6 +15,47 @@ def gen(content: dict, target: str):
     )
 
 
+def gen_compose():
+    target = "compose.yaml"
+    content = {
+        "services": {
+            "app": {
+                "environment": {
+                    "ADMIN_EMAIL": "(set in compose.override.yaml)",
+                    "DSN": "postgres://postgres:postgres@postgres/postgres",
+                    "OPENID_CLIENT_ID": "(set in compose.override.yaml)",
+                    "OPENID_CLIENT_SECRET": "(set in compose.override.yaml)",
+                    "PORT": 8080,
+                    "SECRET_KEY": "(set in compose.override.yaml)",
+                    "SERVER_NAME": "localhost:8080",
+                },
+                "image": CONTAINER_IMAGE,
+                "init": True,
+                "ports": ["8080:8080"],
+            },
+            "postgres": {
+                "image": "postgres:16",
+                "environment": {
+                    "POSTGRES_PASSWORD": "postgres",
+                    "PGDATA": "/var/lib/postgresql/data/16",
+                },
+                "ports": ["5432:5432"],
+                "volumes": ["postgres-data:/var/lib/postgresql/data"],
+            },
+            "shell": {
+                "entrypoint": ["/bin/bash"],
+                "image": CONTAINER_IMAGE,
+                "init": True,
+                "volumes": ["./:/app"],
+            },
+        },
+        "volumes": {
+            "postgres-data": {},
+        },
+    }
+    gen(content, target)
+
+
 def gen_dependabot():
     target = ".github/dependabot.yaml"
     content = {
@@ -145,6 +186,7 @@ def gen_ruff_workflow():
 
 
 def main():
+    gen_compose()
     gen_dependabot()
     gen_deploy_workflow()
     gen_ruff_workflow()
