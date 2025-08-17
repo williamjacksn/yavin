@@ -835,6 +835,19 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             """)
             self._add_schema_version(22)
+        if self.version < 23:
+            self.log.debug("Migrating to version 23")
+            self.u("""
+                create table callings (
+                   id uuid primary key default gen_random_uuid(),
+                   ward text not null,
+                   calling text not null,
+                   sustained_at date not null,
+                   set_apart_at date,
+                   released_at date
+                )
+            """)
+            self._add_schema_version(23)
 
     def _add_schema_version(self, schema_version: int):
         self._version = schema_version
