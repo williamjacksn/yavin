@@ -57,7 +57,6 @@ def _base(
             ],
             htpy.script(src=f"{_cdn}/bootstrap@{v.bs}/dist/js/bootstrap.bundle.min.js"),
             htpy.script(src=f"{_cdn}/htmx.org@{v.hx}/dist/htmx.js"),
-            htpy.script(src=flask.url_for("static", filename="data-href-clickable.js")),
             end_of_body,
         ],
     ]
