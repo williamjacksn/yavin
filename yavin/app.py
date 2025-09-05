@@ -439,8 +439,8 @@ def jar_rows():
 @permission_required("library")
 def library():
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.library_books = db.library_books_list()
-    return yavin.components.library()
+    library_books = db.library_books_list()
+    return yavin.components.library(library_books)
 
 
 @app.get("/library/accounts")

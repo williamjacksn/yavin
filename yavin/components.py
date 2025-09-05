@@ -920,18 +920,7 @@ def jar_rows() -> str:
     return str(htpy.fragment[rows])
 
 
-def library() -> str:
-    rows = []
-    for b in flask.g.library_books:
-        rows.append(
-            htpy.tr[
-                htpy.td[b.get("due").isoformat()],
-                htpy.td[
-                    htpy.span(".badge.bg-dark")[b.get("medium")], " ", b.get("title")
-                ],
-                htpy.td[b.get("display_name")],
-            ]
-        )
+def library(library_books: list[dict]) -> str:
     content = [
         _page_title("Library"),
         htpy.div(".pt-3.row")[
@@ -954,7 +943,20 @@ def library() -> str:
                     htpy.thead[
                         htpy.tr[htpy.th["Due"], htpy.th["Title"], htpy.th["Account"]]
                     ],
-                    htpy.tbody[rows],
+                    htpy.tbody[
+                        [
+                            htpy.tr[
+                                htpy.td[b.get("due").isoformat()],
+                                htpy.td[
+                                    htpy.span(".badge.bg-dark")[b.get("medium")],
+                                    " ",
+                                    b.get("title"),
+                                ],
+                                htpy.td[b.get("display_name")],
+                            ]
+                            for b in library_books
+                        ]
+                    ],
                 ]
             ]
         ],
