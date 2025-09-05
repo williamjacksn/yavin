@@ -1,8 +1,10 @@
 import decimal
+import logging
+
 import flask
 import htpy
-import logging
 import markupsafe
+
 import yavin.util
 import yavin.versions as v
 

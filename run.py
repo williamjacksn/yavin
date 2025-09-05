@@ -1,6 +1,8 @@
-import notch
 import signal
 import sys
+
+import notch
+
 import yavin.app
 
 notch.configure()

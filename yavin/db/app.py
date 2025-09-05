@@ -1,7 +1,8 @@
 import datetime
 import decimal
-import fort
 import uuid
+
+import fort
 
 
 class YavinDatabase(fort.PostgresDatabase):

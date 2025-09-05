@@ -1,12 +1,14 @@
+import email.message
+import email.utils
+import logging
+import smtplib
+
 import apscheduler.schedulers.background
 import bibliocommons
 import biblionix
-import email.message
-import email.utils
 import httpx
 import lxml.html
-import logging
-import smtplib
+
 import yavin.components
 import yavin.db
 import yavin.settings
