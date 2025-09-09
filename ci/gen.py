@@ -153,6 +153,7 @@ def gen_deploy_workflow():
 def gen_package_json():
     target = "package.json"
     content = {
+        "description": f"This file ({target}) was generated from {THIS_FILE}",
         "name": "yavin",
         "version": "1.0.0",
         "license": "UNLICENSED",
