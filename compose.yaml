@@ -3,6 +3,7 @@
     "app": {
       "environment": {
         "ADMIN_EMAIL": "(set in compose.override.yaml)",
+        "DESCRIPTION": "This file (compose.yaml) was generated from ci/gen.py",
         "DSN": "postgres://postgres:postgres@postgres/postgres",
         "OPENID_CLIENT_ID": "(set in compose.override.yaml)",
         "OPENID_CLIENT_SECRET": "(set in compose.override.yaml)",
