@@ -122,7 +122,7 @@ class YavinDatabase(fort.PostgresDatabase):
             }
 
     def captains_log_insert(
-        self, log_text: str, log_timestamp: datetime.datetime = None
+        self, log_text: str, log_timestamp: datetime.datetime | None = None
     ):
         sql = """
             insert into captains_log (id, log_timestamp, log_text)
@@ -201,10 +201,10 @@ class YavinDatabase(fort.PostgresDatabase):
         self,
         price_date: datetime.date,
         price: decimal.Decimal,
-        gallons: decimal.Decimal = None,
-        location: str = None,
-        vehicle: str = None,
-        miles_driven: decimal.Decimal = None,
+        gallons: decimal.Decimal | None = None,
+        location: str | None = None,
+        vehicle: str | None = None,
+        miles_driven: decimal.Decimal | None = None,
     ):
         sql = """
             insert into gas_prices (
@@ -578,7 +578,7 @@ class YavinDatabase(fort.PostgresDatabase):
         if permission in existing_permissions:
             self.log.debug(f"{email} already has permission {permission}")
             return
-        new_permissions = existing_permissions + [permission]
+        new_permissions = [*existing_permissions, permission]
         self.user_permissions_set(email, new_permissions)
 
     def user_permissions_get(self, email: str) -> list[str]:

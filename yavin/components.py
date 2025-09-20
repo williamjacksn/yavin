@@ -511,7 +511,7 @@ def captains_log_modal_edit(log_entry: dict) -> str:
 
 
 def dashboard_card(
-    card_title: str, card_href: str = None, card_text: str = None
+    card_title: str, card_href: str | None = None, card_text: str | None = None
 ) -> str:
     content = htpy.div(".card.h-100")[
         htpy.div(".card-body")[
@@ -1208,7 +1208,7 @@ def movie_night(picks: list[dict], people: list[dict]) -> str:
     )
 
 
-def movie_night_modal_pick(people: list[dict], pick: dict = None) -> str:
+def movie_night_modal_pick(people: list[dict], pick: dict | None = None) -> str:
     content = htpy.div(".modal-content")[
         htpy.div(".modal-header")[
             htpy.h5(".modal-title")[
