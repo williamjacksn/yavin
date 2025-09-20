@@ -222,19 +222,16 @@ def app_settings() -> str:
 
 
 def balances() -> str:
-    rows = []
-    for a in flask.g.accounts:
-        rows.append(
-            htpy.tr(
-                data_href=flask.url_for(
-                    "balances_detail", account_id=a.get("account_id")
-                ),
-                role="button",
-            )[
-                htpy.td[a.get("account_name")],
-                htpy.td(".text-end")[f"{a.get('account_balance'):,.2f}"],
-            ]
-        )
+    rows = [
+        htpy.tr(
+            data_href=flask.url_for("balances_detail", account_id=a.get("account_id")),
+            role="button",
+        )[
+            htpy.td[a.get("account_name")],
+            htpy.td(".text-end")[f"{a.get('account_balance'):,.2f}"],
+        ]
+        for a in flask.g.accounts
+    ]
     content = [
         _page_title("Balances"),
         htpy.div(".pt-3.row")[
@@ -584,17 +581,16 @@ def dashboard_card_weight(text: str) -> str:
 
 
 def electricity() -> str:
-    rows = []
-    for r in flask.g.records:
-        rows.append(
-            htpy.tr[
-                htpy.td[r.get("bill_date").isoformat()],
-                htpy.td(".text-end")[r.get("kwh")],
-                htpy.td(".text-end")[int(r.get("avg_12_months"))],
-                htpy.td(".text-end")[f"$ {r.get('charge'):,.2f}"],
-                htpy.td(".text-end")[f"$ {r.get('bill'):,.2f}"],
-            ]
-        )
+    rows = [
+        htpy.tr[
+            htpy.td[r.get("bill_date").isoformat()],
+            htpy.td(".text-end")[r.get("kwh")],
+            htpy.td(".text-end")[int(r.get("avg_12_months"))],
+            htpy.td(".text-end")[f"$ {r.get('charge'):,.2f}"],
+            htpy.td(".text-end")[f"$ {r.get('bill'):,.2f}"],
+        ]
+        for r in flask.g.records
+    ]
     content = [
         _page_title("Electricity"),
         htpy.div(".pt-3.row")[
@@ -729,32 +725,31 @@ def email_library_item_due(due_books: list[dict]) -> str:
 
 
 def expenses() -> str:
-    expense_rows = []
-    for e in flask.g.expenses:
-        expense_rows.append(
-            htpy.tr[
-                htpy.td[
-                    htpy.div(".g-1.justify-content-between.row")[
-                        htpy.div(".col-auto")[
-                            e["description"],
-                            htpy.br,
-                            e["memo"] and htpy.small[e["memo"]],
-                        ],
-                        htpy.div(".col-auto.text-end")[
-                            htpy.strong[f"$ {e['amount']:,.2f}"]
-                        ],
+    expense_rows = [
+        htpy.tr[
+            htpy.td[
+                htpy.div(".g-1.justify-content-between.row")[
+                    htpy.div(".col-auto")[
+                        e["description"],
+                        htpy.br,
+                        e["memo"] and htpy.small[e["memo"]],
                     ],
-                    htpy.div(".g-1.justify-content-between.row")[
-                        htpy.div(".col-auto")[
-                            htpy.span(".badge.bg-primary")[e["account"][13:]]
-                        ],
-                        htpy.div(".col-auto.text-body-secondary.text-end")[
-                            e["post_date"][:10]
-                        ],
+                    htpy.div(".col-auto.text-end")[
+                        htpy.strong[f"$ {e['amount']:,.2f}"]
                     ],
-                ]
+                ],
+                htpy.div(".g-1.justify-content-between.row")[
+                    htpy.div(".col-auto")[
+                        htpy.span(".badge.bg-primary")[e["account"][13:]]
+                    ],
+                    htpy.div(".col-auto.text-body-secondary.text-end")[
+                        e["post_date"][:10]
+                    ],
+                ],
             ]
-        )
+        ]
+        for e in flask.g.expenses
+    ]
     content = [
         _page_title("Expenses"),
         htpy.div(".pt-3.row")[
@@ -842,15 +837,15 @@ def favicon() -> str:
 
 
 def index_signed_in(email: str, permissions: list[str], cards: list[dict]) -> str:
-    card_nodes = []
-    for card in cards:
-        if card.get("visible"):
-            card_nodes.append(
-                htpy.div(".col", hx_get=card.get("url"), hx_trigger="load")
-            )
     content = htpy.div(
         ".g-2.pt-3.row.row-cols-2.row-cols-md-3.row-cols-lg-4.row-cols-xl-5.row-cols-xxl-6"
-    )[card_nodes]
+    )[
+        (
+            htpy.div(".col", hx_get=card.get("url"), hx_trigger="load")
+            for card in cards
+            if card.get("visible")
+        )
+    ]
     return signed_in(email, permissions, _breadcrumb(), content, "Yavin")
 
 
@@ -977,28 +972,27 @@ def library(library_books: list[dict]) -> str:
 
 
 def library_accounts() -> str:
-    rows = []
-    for cred in flask.g.library_credentials:
-        rows.append(
-            htpy.tr[
-                htpy.td[cred.get("display_name")],
-                htpy.td[cred.get("library")],
-                htpy.td[cred.get("library_type")],
-                htpy.td[cred.get("username")],
-                htpy.td["***"],
-                htpy.td[cred.get("balance"), markupsafe.Markup("&cent;")],
-                htpy.td[
-                    htpy.form(
-                        action=flask.url_for("library_accounts_delete"), method="post"
-                    )[
-                        htpy.input(name="id", type="hidden", value=str(cred.get("id"))),
-                        htpy.button(".btn.btn-danger.btn-sm", type="submit")[
-                            htpy.i(".bi-trash-fill")
-                        ],
-                    ]
-                ],
-            ]
-        )
+    rows = [
+        htpy.tr[
+            htpy.td[cred.get("display_name")],
+            htpy.td[cred.get("library")],
+            htpy.td[cred.get("library_type")],
+            htpy.td[cred.get("username")],
+            htpy.td["***"],
+            htpy.td[cred.get("balance"), markupsafe.Markup("&cent;")],
+            htpy.td[
+                htpy.form(
+                    action=flask.url_for("library_accounts_delete"), method="post"
+                )[
+                    htpy.input(name="id", type="hidden", value=str(cred.get("id"))),
+                    htpy.button(".btn.btn-danger.btn-sm", type="submit")[
+                        htpy.i(".bi-trash-fill")
+                    ],
+                ]
+            ],
+        ]
+        for cred in flask.g.library_credentials
+    ]
     form_row = htpy.tr[
         htpy.td[
             htpy.form(

@@ -599,15 +599,13 @@ class YavinDatabase(fort.PostgresDatabase):
             from user_permissions
             order by email
         """
-        result = []
-        for row in self.q(sql):
-            result.append(
-                {
-                    "email": row.get("email"),
-                    "permissions": sorted(set(row.get("permissions").split())),
-                }
-            )
-        return result
+        return [
+            {
+                "email": row.get("email"),
+                "permissions": sorted(set(row.get("permissions").split())),
+            }
+            for row in self.q(sql)
+        ]
 
     def user_permissions_set(self, email: str, permissions: list[str]):
         sql = """

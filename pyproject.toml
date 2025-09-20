@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "RUF", "S"]
+select = ["E", "F", "I", "PERF", "RUF", "S"]
 
 [dependency-groups]
 dev = [
