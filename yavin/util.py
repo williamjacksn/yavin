@@ -20,7 +20,7 @@ def str_to_date(d: str) -> datetime.date:
 
 def today() -> datetime.date:
     return (
-        datetime.datetime.now(tz=datetime.timezone.utc)
+        datetime.datetime.now(tz=datetime.UTC)
         .astimezone(tz=zoneinfo.ZoneInfo("America/Chicago"))
         .date()
     )
