@@ -24,7 +24,7 @@ def _back_to_library() -> htpy.Element:
 
 
 def _base(
-    title: str = "Yavin",
+    title: str | markupsafe.Markup = "Yavin",
     sign_in_block=None,
     breadcrumb=None,
     content=None,
@@ -37,7 +37,7 @@ def _base(
                 content="width=device-width, initial-scale=1, shrink-to-fit=no",
                 name="viewport",
             ),
-            htpy.title[markupsafe.Markup(title)],
+            htpy.title[title],
             htpy.link(href=flask.url_for("favicon"), rel="icon"),
             htpy.link(
                 href=f"{_cdn}/bootstrap@{v.bs}/dist/css/bootstrap.min.css",
@@ -101,8 +101,8 @@ def _footer() -> htpy.Element:
     ]
 
 
-def _page_title(title: str) -> htpy.Element:
-    return htpy.div(".pt-3.row")[htpy.div(".col")[htpy.h1[markupsafe.Markup(title)]]]
+def _page_title(title: str | markupsafe.Markup) -> htpy.Element:
+    return htpy.div(".pt-3.row")[htpy.div(".col")[htpy.h1[title]]]
 
 
 def _sign_in() -> htpy.Element:
@@ -432,7 +432,7 @@ def captains_log() -> str:
         )
     ]
     content = [
-        _page_title("Captain&#x02bc;s log"),
+        _page_title(markupsafe.Markup("Captain&#x02bc;s log")),
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
                 htpy.table(".d-block.table")[
@@ -511,11 +511,13 @@ def captains_log_modal_edit(log_entry: dict) -> str:
 
 
 def dashboard_card(
-    card_title: str, card_href: str | None = None, card_text: str | None = None
+    card_title: str | markupsafe.Markup,
+    card_href: str | None = None,
+    card_text: str | None = None,
 ) -> str:
     content = htpy.div(".card.h-100")[
         htpy.div(".card-body")[
-            htpy.h5(".card-title")[markupsafe.Markup(card_title)],
+            htpy.h5(".card-title")[card_title],
             card_href
             and htpy.a(
                 ".card-link.stretched-link.text-decoration-none.text-reset",
@@ -535,7 +537,9 @@ def dashboard_card_billboard(latest: str) -> str:
 
 
 def dashboard_card_captains_log() -> str:
-    return dashboard_card("Captain&#x02bc;s log", flask.url_for("captains_log"), "Go")
+    return dashboard_card(
+        markupsafe.Markup("Captain&#x02bc;s log"), flask.url_for("captains_log"), "Go"
+    )
 
 
 def dashboard_card_electricity() -> str:
