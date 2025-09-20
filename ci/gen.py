@@ -4,6 +4,9 @@ import pathlib
 ACTIONS_CHECKOUT = {"name": "Check out repository", "uses": "actions/checkout@v5"}
 CONTAINER_IMAGE = "ghcr.io/williamjacksn/yavin"
 DEFAULT_BRANCH = "master"
+PUSH_OR_DISPATCH = (
+    "github.event_name == 'push' || github.event_name == 'workflow_dispatch'"
+)
 THIS_FILE = pathlib.PurePosixPath(
     pathlib.Path(__file__).relative_to(pathlib.Path().resolve())
 )
@@ -18,12 +21,13 @@ def gen(content: dict, target: str):
 
 def gen_compose():
     target = "compose.yaml"
+    description = f"This file ({target}) was generated from {THIS_FILE}"
     content = {
         "services": {
             "app": {
                 "environment": {
                     "ADMIN_EMAIL": "(set in compose.override.yaml)",
-                    "DESCRIPTION": f"This file ({target}) was generated from {THIS_FILE}",
+                    "DESCRIPTION": description,
                     "DSN": "postgres://postgres:postgres@postgres/postgres",
                     "OPENID_CLIENT_ID": "(set in compose.override.yaml)",
                     "OPENID_CLIENT_SECRET": "(set in compose.override.yaml)",
@@ -109,7 +113,7 @@ def gen_deploy_workflow():
                     },
                     {
                         "name": "Log in to GitHub container registry",
-                        "if": "github.event_name == 'push' || github.event_name == 'workflow_dispatch'",
+                        "if": PUSH_OR_DISPATCH,
                         "uses": "docker/login-action@v3",
                         "with": {
                             "password": "${{ github.token }}",
@@ -119,7 +123,7 @@ def gen_deploy_workflow():
                     },
                     {
                         "name": "Push latest image to registry",
-                        "if": "github.event_name == 'push' || github.event_name == 'workflow_dispatch'",
+                        "if": PUSH_OR_DISPATCH,
                         "uses": "docker/build-push-action@v6",
                         "with": {
                             "cache-from": "type=gha",
@@ -132,7 +136,7 @@ def gen_deploy_workflow():
             "deploy": {
                 "name": "Deploy the app",
                 "needs": "build",
-                "if": "github.event_name == 'push' || github.event_name == 'workflow_dispatch'",
+                "if": PUSH_OR_DISPATCH,
                 "runs-on": "ubuntu-latest",
                 "steps": [
                     ACTIONS_CHECKOUT,

@@ -20,7 +20,9 @@ class YavinDatabase(fort.PostgresDatabase):
     def balances_accounts_list(self):
         sql = """
             select
-                a.id as account_id, a.account_name, sum(coalesce(t.tx_value, 0)) as account_balance
+                a.id as account_id,
+                a.account_name,
+                sum(coalesce(t.tx_value, 0)) as account_balance
             from balances_accounts a
             left join balances_transactions t on t.account_id = a.id
             group by a.id, a.account_name
@@ -41,7 +43,12 @@ class YavinDatabase(fort.PostgresDatabase):
     def balances_transactions_list(self, account_id: uuid.UUID):
         sql = """
             select
-                a.id as account_id, a.account_name, tx_id, tx_date, tx_description, tx_value,
+                a.id as account_id,
+                a.account_name,
+                tx_id,
+                tx_date,
+                tx_description,
+                tx_value,
                 sum(coalesce(tx_value, 0)) over () account_balance
             from balances_accounts a
             left join balances_transactions t on t.account_id = a.id
@@ -168,8 +175,13 @@ class YavinDatabase(fort.PostgresDatabase):
     def electricity_list(self):
         sql = """
             select
-                bill_date, kwh, charge, bill,
-                round(avg(kwh) over (order by bill_date desc rows between current row and 11 following)) avg_12_months
+                bill_date,
+                kwh,
+                charge,
+                bill,
+                round(avg(kwh) over (
+                    order by bill_date desc rows between current row and 11 following)
+                ) avg_12_months
             from electricity
             order by bill_date desc
         """
@@ -195,8 +207,13 @@ class YavinDatabase(fort.PostgresDatabase):
         miles_driven: decimal.Decimal = None,
     ):
         sql = """
-            insert into gas_prices (id, price_date, price, gallons, location, vehicle, miles_driven)
-            values (%(id)s, %(price_date)s, %(price)s, %(gallons)s, %(location)s, %(vehicle)s, %(miles_driven)s)
+            insert into gas_prices (
+                id, price_date, price, gallons, location,
+                vehicle, miles_driven
+            ) values (
+                %(id)s, %(price_date)s, %(price)s, %(gallons)s, %(location)s,
+                %(vehicle)s, %(miles_driven)s
+            )
         """
         params = {
             "id": uuid.uuid4(),
@@ -222,8 +239,8 @@ class YavinDatabase(fort.PostgresDatabase):
     # jar
 
     def jar_entries_days_since_last(self) -> int:
-        """Get the number of days since the last jar entry. If the last jar entry was today (or in the future),
-        return 0. If there is no jar entry, return -1"""
+        """Get the number of days since the last jar entry. If the last jar entry was
+        today (or in the future), return 0. If there is no jar entry, return -1"""
         sql = """
             select max(entry_date) last_entry
             from jar_entries
@@ -273,17 +290,22 @@ class YavinDatabase(fort.PostgresDatabase):
 
     def library_credentials_get(self, params: dict):
         sql = """
-            select library, username, password, library_type
-            from library_books
-            join library_credentials on library_credentials.id = library_books.credential_id
+            select c.library, c.username, c.password, c.library_type
+            from library_books b
+            join library_credentials c on c.id = b.credential_id
             where item_id = %(item_id)s
         """
         return self.q_one(sql, params)
 
     def library_credentials_insert(self, params: dict):
         sql = """
-            insert into library_credentials (id, library, username, password, display_name, library_type)
-            values (%(id)s, %(library)s, %(username)s, %(password)s, %(display_name)s, %(library_type)s)
+            insert into library_credentials (
+                id, library, username, password, display_name,
+                library_type
+            ) values (
+                %(id)s, %(library)s, %(username)s, %(password)s, %(display_name)s,
+                %(library_type)s
+            )
         """
         params.update({"id": uuid.uuid4()})
         self.u(sql, params)
@@ -315,17 +337,22 @@ class YavinDatabase(fort.PostgresDatabase):
 
     def library_books_insert(self, params: dict):
         sql = """
-            insert into library_books (id, credential_id, title, due, renewable, item_id, medium)
-            values (%(id)s, %(credential_id)s, %(title)s, %(due)s, %(renewable)s, %(item_id)s, %(medium)s)
+            insert into library_books (
+                id, credential_id, title, due, renewable,
+                item_id, medium
+            ) values (
+                %(id)s, %(credential_id)s, %(title)s, %(due)s, %(renewable)s,
+                %(item_id)s, %(medium)s
+            )
         """
         params.update({"id": uuid.uuid4()})
         self.u(sql, params)
 
     def library_books_list(self):
         sql = """
-            select display_name, title, due, renewable, item_id, medium
-            from library_books
-            join library_credentials on library_credentials.id = library_books.credential_id
+            select c.display_name, b.title, b.due, b.renewable, b.item_id, b.medium
+            from library_books b
+            join library_credentials c on c.id = b.credential_id
             order by due, title
         """
         return self.q(sql)
@@ -366,7 +393,10 @@ class YavinDatabase(fort.PostgresDatabase):
 
     def movie_people_list(self):
         sql = """
-            select movie_people.id, person, row_number() over (order by max(pick_date) nulls first) pick_order
+            select
+                movie_people.id,
+                person,
+                row_number() over (order by max(pick_date) nulls first) pick_order
             from movie_people
             left join movie_picks on movie_people.id = movie_picks.person_id
             group by person, movie_people.id
@@ -430,7 +460,8 @@ class YavinDatabase(fort.PostgresDatabase):
     def movie_picks_update(self, params: dict):
         sql = """
             update movie_picks
-            set pick_date = %(pick_date)s, person_id = %(person_id)s, pick_text = %(pick_text)s, pick_url = %(pick_url)s
+            set pick_date = %(pick_date)s, person_id = %(person_id)s,
+                pick_text = %(pick_text)s, pick_url = %(pick_url)s
             where id = %(id)s
         """
         if params.get("pick_url") == "":
@@ -448,8 +479,13 @@ class YavinDatabase(fort.PostgresDatabase):
         megabytes: int,
     ):
         sql = """
-            insert into phone_usage (id, start_date, end_date, minutes, messages, megabytes)
-            values (%(id)s, %(start_date)s, %(end_date)s, %(minutes)s, %(messages)s, %(megabytes)s)
+            insert into phone_usage (
+                id, start_date, end_date, minutes, messages,
+                megabytes
+            ) values (
+                %(id)s, %(start_date)s, %(end_date)s, %(minutes)s, %(messages)s,
+                %(megabytes)s
+            )
         """
         params = {
             "id": uuid.uuid4(),
@@ -708,7 +744,9 @@ class YavinDatabase(fort.PostgresDatabase):
             self.u("""
                 create table library_books (
                     id uuid primary key,
-                    credential_id uuid references library_credentials (id) on delete cascade,
+                    credential_id uuid
+                        references library_credentials (id)
+                        on delete cascade,
                     title text not null,
                     due date not null,
                     renewable boolean not null,
@@ -799,7 +837,9 @@ class YavinDatabase(fort.PostgresDatabase):
             self.u("""
                 create table balances_transactions (
                     tx_id uuid primary key default gen_random_uuid(),
-                    account_id uuid not null references balances_accounts(id) on delete cascade,
+                    account_id uuid not null
+                        references balances_accounts(id)
+                        on delete cascade,
                     tx_date date not null,
                     tx_description text,
                     tx_value numeric not null

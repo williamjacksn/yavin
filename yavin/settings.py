@@ -15,10 +15,12 @@ class Settings:
     web_server_threads: int
 
     def __init__(self):
-        """Instantiating a Settings object will automatically read the following environment variables:
+        """Instantiating a Settings object will automatically read the following
+        environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, DSN, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PORT,
-        SCHEME, SECRET_KEY, SERVER_NAME, WEB_SERVER_THREADS
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, DSN, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET,
+        OPENID_DISCOVERY_DOCUMENT, PORT, SCHEME, SECRET_KEY, SERVER_NAME,
+        WEB_SERVER_THREADS
 
         Some variables have defaults if they are not found in the environment:
 
