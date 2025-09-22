@@ -6,9 +6,8 @@ import smtplib
 import apscheduler.schedulers.background
 import bibliocommons
 import biblionix
-import httpx
-import lxml.html
 
+import yavin.billboard
 import yavin.components
 import yavin.db
 import yavin.settings
@@ -38,28 +37,17 @@ def _notify(subject: str, body: str) -> None:
 
 
 def billboard_number_one_fetch() -> None:
-    log.info("Fetching Billboard Hot 100 #1")
-    url = "https://www.billboard.com/charts/hot-100/"
-    resp = httpx.get(url)
-    resp.raise_for_status()
-    doc = lxml.html.document_fromstring(resp.content)
-
-    title_el = doc.cssselect("li.a-chart-result-item-container h3")[0]
-    title = str(title_el.text_content()).strip()
-
-    title_parent = title_el.getparent()
-    artist_el = title_parent.cssselect("a")[0]
-    artist = str(artist_el.text_content()).strip()
+    song = yavin.billboard.fetch_number_one()
 
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
     latest = db.billboard_get_latest()
-    if latest and (artist, title) == (latest.get("artist"), latest.get("title")):
+    if latest and song == (latest.get("artist"), latest.get("title")):
         db.billboard_update_fetched_at(latest.get("id"))
     else:
-        db.billboard_insert(artist, title)
+        db.billboard_insert(song.artist, song.title)
         subject = "New Billboard Hot 100 #1"
-        _notify(subject, yavin.components.email_billboard(title, artist))
+        _notify(subject, yavin.components.email_billboard(song.title, song.artist))
 
 
 def library_notify() -> None:
