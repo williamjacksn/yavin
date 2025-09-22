@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 scheduler = apscheduler.schedulers.background.BackgroundScheduler()
 
 
-def _notify(subject: str, body: str):
+def _notify(subject: str, body: str) -> None:
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
     app_settings = db.settings_list()
@@ -37,7 +37,7 @@ def _notify(subject: str, body: str):
         s.send_message(msg)
 
 
-def billboard_number_one_fetch():
+def billboard_number_one_fetch() -> None:
     log.info("Fetching Billboard Hot 100 #1")
     url = "https://www.billboard.com/charts/hot-100/"
     resp = httpx.get(url)
@@ -62,7 +62,7 @@ def billboard_number_one_fetch():
         _notify(subject, yavin.components.email_billboard(title, artist))
 
 
-def library_notify():
+def library_notify() -> None:
     log.info("Checking for due library items")
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
@@ -75,7 +75,7 @@ def library_notify():
         log.info("No due library items found")
 
 
-def library_sync():
+def library_sync() -> None:
     log.info("Syncing library data")
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
@@ -92,7 +92,7 @@ def library_sync():
             log.warning(f"Library type {lib_type} is not implemented yet")
 
 
-def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase):
+def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase) -> None:
     lib_url = lib_data.get("library")
     bc = bibliocommons.BiblioCommonsClient(lib_url)
     bc.authenticate(lib_data.get("username"), lib_data.get("password"))
@@ -112,7 +112,7 @@ def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase):
         db.library_books_insert(params)
 
 
-def library_sync_biblionix(lib_data: dict, db: yavin.db.YavinDatabase):
+def library_sync_biblionix(lib_data: dict, db: yavin.db.YavinDatabase) -> None:
     lib_url = lib_data.get("library")
     bc = biblionix.BiblionixClient(lib_url)
     bc.authenticate(lib_data.get("username"), lib_data.get("password"))

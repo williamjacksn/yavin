@@ -25,10 +25,10 @@ def _back_to_library() -> htpy.Element:
 
 def _base(
     title: str | markupsafe.Markup = "Yavin",
-    sign_in_block=None,
-    breadcrumb=None,
-    content=None,
-    end_of_body=None,
+    sign_in_block: htpy.Element | None = None,
+    breadcrumb: htpy.Element | None = None,
+    content: htpy.Element | None = None,
+    end_of_body: htpy.Element | None = None,
 ) -> htpy.Element:
     return htpy.html(lang="en")[
         htpy.head[
@@ -64,7 +64,7 @@ def _base(
     ]
 
 
-def _breadcrumb(href="#", label="Yavin") -> htpy.Element:
+def _breadcrumb(href: str = "#", label: str = "Yavin") -> htpy.Element:
     icon_class = ".bi-house-fill" if label == "Yavin" else ".bi-chevron-left"
     return htpy.a(".btn.btn-outline-dark", href=href)[
         htpy.strong[
@@ -1420,7 +1420,11 @@ def phone() -> str:
 
 
 def signed_in(
-    email: str, permissions: list[str], breadcrumb=None, content=None, title=None
+    email: str,
+    permissions: list[str],
+    breadcrumb: htpy.Element | None = None,
+    content: htpy.Element | list[htpy.Element] | None = None,
+    title: str | None = None,
 ) -> str:
     is_admin = "admin" in permissions
     content = _base(

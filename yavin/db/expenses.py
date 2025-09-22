@@ -6,7 +6,7 @@ import fort
 class ExpensesDatabase(fort.SQLiteDatabase):
     def get_expenses(
         self, account_prefix: str, start_date: datetime.date, end_date: datetime.date
-    ):
+    ) -> list[dict]:
         sql = """
             select
                 a.full_name account, t.post_date, t.description, s.memo,

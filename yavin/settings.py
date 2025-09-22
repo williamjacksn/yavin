@@ -14,7 +14,7 @@ class Settings:
     server_name: str
     web_server_threads: int
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Instantiating a Settings object will automatically read the following
         environment variables:
 

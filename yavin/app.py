@@ -2,6 +2,7 @@ import datetime
 import decimal
 import functools
 import logging
+import typing
 import urllib.parse
 import uuid
 
@@ -39,10 +40,10 @@ if settings.scheme == "https":
     app.config["SESSION_COOKIE_SECURE"] = True
 
 
-def permission_required(permission: str):
-    def decorator(f):
+def permission_required(permission: str) -> typing.Callable:
+    def decorator(f: typing.Callable) -> typing.Callable:
         @functools.wraps(f)
-        def decorated_function(*args, **kwargs):
+        def decorated_function(*args, **kwargs) -> str | flask.Response:  # noqa: ANN002, ANN003
             app.logger.debug(f"Checking permission for {flask.g.email}")
             if flask.g.email is None:
                 return flask.redirect(flask.url_for("index"))
@@ -56,7 +57,7 @@ def permission_required(permission: str):
 
 
 @app.before_request
-def before_request():
+def before_request() -> None:
     log.debug(f"{flask.request.method} {flask.request.path}")
     flask.session.permanent = True
     flask.g.db = yavin.db.YavinDatabase(settings.dsn)
@@ -67,7 +68,7 @@ def before_request():
 
 
 @app.get("/")
-def index():
+def index() -> str:
     session_email = flask.session.get("email")
     if session_email is None:
         return yavin.components.index_signed_out()
@@ -131,13 +132,13 @@ def index():
 
 @app.get("/app-settings")
 @permission_required("admin")
-def app_settings():
+def app_settings() -> str:
     return yavin.components.app_settings()
 
 
 @app.post("/app-settings/update")
 @permission_required("admin")
-def app_settings_update():
+def app_settings_update() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
 
     text_settings = [
@@ -167,14 +168,14 @@ def app_settings_update():
 
 @app.get("/balances")
 @permission_required("balances")
-def balances():
+def balances() -> str:
     flask.g.accounts = flask.g.db.balances_accounts_list()
     return yavin.components.balances()
 
 
 @app.get("/balances/<uuid:account_id>")
 @permission_required("balances")
-def balances_detail(account_id: uuid.UUID):
+def balances_detail(account_id: uuid.UUID) -> str:
     flask.g.account_id = account_id
     flask.g.transactions = flask.g.db.balances_transactions_list(account_id)
     flask.g.account_name = flask.g.transactions[0].get("account_name")
@@ -184,7 +185,7 @@ def balances_detail(account_id: uuid.UUID):
 
 @app.post("/balances/add-transaction")
 @permission_required("balances")
-def balances_add_tx():
+def balances_add_tx() -> flask.Response:
     account_id = flask.request.values.get("account-id")
     params = {
         "account_id": account_id,
@@ -198,7 +199,7 @@ def balances_add_tx():
 
 @app.get("/billboard")
 @permission_required("billboard")
-def billboard():
+def billboard() -> str:
     flask.g.latest = flask.g.db.billboard_get_latest()
     if flask.g.latest is None:
         yavin.tasks.billboard_number_one_fetch()
@@ -208,7 +209,7 @@ def billboard():
 
 @app.get("/captains-log")
 @permission_required("captains-log")
-def captains_log():
+def captains_log() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.captains_log_list()
     return yavin.components.captains_log()
@@ -216,14 +217,14 @@ def captains_log():
 
 @app.post("/captains-log/delete")
 @permission_required("captains-log")
-def captains_log_delete():
+def captains_log_delete() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     db.captains_log_delete(flask.request.form.get("id"))
     return flask.redirect(flask.url_for("captains_log"))
 
 
 @app.post("/captains-log/incoming")
-def captains_log_incoming():
+def captains_log_incoming() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     log.debug(f"json: {flask.request.json}")
     auth_phrase: str = flask.request.json["auth-phrase"]
@@ -236,14 +237,14 @@ def captains_log_incoming():
 
 
 @app.post("/captains-log/modal/delete")
-def captains_log_modal_delete():
+def captains_log_modal_delete() -> str:
     return yavin.components.captains_log_modal_delete(
         flask.request.values.get("log-id")
     )
 
 
 @app.post("/captains-log/modal/edit")
-def captains_log_modal_edit():
+def captains_log_modal_edit() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     log_id = uuid.UUID(flask.request.values.get("log-id"))
     log_entry = db.captains_log_get(log_id)
@@ -252,7 +253,7 @@ def captains_log_modal_edit():
 
 @app.post("/captains-log/update")
 @permission_required("captains-log")
-def captains_log_update():
+def captains_log_update() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     log_text = flask.request.form.get("log_text")
     db.captains_log_update(flask.request.form.get("id"), log_text)
@@ -260,14 +261,14 @@ def captains_log_update():
 
 
 @app.get("/dashboard-card/balances")
-def dashboard_card_balances():
+def dashboard_card_balances() -> str:
     accounts_count = flask.g.db.balances_accounts_count()
     text = f"Accounts: {accounts_count}"
     return yavin.components.dashboard_card_balances(text)
 
 
 @app.get("/dashboard-card/billboard")
-def dashboard_card_billboard():
+def dashboard_card_billboard() -> str:
     latest = flask.g.db.billboard_get_latest()
     if latest is None:
         text = "Unknown"
@@ -277,29 +278,29 @@ def dashboard_card_billboard():
 
 
 @app.get("/dashboard-card/captains-log")
-def dashboard_card_captains_log():
+def dashboard_card_captains_log() -> str:
     return yavin.components.dashboard_card_captains_log()
 
 
 @app.get("/dashboard-card/electricity")
-def dashboard_card_electricity():
+def dashboard_card_electricity() -> str:
     return yavin.components.dashboard_card_electricity()
 
 
 @app.get("/dashboard-card/expenses")
-def dashboard_card_expenses():
+def dashboard_card_expenses() -> str:
     return yavin.components.dashboard_card_expenses()
 
 
 @app.get("/dashboard-card/jar")
-def dashboard_card_jar():
+def dashboard_card_jar() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     days_since_last = db.jar_entries_days_since_last()
     return yavin.components.dashboard_card_jar(days_since_last)
 
 
 @app.get("/dashboard-card/library")
-def dashboard_card_library():
+def dashboard_card_library() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     counts = db.library_books_count()
     return yavin.components.dashboard_card_library(
@@ -308,7 +309,7 @@ def dashboard_card_library():
 
 
 @app.get("/dashboard-card/movie-night")
-def dashboard_card_movie_night():
+def dashboard_card_movie_night() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     next_pick = db.movie_people_next_pick()
     if next_pick is None:
@@ -319,19 +320,19 @@ def dashboard_card_movie_night():
 
 
 @app.get("/dashboard-card/phone")
-def dashboard_card_phone():
+def dashboard_card_phone() -> str:
     return yavin.components.dashboard_card_phone()
 
 
 @app.get("/dashboard-card/tithing")
-def dashboard_card_tithing():
+def dashboard_card_tithing() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     tithing_owed = db.tithing_get_current_owed()
     return yavin.components.dashboard_card_tithing(tithing_owed)
 
 
 @app.get("/dashboard-card/weight")
-def dashboard_card_weight():
+def dashboard_card_weight() -> str:
     db: flask.db.YavinDatabase = flask.g.db
     most_recent = db.weight_entries_get_most_recent()
     if most_recent is None:
@@ -343,7 +344,7 @@ def dashboard_card_weight():
 
 @app.get("/electricity")
 @permission_required("electricity")
-def electricity():
+def electricity() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.electricity_list()
     return yavin.components.electricity()
@@ -351,7 +352,7 @@ def electricity():
 
 @app.post("/electricity/add")
 @permission_required("electricity")
-def electricity_add():
+def electricity_add() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     bill_date = yavin.util.str_to_date(flask.request.form.get("bill_date"))
     kwh = int(flask.request.form.get("kwh"))
@@ -363,7 +364,7 @@ def electricity_add():
 
 @app.get("/expenses")
 @permission_required("expenses")
-def expenses():
+def expenses() -> str | flask.Response:
     ex_db_path = flask.g.app_settings.get("expenses_db")
     if ex_db_path is None:
         return flask.redirect(flask.url_for("app_settings"))
@@ -403,13 +404,13 @@ def expenses():
 
 
 @app.get("/favicon.svg")
-def favicon():
+def favicon() -> flask.Response:
     return flask.Response(yavin.components.favicon(), mimetype="image/svg+xml")
 
 
 @app.get("/jar")
 @permission_required("jar")
-def jar():
+def jar() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.today = yavin.util.today()
     flask.g.days_since_last = db.jar_entries_days_since_last()
@@ -420,7 +421,7 @@ def jar():
 
 @app.post("/jar/add")
 @permission_required("jar")
-def jar_add():
+def jar_add() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get("entry_date"))
     log.info(f"Adding new jar entry for {entry_date}")
@@ -430,7 +431,7 @@ def jar_add():
 
 @app.post("/jar/rows")
 @permission_required("jar")
-def jar_rows():
+def jar_rows() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.page = int(flask.request.values.get("page", 1))
     flask.g.rows = db.jar_entries_list(flask.g.page)
@@ -439,7 +440,7 @@ def jar_rows():
 
 @app.get("/library")
 @permission_required("library")
-def library():
+def library() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     library_books = db.library_books_list()
     return yavin.components.library(library_books)
@@ -447,7 +448,7 @@ def library():
 
 @app.get("/library/accounts")
 @permission_required("library")
-def library_accounts():
+def library_accounts() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.library_credentials = db.library_credentials_list()
     return yavin.components.library_accounts()
@@ -455,7 +456,7 @@ def library_accounts():
 
 @app.post("/library/accounts/add")
 @permission_required("library")
-def library_accounts_add():
+def library_accounts_add() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
         "display_name": flask.request.form.get("display_name"),
@@ -471,7 +472,7 @@ def library_accounts_add():
 
 @app.post("/library/accounts/delete")
 @permission_required("library")
-def library_accounts_delete():
+def library_accounts_delete() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     db.library_credentials_delete(flask.request.form)
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
@@ -480,7 +481,7 @@ def library_accounts_delete():
 
 @app.get("/library/notify-now")
 @permission_required("library")
-def library_notify_now():
+def library_notify_now() -> flask.Response:
     log.info("Got library notification request")
     yavin.tasks.scheduler.add_job(yavin.tasks.library_notify)
     return flask.redirect(flask.url_for("library"))
@@ -488,7 +489,7 @@ def library_notify_now():
 
 @app.get("/library/sync-now")
 @permission_required("library")
-def library_sync_now():
+def library_sync_now() -> flask.Response:
     log.info("Got library sync request")
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for("library"))
@@ -496,7 +497,7 @@ def library_sync_now():
 
 @app.get("/movie-night")
 @permission_required("movie-night")
-def movie_night():
+def movie_night() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     people = db.movie_people_list() or []
     picks = db.movie_picks_list() or []
@@ -505,7 +506,7 @@ def movie_night():
 
 @app.post("/movie-night/add-person")
 @permission_required("movie-night")
-def movie_night_add_person():
+def movie_night_add_person() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {"person": flask.request.form.get("person")}
     db.movie_people_insert(params)
@@ -514,7 +515,7 @@ def movie_night_add_person():
 
 @app.post("/movie-night/add-pick")
 @permission_required("movie-night")
-def movie_night_add_pick():
+def movie_night_add_pick() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
         "pick_date": flask.request.form.get("pick_date"),
@@ -529,7 +530,7 @@ def movie_night_add_pick():
 
 @app.post("/movie-night/delete-pick")
 @permission_required("movie-night")
-def movie_night_delete_pick():
+def movie_night_delete_pick() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {"id": flask.request.form.get("id")}
     db.movie_picks_delete(params)
@@ -538,7 +539,7 @@ def movie_night_delete_pick():
 
 @app.post("/movie-night/edit-pick")
 @permission_required("movie-night")
-def movie_night_edit_pick():
+def movie_night_edit_pick() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
         "id": flask.request.form.get("id"),
@@ -552,7 +553,7 @@ def movie_night_edit_pick():
 
 
 @app.post("/movie-night/modal/pick")
-def movie_night_modal_pick():
+def movie_night_modal_pick() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     people = db.movie_people_list()
     if "pick-id" in flask.request.values:
@@ -566,7 +567,7 @@ def movie_night_modal_pick():
 
 @app.get("/phone")
 @permission_required("phone")
-def phone():
+def phone() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.records = db.phone_usage_list()
     return yavin.components.phone()
@@ -574,7 +575,7 @@ def phone():
 
 @app.post("/phone/add")
 @permission_required("phone")
-def phone_add():
+def phone_add() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     kwargs = {
         "start_date": datetime.date.fromisoformat(
@@ -591,7 +592,7 @@ def phone_add():
 
 @app.get("/tithing")
 @permission_required("tithing")
-def tithing():
+def tithing() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.tithing_owed = db.tithing_get_current_owed()
     flask.g.transactions = db.tithing_income_list_unpaid()
@@ -600,7 +601,7 @@ def tithing():
 
 @app.post("/tithing/income/add")
 @permission_required("tithing")
-def tithing_income_add():
+def tithing_income_add() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     date = datetime.datetime.strptime(flask.request.values.get("tx-date"), "%Y-%m-%d")
     amount = decimal.Decimal(flask.request.values.get("tx-value"))
@@ -611,7 +612,7 @@ def tithing_income_add():
 
 @app.post("/tithing/income/paid")
 @permission_required("tithing")
-def tithing_income_paid():
+def tithing_income_paid() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     db.tithing_income_mark_paid()
     return flask.redirect(flask.url_for("tithing"))
@@ -619,14 +620,14 @@ def tithing_income_paid():
 
 @app.get("/user-permissions")
 @permission_required("admin")
-def user_permissions():
+def user_permissions() -> str:
     flask.g.users = flask.g.db.user_permissions_list()
     return yavin.components.user_permissions()
 
 
 @app.get("/weight")
 @permission_required("weight")
-def weight():
+def weight() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     weight_entries = db.weight_entries_list()
     default_weight = weight_entries[0].get("weight") if weight_entries else 0
@@ -635,7 +636,7 @@ def weight():
 
 @app.post("/weight/add")
 @permission_required("weight")
-def weight_add():
+def weight_add() -> flask.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get("entry_date"))
     current = db.weight_entries_get_for_date(entry_date)
@@ -651,11 +652,11 @@ def weight_add():
 
 
 @app.get("/authorize")
-def authorize():
+def authorize() -> flask.Response:
     for key, value in flask.request.values.items():
         log.debug(f"{key}: {value}")
     if flask.session.get("state") != flask.request.values.get("state"):
-        return "State mismatch", 401
+        return flask.Response("State mismatch", 401)
     discovery_document = httpx.get(settings.openid_discovery_document).json()
     token_endpoint = discovery_document.get("token_endpoint")
     data = {
@@ -676,7 +677,7 @@ def authorize():
 
 
 @app.get("/sign-in")
-def sign_in():
+def sign_in() -> flask.Response:
     state = str(uuid.uuid4())
     flask.session["state"] = state
     redirect_uri = flask.url_for("authorize", _external=True)
@@ -694,12 +695,12 @@ def sign_in():
 
 
 @app.get("/sign-out")
-def sign_out():
+def sign_out() -> flask.Response:
     flask.session.pop("email", None)
     return flask.redirect(flask.url_for("index"))
 
 
-def main():
+def main() -> None:
     log.info(f"Welcome to Yavin {yavin.versions.app_version}")
     if settings.dsn is None:
         log.critical(
