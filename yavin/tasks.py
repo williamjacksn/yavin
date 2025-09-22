@@ -6,6 +6,7 @@ import smtplib
 import apscheduler.schedulers.background
 import bibliocommons
 import biblionix
+import httpx
 
 import yavin.billboard
 import yavin.components
@@ -72,12 +73,15 @@ def library_sync() -> None:
         lib_type = lib_cred.get("library_type")
         display_name = lib_cred.get("display_name")
         log.info(f"Syncing library data for {display_name}")
-        if lib_type == "biblionix":
-            library_sync_biblionix(lib_cred, db)
-        elif lib_type == "bibliocommons":
-            library_sync_bibliocommons(lib_cred, db)
-        else:
-            log.warning(f"Library type {lib_type} is not implemented yet")
+        try:
+            if lib_type == "biblionix":
+                library_sync_biblionix(lib_cred, db)
+            elif lib_type == "bibliocommons":
+                library_sync_bibliocommons(lib_cred, db)
+            else:
+                log.warning(f"Library type {lib_type} is not implemented yet")
+        except httpx.ReadTimeout:
+            log.error(f"Library sync timed out for {display_name}")
 
 
 def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase) -> None:
