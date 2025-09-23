@@ -239,15 +239,6 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         self.u(sql, params)
 
-    def library_credentials_get(self, params: dict) -> dict:
-        sql = """
-            select c.library, c.username, c.password, c.library_type
-            from library_books b
-            join library_credentials c on c.id = b.credential_id
-            where item_id = %(item_id)s
-        """
-        return self.q_one(sql, params)
-
     def library_credentials_insert(self, params: dict) -> None:
         sql = """
             insert into library_credentials (
@@ -268,14 +259,6 @@ class YavinDatabase(fort.PostgresDatabase):
             order by display_name
         """
         return self.q(sql)
-
-    def library_credentials_update(self, params: dict) -> None:
-        sql = """
-            update library_credentials
-            set balance = %(balance)s
-            where id = %(id)s
-        """
-        self.u(sql, params)
 
     def library_books_count(self) -> dict:
         sql = """
@@ -610,10 +593,45 @@ class YavinDatabase(fort.PostgresDatabase):
     def migrate(self) -> None:
         self.log.debug(f"The database is at schema version {self.version}")
         self.log.debug("Checking for database migrations ...")
-        if self.version < 17:
-            self.log.debug("Migrating to version 17")
+        if self.version < 23:
+            self.log.debug("Migrating to version 23")
             self.u("""
                 create extension if not exists pgcrypto
+            """)
+            self.u("""
+                create table balances_accounts (
+                    id uuid primary key default gen_random_uuid(),
+                    account_name text not null
+                )
+            """)
+            self.u("""
+                create table balances_transactions (
+                    tx_id uuid primary key default gen_random_uuid(),
+                    account_id uuid not null
+                        references balances_accounts(id)
+                        on delete cascade,
+                    tx_date date not null,
+                    tx_description text,
+                    tx_value numeric not null
+                )
+            """)
+            self.u("""
+                create table billboard_number_one (
+                    id uuid primary key,
+                    fetched_at timestamptz not null,
+                    artist text not null,
+                    title text not null
+                )
+            """)
+            self.u("""
+                create table callings (
+                   id uuid primary key default gen_random_uuid(),
+                   ward text not null,
+                   calling text not null,
+                   sustained_at date not null,
+                   set_apart_at date,
+                   released_at date
+                )
             """)
             self.u("""
                 create table captains_log (
@@ -681,7 +699,8 @@ class YavinDatabase(fort.PostgresDatabase):
                     username text not null,
                     password text not null,
                     display_name text not null,
-                    balance integer not null default 0
+                    balance integer not null default 0,
+                    library_type text not null default 'biblionix'
                 )
             """)
             self.u("""
@@ -738,6 +757,12 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             """)
             self.u("""
+                create table settings (
+                    setting_id text primary key,
+                    setting_value text
+                )
+            """)
+            self.u("""
                 create table timeline_entries (
                     id uuid primary key,
                     start_date date not null,
@@ -748,57 +773,6 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             """)
             self.u("""
-                create table weight_entries (
-                    entry_date date primary key,
-                    weight numeric not null check (weight > 0)
-                )
-            """)
-            self._add_schema_version(17)
-        if self.version < 18:
-            self.log.debug("Migrating to version 18")
-            self.u("""
-                create table settings (
-                    setting_id text primary key,
-                    setting_value text
-                )
-            """)
-            self._add_schema_version(18)
-        if self.version < 19:
-            self.log.debug("Migrating to version 19")
-            self.u("""
-                create table user_permissions (
-                    email text primary key,
-                    permissions text
-                )
-            """)
-            self.u("""
-                create table balances_accounts (
-                    id uuid primary key default gen_random_uuid(),
-                    account_name text not null
-                )
-            """)
-            self.u("""
-                create table balances_transactions (
-                    tx_id uuid primary key default gen_random_uuid(),
-                    account_id uuid not null
-                        references balances_accounts(id)
-                        on delete cascade,
-                    tx_date date not null,
-                    tx_description text,
-                    tx_value numeric not null
-                )
-            """)
-            self._add_schema_version(19)
-        if self.version < 20:
-            self.log.debug("Migrating to version 20")
-            self.u("""
-                alter table library_credentials
-                add library_type text not null default 'biblionix'
-            """)
-            self._add_schema_version(20)
-        if self.version < 21:
-            self.log.debug("Migrating to version 21")
-            self.u("""
                 create table tithing_income (
                     id uuid primary key default gen_random_uuid(),
                     date date not null,
@@ -807,28 +781,16 @@ class YavinDatabase(fort.PostgresDatabase):
                     tithing_paid date
                 )
             """)
-            self._add_schema_version(21)
-        if self.version < 22:
-            self.log.debug("Migrating to version 22")
             self.u("""
-                create table billboard_number_one (
-                    id uuid primary key,
-                    fetched_at timestamptz not null,
-                    artist text not null,
-                    title text not null
+                create table user_permissions (
+                    email text primary key,
+                    permissions text
                 )
             """)
-            self._add_schema_version(22)
-        if self.version < 23:
-            self.log.debug("Migrating to version 23")
             self.u("""
-                create table callings (
-                   id uuid primary key default gen_random_uuid(),
-                   ward text not null,
-                   calling text not null,
-                   sustained_at date not null,
-                   set_apart_at date,
-                   released_at date
+                create table weight_entries (
+                    entry_date date primary key,
+                    weight numeric not null check (weight > 0)
                 )
             """)
             self._add_schema_version(23)
@@ -841,7 +803,7 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         params = {
             "schema_version": schema_version,
-            "migration_date": datetime.datetime.utcnow(),
+            "migration_date": datetime.datetime.now(datetime.UTC),
         }
         self.u(sql, params)
 
