@@ -73,7 +73,7 @@ def gen_dependabot() -> None:
                 "directory": "/",
                 "schedule": {"interval": "daily"},
             }
-            for e in ["docker", "github-actions", "npm", "uv"]
+            for e in ["docker", "docker-compose", "github-actions", "npm", "uv"]
         ],
     }
     gen(content, target)
