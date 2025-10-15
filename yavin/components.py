@@ -223,11 +223,14 @@ def app_settings() -> str:
 
 def balances() -> str:
     rows = [
-        htpy.tr(
-            data_href=flask.url_for("balances_detail", account_id=a.get("account_id")),
-            role="button",
-        )[
-            htpy.td[a.get("account_name")],
+        htpy.tr[
+            htpy.td[
+                htpy.a(
+                    href=flask.url_for(
+                        "balances_detail", account_id=a.get("account_id")
+                    )
+                )[a.get("account_name")]
+            ],
             htpy.td(".text-end")[f"{a.get('account_balance'):,.2f}"],
         ]
         for a in flask.g.accounts
