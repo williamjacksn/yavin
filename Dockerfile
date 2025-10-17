@@ -17,6 +17,7 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.source="https://github.com/williamjacksn/yavin" \
       org.opencontainers.image.title="Yavin"
 
+COPY --chown=python:python README.md ./
 COPY --chown=python:python src/yavin ./src/yavin
 RUN uv sync --frozen --no-dev
 
