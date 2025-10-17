@@ -1,6 +1,6 @@
 [project]
 name = "yavin"
-version = "2024.8"
+version = "2025.0"
 description = "Personal web tools"
 readme = "README.md"
 requires-python = ">=3.13"

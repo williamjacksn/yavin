@@ -469,7 +469,7 @@ wheels = [
 
 [[package]]
 name = "yavin"
-version = "2024.8"
+version = "2025.0"
 source = { editable = "." }
 dependencies = [
     { name = "apscheduler" },
