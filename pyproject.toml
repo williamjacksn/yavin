@@ -1,7 +1,7 @@
 [project]
 name = "yavin"
-version = "0.1.0"
-description = "Add your description here"
+version = "2024.8"
+description = "Personal web tools"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -19,9 +19,17 @@ dependencies = [
     "waitress>=3.0.2",
 ]
 
+[project.scripts]
+yavin = "yavin:main"
+
+[build-system]
+build-backend = "uv_build"
+requires = ["uv-build>=0.9.3,<0.10.0"]
+
 [dependency-groups]
 dev = [
     "ruff>=0.14.0",
+    "uv-build>=0.9.3",
 ]
 
 [tool.ruff.lint]

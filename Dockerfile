@@ -5,7 +5,7 @@ USER python
 
 WORKDIR /app
 COPY --chown=python:python .python-version pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-install-project
 
 ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE="1" \
@@ -17,7 +17,7 @@ LABEL org.opencontainers.image.authors="William Jackson <william@subtlecoolness.
       org.opencontainers.image.source="https://github.com/williamjacksn/yavin" \
       org.opencontainers.image.title="Yavin"
 
-COPY --chown=python:python package.json run.py ./
-COPY --chown=python:python yavin ./yavin
+COPY --chown=python:python src/yavin ./src/yavin
+RUN uv sync --frozen --no-dev
 
-ENTRYPOINT ["uv", "run", "--no-sync", "run.py"]
+ENTRYPOINT ["uv", "run", "--no-sync", "yavin"]

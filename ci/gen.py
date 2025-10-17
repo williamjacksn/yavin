@@ -1,6 +1,8 @@
 import json
 import pathlib
 
+import yavin.versions as v
+
 ACTIONS_CHECKOUT = {"name": "Check out repository", "uses": "actions/checkout@v5"}
 CONTAINER_IMAGE = "ghcr.io/williamjacksn/yavin"
 DEFAULT_BRANCH = "master"
@@ -165,9 +167,9 @@ def gen_package_json() -> None:
         "license": "UNLICENSED",
         "private": True,
         "dependencies": {
-            "bootstrap": "5.3.8",
-            "bootstrap-icons": "1.13.1",
-            "htmx.org": "2.0.7",
+            "bootstrap": v.bs,
+            "bootstrap-icons": v.bi,
+            "htmx.org": v.hx,
         },
     }
     gen(content, target)
