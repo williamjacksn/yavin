@@ -81,7 +81,24 @@ def gen_dependabot() -> None:
     gen(content, target)
 
 
-def gen_deploy_workflow() -> None:
+def gen_package_json() -> None:
+    target = "package.json"
+    content = {
+        "description": f"This file ({target}) was generated from {THIS_FILE}",
+        "name": "yavin",
+        "version": "1.0.0",
+        "license": "UNLICENSED",
+        "private": True,
+        "dependencies": {
+            "bootstrap": v.bs,
+            "bootstrap-icons": v.bi,
+            "htmx.org": v.hx,
+        },
+    }
+    gen(content, target)
+
+
+def gen_workflow_deploy() -> None:
     target = ".github/workflows/build-and-deploy.yaml"
     content = {
         "env": {
@@ -158,24 +175,7 @@ def gen_deploy_workflow() -> None:
     gen(content, target)
 
 
-def gen_package_json() -> None:
-    target = "package.json"
-    content = {
-        "description": f"This file ({target}) was generated from {THIS_FILE}",
-        "name": "yavin",
-        "version": "1.0.0",
-        "license": "UNLICENSED",
-        "private": True,
-        "dependencies": {
-            "bootstrap": v.bs,
-            "bootstrap-icons": v.bi,
-            "htmx.org": v.hx,
-        },
-    }
-    gen(content, target)
-
-
-def gen_ruff_workflow() -> None:
+def gen_workflow_ruff() -> None:
     target = ".github/workflows/ruff.yaml"
     content = {
         "name": "Ruff",
@@ -212,9 +212,9 @@ def gen_ruff_workflow() -> None:
 def main() -> None:
     gen_compose()
     gen_dependabot()
-    gen_deploy_workflow()
     gen_package_json()
-    gen_ruff_workflow()
+    gen_workflow_deploy()
+    gen_workflow_ruff()
 
 
 if __name__ == "__main__":
