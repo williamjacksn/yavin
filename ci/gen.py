@@ -21,49 +21,6 @@ def gen(content: dict, target: str) -> None:
     )
 
 
-def gen_compose() -> None:
-    target = "compose.yaml"
-    description = f"This file ({target}) was generated from {THIS_FILE}"
-    content = {
-        "services": {
-            "app": {
-                "environment": {
-                    "ADMIN_EMAIL": "(set in compose.override.yaml)",
-                    "DESCRIPTION": description,
-                    "DSN": "postgres://postgres:postgres@postgres/postgres",
-                    "OPENID_CLIENT_ID": "(set in compose.override.yaml)",
-                    "OPENID_CLIENT_SECRET": "(set in compose.override.yaml)",
-                    "PORT": 8080,
-                    "SECRET_KEY": "(set in compose.override.yaml)",
-                    "SERVER_NAME": "localhost:8080",
-                },
-                "image": CONTAINER_IMAGE,
-                "init": True,
-                "ports": ["8080:8080"],
-            },
-            "postgres": {
-                "image": "postgres:16",
-                "environment": {
-                    "POSTGRES_PASSWORD": "postgres",
-                    "PGDATA": "/var/lib/postgresql/data/16",
-                },
-                "ports": ["5432:5432"],
-                "volumes": ["postgres-data:/var/lib/postgresql/data"],
-            },
-            "shell": {
-                "entrypoint": ["/bin/bash"],
-                "image": CONTAINER_IMAGE,
-                "init": True,
-                "volumes": ["./:/app"],
-            },
-        },
-        "volumes": {
-            "postgres-data": {},
-        },
-    }
-    gen(content, target)
-
-
 def gen_dependabot() -> None:
     target = ".github/dependabot.yaml"
     content = {
@@ -210,7 +167,6 @@ def gen_workflow_ruff() -> None:
 
 
 def main() -> None:
-    gen_compose()
     gen_dependabot()
     gen_package_json()
     gen_workflow_deploy()
