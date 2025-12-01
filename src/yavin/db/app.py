@@ -129,7 +129,7 @@ class YavinDatabase(fort.PostgresDatabase):
             values (%(id)s, %(log_timestamp)s, %(log_text)s)
         """
         if log_timestamp is None:
-            log_timestamp = datetime.datetime.utcnow()
+            log_timestamp = datetime.datetime.now(datetime.UTC)
         params = {
             "id": uuid.uuid4(),
             "log_text": log_text,
