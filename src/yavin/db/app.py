@@ -6,7 +6,7 @@ import fort
 
 
 class YavinDatabase(fort.PostgresDatabase):
-    _version: int = None
+    _version: int = -1
 
     # balances
 
@@ -821,7 +821,7 @@ class YavinDatabase(fort.PostgresDatabase):
 
     @property
     def version(self) -> int:
-        if self._version is None:
+        if self._version < 0:
             self._version = 0
             if self._table_exists("schema_versions"):
                 sql = """
