@@ -274,8 +274,8 @@ def balances_detail() -> str:
                         t.get("tx_description"),
                     ],
                     htpy.td(".text-end")[
-                        htpy.span(f".badge.{badge_class}")[
-                            f"$ {abs(t.get('tx_value')):,.2f}"
+                        htpy.span(class_=["badge", badge_class])[
+                            "$ ", f"{abs(t.get('tx_value')):,.2f}"
                         ]
                     ],
                 ]
@@ -595,8 +595,8 @@ def electricity() -> str:
             htpy.td[r.get("bill_date").isoformat()],
             htpy.td(".text-end")[r.get("kwh")],
             htpy.td(".text-end")[int(r.get("avg_12_months"))],
-            htpy.td(".text-end")[f"$ {r.get('charge'):,.2f}"],
-            htpy.td(".text-end")[f"$ {r.get('bill'):,.2f}"],
+            htpy.td(".text-end")["$ ", f"{r.get('charge'):,.2f}"],
+            htpy.td(".text-end")["$ ", f"{r.get('bill'):,.2f}"],
         ]
         for r in flask.g.records
     ]
@@ -744,7 +744,7 @@ def expenses() -> str:
                         e["memo"] and htpy.small[e["memo"]],
                     ],
                     htpy.div(".col-auto.text-end")[
-                        htpy.strong[f"$ {e['amount']:,.2f}"]
+                        htpy.strong["$ ", f"{e['amount']:,.2f}"]
                     ],
                 ],
                 htpy.div(".g-1.justify-content-between.row")[
@@ -805,7 +805,7 @@ def expenses() -> str:
                                 htpy.div(".g-1.justify-content-between.row")[
                                     htpy.div(".col-auto")[htpy.strong["Total"]],
                                     htpy.div(".col-auto")[
-                                        htpy.strong[f"$ {flask.g.total:,.2f}"]
+                                        htpy.strong["$ ", f"{flask.g.total:,.2f}"]
                                     ],
                                 ]
                             ]
@@ -1452,7 +1452,7 @@ def tithing() -> str:
             htpy.div(".col")[
                 htpy.p[
                     "Current tithing owed: ",
-                    htpy.strong[f"$ {flask.g.tithing_owed:,.2f}"],
+                    htpy.strong["$ ", f"{flask.g.tithing_owed:,.2f}"],
                 ]
             ]
         ],
@@ -1485,7 +1485,7 @@ def tithing() -> str:
                             htpy.tr[
                                 htpy.td[t.get("date").isoformat()],
                                 htpy.td[t.get("description")],
-                                htpy.td(".text-end")[f"$ {t.get('amount'):,.2f}"],
+                                htpy.td(".text-end")["$ ", f"{t.get('amount'):,.2f}"],
                             ]
                             for t in flask.g.transactions
                         )
@@ -1612,7 +1612,7 @@ def weight(weight_entries: list[dict], default_weight: decimal.Decimal) -> str:
         and htpy.div(".pt-3.row")[
             htpy.div(".col")[
                 (
-                    htpy.div(f".alert.alert-dismissible.{category}")[
+                    htpy.div(class_=["alert", "alert-dismissible", category])[
                         htpy.button(
                             ".btn-close", data_bs_dismiss="alert", type="button"
                         ),
