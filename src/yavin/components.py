@@ -386,6 +386,12 @@ def billboard() -> str:
                     yavin.util.clean_datetime(flask.g.latest.get("fetched_at")),
                     " UTC",
                 ],
+                htpy.p[
+                    htpy.a(
+                        href="https://www.billboard.com/charts/hot-100/",
+                        target="_blank",
+                    )["See the full chart", markupsafe.Markup("&rarr;")]
+                ],
             ]
         ],
     ]
