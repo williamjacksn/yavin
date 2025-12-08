@@ -390,7 +390,7 @@ def billboard() -> str:
                     htpy.a(
                         href="https://www.billboard.com/charts/hot-100/",
                         target="_blank",
-                    )["See the full chart", markupsafe.Markup("&rarr;")]
+                    )["See the full chart ", markupsafe.Markup("&rarr;")]
                 ],
             ]
         ],
