@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 settings = yavin.settings.Settings()
 
 app = flask.Flask(__name__)
-app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(
+app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(  # ty:ignore[invalid-assignment]
     app.wsgi_app, x_for=1, x_proto=1, x_port=1
 )
 
@@ -43,7 +43,7 @@ if settings.scheme == "https":
 def permission_required(permission: str) -> typing.Callable:
     def decorator(f: typing.Callable) -> typing.Callable:
         @functools.wraps(f)
-        def decorated_function(*args, **kwargs) -> str | flask.Response:  # noqa: ANN002, ANN003
+        def decorated_function(*args, **kwargs) -> str | werkzeug.Response:  # noqa: ANN002, ANN003
             app.logger.debug(f"Checking permission for {flask.g.email}")
             if flask.g.email is None:
                 return flask.redirect(flask.url_for("index"))
