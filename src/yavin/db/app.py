@@ -1,8 +1,37 @@
+import dataclasses
 import datetime
 import decimal
 import uuid
+from typing import TypedDict
 
 import fort
+
+
+class BillboardRow(TypedDict):
+    artist: str
+    fetched_at: datetime.datetime
+    id: uuid.UUID
+    title: str
+
+
+class LibraryCredential(TypedDict):
+    balance: int
+    display_name: str
+    id: uuid.UUID
+    library: str
+    library_type: str
+    password: str
+    username: str
+
+
+@dataclasses.dataclass
+class UserPermissions:
+    email: str
+    permissions_db: str
+
+    @property
+    def permissions(self) -> list[str]:
+        return sorted(set(self.permissions_db.split()))
 
 
 class YavinDatabase(fort.PostgresDatabase):
@@ -62,14 +91,15 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # billboard
 
-    def billboard_get_latest(self) -> dict:
+    def billboard_get_latest(self) -> BillboardRow:
         sql = """
             select artist, fetched_at, id, title
             from billboard_number_one
             order by fetched_at desc
             limit 1
         """
-        return self.q_one(sql)
+        row: BillboardRow = self.q_one(sql)
+        return row
 
     def billboard_insert(self, artist: str, title: str) -> None:
         sql = """
@@ -252,13 +282,14 @@ class YavinDatabase(fort.PostgresDatabase):
         params.update({"id": uuid.uuid4()})
         self.u(sql, params)
 
-    def library_credentials_list(self) -> list[dict]:
+    def library_credentials_list(self) -> list[LibraryCredential]:
         sql = """
             select id, library, username, password, display_name, balance, library_type
             from library_credentials
             order by display_name
         """
-        return self.q(sql)
+        rows: list[LibraryCredential] = self.q(sql)
+        return rows
 
     def library_books_count(self) -> dict:
         sql = """
@@ -445,7 +476,9 @@ class YavinDatabase(fort.PostgresDatabase):
             select setting_id, setting_value
             from settings
         """
-        return {s.get("setting_id"): s.get("setting_value") for s in self.q(sql)}
+        return {
+            s.get("setting_id", ""): s.get("setting_value", "") for s in self.q(sql)
+        }
 
     def settings_update(self, setting_id: str, setting_value: str) -> None:
         sql = """
@@ -519,19 +552,14 @@ class YavinDatabase(fort.PostgresDatabase):
             return sorted(set(permissions.split()))
         return []
 
-    def user_permissions_list(self) -> list[dict]:
+    def user_permissions_list(self) -> list[UserPermissions]:
         sql = """
             select email, permissions
             from user_permissions
             order by email
         """
-        return [
-            {
-                "email": row.get("email"),
-                "permissions": sorted(set(row.get("permissions").split())),
-            }
-            for row in self.q(sql)
-        ]
+        rows: list[dict[str, str]] = self.q(sql)
+        return [UserPermissions(row["email"], row["permissions"]) for row in rows]
 
     def user_permissions_set(self, email: str, permissions: list[str]) -> None:
         sql = """

@@ -26,13 +26,13 @@ def _notify(subject: str, body: str) -> None:
     msg["Message-ID"] = email.utils.make_msgid()
     msg["Date"] = email.utils.formatdate()
     msg["Subject"] = subject
-    msg["From"] = app_settings.get("smtp_from_address")
+    msg["From"] = app_settings.get("smtp_from_address", "")
     msg["To"] = settings.admin_email
     msg.set_content(body, subtype="html")
-    with smtplib.SMTP_SSL(host=app_settings.get("smtp_server")) as s:
+    with smtplib.SMTP_SSL(host=app_settings.get("smtp_server", "")) as s:
         s.login(
-            user=app_settings.get("smtp_username"),
-            password=app_settings.get("smtp_password"),
+            user=app_settings.get("smtp_username", ""),
+            password=app_settings.get("smtp_password", ""),
         )
         s.send_message(msg)
 
@@ -84,7 +84,9 @@ def library_sync() -> None:
             log.error(f"Library sync timed out for {display_name}")
 
 
-def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase) -> None:
+def library_sync_bibliocommons(
+    lib_data: yavin.db.app.LibraryCredential, db: yavin.db.YavinDatabase
+) -> None:
     lib_url = lib_data.get("library")
     bc = bibliocommons.BiblioCommonsClient(lib_url)
     bc.authenticate(lib_data.get("username"), lib_data.get("password"))
@@ -104,7 +106,9 @@ def library_sync_bibliocommons(lib_data: dict, db: yavin.db.YavinDatabase) -> No
         db.library_books_insert(params)
 
 
-def library_sync_biblionix(lib_data: dict, db: yavin.db.YavinDatabase) -> None:
+def library_sync_biblionix(
+    lib_data: yavin.db.app.LibraryCredential, db: yavin.db.YavinDatabase
+) -> None:
     lib_url = lib_data.get("library")
     bc = biblionix.BiblionixClient(lib_url)
     bc.authenticate(lib_data.get("username"), lib_data.get("password"))

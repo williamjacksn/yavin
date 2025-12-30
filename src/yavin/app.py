@@ -621,8 +621,8 @@ def tithing_income_paid() -> flask.Response:
 @app.get("/user-permissions")
 @permission_required("admin")
 def user_permissions() -> str:
-    flask.g.users = flask.g.db.user_permissions_list()
-    return yavin.components.user_permissions()
+    users: list[yavin.db.app.UserPermissions] = flask.g.db.user_permissions_list()
+    return yavin.components.user_permissions(users)
 
 
 @app.get("/weight")

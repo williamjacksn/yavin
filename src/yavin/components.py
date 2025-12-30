@@ -5,6 +5,7 @@ import flask
 import htpy
 import markupsafe
 
+import yavin.db
 import yavin.util
 import yavin.versions as v
 
@@ -1572,7 +1573,7 @@ def tithing() -> str:
     )
 
 
-def user_permissions() -> str:
+def user_permissions(users: list[yavin.db.app.UserPermissions]) -> str:
     content = [
         _page_title("User permissions"),
         htpy.div(".pt-3.row")[
@@ -1582,12 +1583,10 @@ def user_permissions() -> str:
                     htpy.tbody[
                         (
                             htpy.tr[
-                                htpy.td[u.get("email")],
-                                htpy.td[
-                                    (htpy.code[p, " "] for p in u.get("permissions"))
-                                ],
+                                htpy.td[u.email],
+                                htpy.td[(htpy.code[p, " "] for p in u.permissions)],
                             ]
-                            for u in flask.g.users
+                            for u in users
                         )
                     ],
                 ]
