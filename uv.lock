@@ -42,14 +42,14 @@ wheels = [
 
 [[package]]
 name = "biblionix"
-version = "2025.1"
+version = "2026.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/6d/4b412756fbf1f8c10d4269ccd6a11cd2ec8d88da91c714d5e0caa6179b89/biblionix-2025.1.tar.gz", hash = "sha256:4ff23ff4741d56a0e68127115e13fceb1940b5615d3109113baf8488a78535cf", size = 2886, upload-time = "2025-04-28T18:24:08.754Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6f/96/09d6fe45ca939883e6321a079395588dbe53bb74721aa10ed5ddaecbd549/biblionix-2026.0.tar.gz", hash = "sha256:8f7c3f4e1827cc162157550e0e135551e842643150025fa4b79c736e02dbf8c2", size = 1673, upload-time = "2026-01-07T21:00:53.739Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/d6/50d0c39f3e99aff1f4bbe8d2311150fd751178532b598b2eccdde0467d62/biblionix-2025.1-py3-none-any.whl", hash = "sha256:33090edb099acdb7753372084f1e2154932633a18026a04c27192cd05e644906", size = 3137, upload-time = "2025-04-28T18:24:07.131Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/46/0ddd066e204809d49085036f96aeef0033490437c65c2ba1f637f4a5e43b/biblionix-2026.0-py3-none-any.whl", hash = "sha256:b7ee57d5937212dc2a01b8c0a605bb01dd7cecdc39e94104112f8ff9fa81ffa2", size = 2273, upload-time = "2026-01-07T21:00:54.526Z" },
 ]
 
 [[package]]
