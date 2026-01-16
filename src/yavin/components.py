@@ -11,6 +11,8 @@ import yavin.versions as v
 
 log = logging.getLogger(__name__)
 
+DECIMAL_ZERO = decimal.Decimal(0)
+
 
 def _back_to_balances() -> htpy.Element:
     return _breadcrumb(flask.url_for("balances"), "Balances")

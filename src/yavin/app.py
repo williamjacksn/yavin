@@ -63,7 +63,7 @@ def before_request() -> None:
     flask.g.db = yavin.db.YavinDatabase(settings.dsn)
     flask.g.settings = settings
     flask.g.app_settings = flask.g.db.settings_list()
-    flask.g.email = flask.session.get("email")
+    flask.g.email = flask.session.get("email", "")
     flask.g.permissions = flask.g.db.user_permissions_get(flask.g.email)
 
 
@@ -138,7 +138,7 @@ def app_settings() -> str:
 
 @app.post("/app-settings/update")
 @permission_required("admin")
-def app_settings_update() -> flask.Response:
+def app_settings_update() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
 
     text_settings = [
@@ -185,7 +185,7 @@ def balances_detail(account_id: uuid.UUID) -> str:
 
 @app.post("/balances/add-transaction")
 @permission_required("balances")
-def balances_add_tx() -> flask.Response:
+def balances_add_tx() -> werkzeug.Response:
     account_id = flask.request.values.get("account-id")
     params = {
         "account_id": account_id,
@@ -217,7 +217,7 @@ def captains_log() -> str:
 
 @app.post("/captains-log/delete")
 @permission_required("captains-log")
-def captains_log_delete() -> flask.Response:
+def captains_log_delete() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     db.captains_log_delete(flask.request.form.get("id"))
     return flask.redirect(flask.url_for("captains_log"))
@@ -253,7 +253,7 @@ def captains_log_modal_edit() -> str:
 
 @app.post("/captains-log/update")
 @permission_required("captains-log")
-def captains_log_update() -> flask.Response:
+def captains_log_update() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     log_text = flask.request.form.get("log_text")
     db.captains_log_update(flask.request.form.get("id"), log_text)
@@ -333,7 +333,7 @@ def dashboard_card_tithing() -> str:
 
 @app.get("/dashboard-card/weight")
 def dashboard_card_weight() -> str:
-    db: flask.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinDatabase = flask.g.db
     most_recent = db.weight_entries_get_most_recent()
     if most_recent is None:
         text = "No weight entries"
@@ -352,7 +352,7 @@ def electricity() -> str:
 
 @app.post("/electricity/add")
 @permission_required("electricity")
-def electricity_add() -> flask.Response:
+def electricity_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     bill_date = yavin.util.str_to_date(flask.request.form.get("bill_date"))
     kwh = int(flask.request.form.get("kwh"))
@@ -364,21 +364,31 @@ def electricity_add() -> flask.Response:
 
 @app.get("/expenses")
 @permission_required("expenses")
-def expenses() -> str | flask.Response:
+def expenses() -> str | werkzeug.Response:
     ex_db_path = flask.g.app_settings.get("expenses_db")
     if ex_db_path is None:
         return flask.redirect(flask.url_for("app_settings"))
     ex_db = yavin.db.ExpensesDatabase(flask.g.app_settings.get("expenses_db"))
+    start_date = datetime.date(2000, 1, 1)
+    end_date = datetime.date(2000, 1, 1)
+    valid_start_date = False
+    valid_end_date = False
     try:
         start_date = yavin.util.str_to_date(flask.request.values.get("start_date"))
+        valid_start_date = True
     except (TypeError, ValueError):
-        start_date = None
+        log.warning(
+            f"Invalid start_date provided: {flask.request.values.get('start_date')}"
+        )
     try:
         end_date = yavin.util.str_to_date(flask.request.values.get("end_date"))
+        valid_end_date = True
     except (TypeError, ValueError):
-        end_date = None
-    if start_date is None:
-        if end_date is None:
+        log.warning(
+            f"Invalid end_date provided: {flask.request.values.get('end_date')}"
+        )
+    if not valid_start_date:
+        if not valid_end_date:
             start_date = yavin.util.today().replace(day=1)
             end_date = yavin.util.today()
             log.debug(f"No dates provided, using {start_date} to {end_date}")
@@ -386,7 +396,7 @@ def expenses() -> str | flask.Response:
             start_date = yavin.util.add_days(end_date, -30)
             log.debug(f"Only end_date provided, using {start_date} to {end_date}")
     else:
-        if end_date is None:
+        if not valid_end_date:
             end_date = yavin.util.add_days(start_date, 30)
             log.debug(f"Only start_date provided, using {start_date} to {end_date}")
         elif start_date > end_date:
@@ -421,7 +431,7 @@ def jar() -> str:
 
 @app.post("/jar/add")
 @permission_required("jar")
-def jar_add() -> flask.Response:
+def jar_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get("entry_date"))
     log.info(f"Adding new jar entry for {entry_date}")
@@ -456,7 +466,7 @@ def library_accounts() -> str:
 
 @app.post("/library/accounts/add")
 @permission_required("library")
-def library_accounts_add() -> flask.Response:
+def library_accounts_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
         "display_name": flask.request.form.get("display_name"),
@@ -472,7 +482,7 @@ def library_accounts_add() -> flask.Response:
 
 @app.post("/library/accounts/delete")
 @permission_required("library")
-def library_accounts_delete() -> flask.Response:
+def library_accounts_delete() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     db.library_credentials_delete(flask.request.form)
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
@@ -481,7 +491,7 @@ def library_accounts_delete() -> flask.Response:
 
 @app.get("/library/notify-now")
 @permission_required("library")
-def library_notify_now() -> flask.Response:
+def library_notify_now() -> werkzeug.Response:
     log.info("Got library notification request")
     yavin.tasks.scheduler.add_job(yavin.tasks.library_notify)
     return flask.redirect(flask.url_for("library"))
@@ -489,7 +499,7 @@ def library_notify_now() -> flask.Response:
 
 @app.get("/library/sync-now")
 @permission_required("library")
-def library_sync_now() -> flask.Response:
+def library_sync_now() -> werkzeug.Response:
     log.info("Got library sync request")
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for("library"))
@@ -506,7 +516,7 @@ def movie_night() -> str:
 
 @app.post("/movie-night/add-person")
 @permission_required("movie-night")
-def movie_night_add_person() -> flask.Response:
+def movie_night_add_person() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {"person": flask.request.form.get("person")}
     db.movie_people_insert(params)
@@ -515,7 +525,7 @@ def movie_night_add_person() -> flask.Response:
 
 @app.post("/movie-night/add-pick")
 @permission_required("movie-night")
-def movie_night_add_pick() -> flask.Response:
+def movie_night_add_pick() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
         "pick_date": flask.request.form.get("pick_date"),
@@ -530,7 +540,7 @@ def movie_night_add_pick() -> flask.Response:
 
 @app.post("/movie-night/delete-pick")
 @permission_required("movie-night")
-def movie_night_delete_pick() -> flask.Response:
+def movie_night_delete_pick() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {"id": flask.request.form.get("id")}
     db.movie_picks_delete(params)
@@ -539,7 +549,7 @@ def movie_night_delete_pick() -> flask.Response:
 
 @app.post("/movie-night/edit-pick")
 @permission_required("movie-night")
-def movie_night_edit_pick() -> flask.Response:
+def movie_night_edit_pick() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     params = {
         "id": flask.request.form.get("id"),
@@ -575,7 +585,7 @@ def phone() -> str:
 
 @app.post("/phone/add")
 @permission_required("phone")
-def phone_add() -> flask.Response:
+def phone_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     kwargs = {
         "start_date": datetime.date.fromisoformat(
@@ -601,7 +611,7 @@ def tithing() -> str:
 
 @app.post("/tithing/income/add")
 @permission_required("tithing")
-def tithing_income_add() -> flask.Response:
+def tithing_income_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     date = datetime.datetime.strptime(flask.request.values.get("tx-date"), "%Y-%m-%d")
     amount = decimal.Decimal(flask.request.values.get("tx-value"))
@@ -612,7 +622,7 @@ def tithing_income_add() -> flask.Response:
 
 @app.post("/tithing/income/paid")
 @permission_required("tithing")
-def tithing_income_paid() -> flask.Response:
+def tithing_income_paid() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     db.tithing_income_mark_paid()
     return flask.redirect(flask.url_for("tithing"))
@@ -630,13 +640,17 @@ def user_permissions() -> str:
 def weight() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     weight_entries = db.weight_entries_list()
-    default_weight = weight_entries[0].get("weight") if weight_entries else 0
+    default_weight = (
+        weight_entries[0].get("weight")
+        if weight_entries
+        else yavin.components.DECIMAL_ZERO
+    )
     return yavin.components.weight(weight_entries, default_weight)
 
 
 @app.post("/weight/add")
 @permission_required("weight")
-def weight_add() -> flask.Response:
+def weight_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.form.get("entry_date"))
     current = db.weight_entries_get_for_date(entry_date)
@@ -652,7 +666,7 @@ def weight_add() -> flask.Response:
 
 
 @app.get("/authorize")
-def authorize() -> flask.Response:
+def authorize() -> werkzeug.Response:
     for key, value in flask.request.values.items():
         log.debug(f"{key}: {value}")
     if flask.session.get("state") != flask.request.values.get("state"):
@@ -677,7 +691,7 @@ def authorize() -> flask.Response:
 
 
 @app.get("/sign-in")
-def sign_in() -> flask.Response:
+def sign_in() -> werkzeug.Response:
     state = str(uuid.uuid4())
     flask.session["state"] = state
     redirect_uri = flask.url_for("authorize", _external=True)
@@ -695,7 +709,7 @@ def sign_in() -> flask.Response:
 
 
 @app.get("/sign-out")
-def sign_out() -> flask.Response:
+def sign_out() -> werkzeug.Response:
     flask.session.pop("email", None)
     return flask.redirect(flask.url_for("index"))
 
