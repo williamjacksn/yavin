@@ -4,6 +4,7 @@ import os
 class Settings:
     admin_auth_phrase: str
     admin_email: str
+    database: str
     dsn: str
     openid_client_id: str
     openid_client_secret: str
@@ -18,12 +19,13 @@ class Settings:
         """Instantiating a Settings object will automatically read the following
         environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, DSN, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET,
-        OPENID_DISCOVERY_DOCUMENT, PORT, SCHEME, SECRET_KEY, SERVER_NAME,
-        WEB_SERVER_THREADS
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, DATABASE, DSN, OPENID_CLIENT_ID,
+        OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PORT, SCHEME, SECRET_KEY,
+        SERVER_NAME, WEB_SERVER_THREADS
 
         Some variables have defaults if they are not found in the environment:
 
+        DATABASE="/etc/yavin/yavin.db"
         PORT="8080"
         SCHEME="http"
         SERVER_NAME="localhost:8080"
@@ -32,6 +34,7 @@ class Settings:
 
         self.admin_auth_phrase = os.getenv("ADMIN_AUTH_PHRASE", "").lower()
         self.admin_email = os.getenv("ADMIN_EMAIL", "")
+        self.database = os.getenv("DATABASE", "/etc/yavin/yavin.db")
         self.dsn = os.getenv("DSN", "")
         self.openid_client_id = os.getenv("OPENID_CLIENT_ID", "")
         self.openid_client_secret = os.getenv("OPENID_CLIENT_SECRET", "")

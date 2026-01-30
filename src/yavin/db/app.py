@@ -1,10 +1,14 @@
 import dataclasses
 import datetime
 import decimal
+import logging
+import sqlite3
 import uuid
 from typing import TypedDict
 
 import fort
+
+log = logging.getLogger(__name__)
 
 
 class BillboardRow(TypedDict):
@@ -677,23 +681,6 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             """)
             self.u("""
-                create table flags (
-                    flag_name text primary key,
-                    flag_value text not null
-                )
-            """)
-            self.u("""
-                create table gas_prices (
-                    id uuid primary key,
-                    price_date date not null,
-                    price numeric not null,
-                    gallons numeric,
-                    location text,
-                    vehicle text,
-                    miles_driven numeric
-                )
-            """)
-            self.u("""
                 create table hymns (
                     hymn_number integer primary key,
                     title text not null,
@@ -760,15 +747,6 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             """)
             self.u("""
-                create table packages (
-                    tracking_number text primary key,
-                    shipper text,
-                    notes text,
-                    expected_at date,
-                    arrived_at date
-                )
-            """)
-            self.u("""
                 create table phone_usage (
                     id uuid primary key default gen_random_uuid(),
                     start_date date not null,
@@ -788,16 +766,6 @@ class YavinDatabase(fort.PostgresDatabase):
                 create table settings (
                     setting_id text primary key,
                     setting_value text
-                )
-            """)
-            self.u("""
-                create table timeline_entries (
-                    id uuid primary key,
-                    start_date date not null,
-                    end_date date not null,
-                    description text not null,
-                    zoom_level integer not null default 1,
-                    tags text
                 )
             """)
             self.u("""
@@ -860,3 +828,238 @@ class YavinDatabase(fort.PostgresDatabase):
                 if current_version is not None:
                     self._version = current_version
         return self._version
+
+
+def add_schema_version(con: sqlite3.Connection, schema_version: int) -> None:
+    sql = """
+        insert into schema_versions (schema_version, migration_timestamp)
+        values (:schema_version, :migration_timestamp)
+    """
+    params = {
+        "schema_version": schema_version,
+        "migration_timestamp": datetime.datetime.now(datetime.UTC),
+    }
+    con.execute(sql, params)
+    con.commit()
+
+
+def get_connection(path: str) -> sqlite3.Connection:
+    con = sqlite3.connect(path, autocommit=False)
+    con.row_factory = sqlite3.Row
+    return con
+
+
+def get_schema_version(con: sqlite3.Connection) -> int:
+    if table_exists(con, "schema_versions"):
+        sql = """
+            select max(schema_version) current_version
+            from schema_versions
+        """
+        for row in con.execute(sql):
+            if row["current_version"] is not None:
+                return int(row["current_version"])
+    return 0
+
+
+def migrate(con: sqlite3.Connection) -> None:
+    current_version = get_schema_version(con)
+    if current_version < 1:
+        log.info("Migrating database to schema version 1")
+        con.execute("""
+            create table schema_versions (
+                migration_timestamp timestamp,
+                schema_version integer primary key
+            )
+        """)
+        con.execute("""
+            create table balances_accounts (
+                account_name text,
+                id uuid primary key
+            )
+        """)
+        con.execute("""
+            create table balances_transactions (
+                account_id uuid,
+                tx_date date,
+                tx_description text,
+                tx_id uuid primary key,
+                tx_value decimal
+            )
+        """)
+        con.execute("""
+            create table billboard_number_one (
+                artist text,
+                fetched_at timestamp,
+                id uuid primary key,
+                title text
+            )
+        """)
+        con.execute("""
+            create table callings (
+                calling text,
+                id uuid primary key,
+                released_at date,
+                set_apart_at date,
+                sustained_at date,
+                ward text
+            )
+        """)
+        con.execute("""
+            create table captains_log (
+                id uuid primary key,
+                log_text text,
+                log_timestamp timestamp
+            )
+        """)
+        con.execute("""
+            create table electricity (
+                bill decimal,
+                bill_date date primary key,
+                charge decimal,
+                kwh integer
+            )
+        """)
+        con.execute("""
+            create table hymn_history (
+                date date,
+                hymn_number integer
+            )
+        """)
+        con.execute("""
+            create table hymn_tags (
+                hymn_number integer,
+                tag text,
+                primary key (hymn_number, tag)
+            )
+        """)
+        con.execute("""
+            create table hymns (
+                first_line text,
+                hymn_number integer primary key,
+                title text
+            )
+        """)
+        con.execute("""
+            create table jar_entries (
+                entry_date date,
+                id integer primary key,
+                paid bool
+            )
+        """)
+        con.execute("""
+            create table library_books (
+                credential_id uuid,
+                due date,
+                id uuid primary key,
+                item_id text,
+                medium text,
+                renewable bool,
+                title text
+            )
+        """)
+        con.execute("""
+            create table library_credentials (
+                balance integer,
+                display_name text,
+                id uuid primary key,
+                library text,
+                library_type text,
+                password text,
+                username text
+            )
+        """)
+        con.execute("""
+            create table movie_people (
+                id uuid primary key,
+                person text
+            )
+        """)
+        con.execute("""
+            create table movie_picks (
+                id uuid primary key,
+                person_id uuid,
+                pick_date date,
+                pick_text text,
+                pick_url text
+            )
+        """)
+        con.execute("""
+            create table phone_usage (
+                end_date date,
+                id uuid primary key,
+                megabytes integer,
+                messages integer,
+                minutes integer,
+                start_date date
+            )
+        """)
+        con.execute("""
+            create table settings (
+                setting_id text primary key,
+                setting_value text
+            )
+        """)
+        con.execute("""
+            create table tithing_income (
+                amount decimal,
+                date date,
+                description text,
+                id uuid primary key,
+                tithing_paid date
+            )
+        """)
+        con.execute("""
+            create table user_permissions (
+                email text primary key,
+                permissions text
+            )
+        """)
+        con.execute("""
+            create table weight_entries (
+                entry_date date,
+                weight decimal
+            )
+        """)
+        add_schema_version(con, 1)
+
+
+def register_adapters_and_converters() -> None:
+    def convert_bool(value: bytes) -> bool:
+        return value == b"True"
+
+    sqlite3.register_adapter(bool, str)
+    sqlite3.register_converter("bool", convert_bool)
+
+    def convert_date(value: bytes) -> datetime.date:
+        return datetime.date.fromisoformat(value.decode())
+
+    sqlite3.register_adapter(datetime.date, str)
+    sqlite3.register_converter("date", convert_date)
+
+    def convert_decimal(value: bytes) -> decimal.Decimal:
+        return decimal.Decimal(value.decode())
+
+    sqlite3.register_adapter(decimal.Decimal, str)
+    sqlite3.register_converter("decimal", convert_decimal)
+
+    def convert_uuid(value: bytes) -> uuid.UUID:
+        return uuid.UUID(value.decode())
+
+    sqlite3.register_adapter(uuid.UUID, str)
+    sqlite3.register_converter("uuid", convert_uuid)
+
+
+def table_exists(con: sqlite3.Connection, table_name: str) -> bool:
+    sql = """
+        select count(*) table_count
+        from sqlite_master
+        where type = 'table' and name = :table_name
+    """
+    params = {"table_name": table_name}
+    for row in con.execute(sql, params):
+        if row["table_count"] == 0:
+            return False
+    return True
+
+
+register_adapters_and_converters()
