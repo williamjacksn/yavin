@@ -376,14 +376,14 @@ def expenses() -> str | werkzeug.Response:
     try:
         start_date = yavin.util.str_to_date(flask.request.values.get("start_date"))
         valid_start_date = True
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         log.warning(
             f"Invalid start_date provided: {flask.request.values.get('start_date')}"
         )
     try:
         end_date = yavin.util.str_to_date(flask.request.values.get("end_date"))
         valid_end_date = True
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         log.warning(
             f"Invalid end_date provided: {flask.request.values.get('end_date')}"
         )
