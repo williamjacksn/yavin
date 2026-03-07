@@ -67,6 +67,11 @@ def before_request() -> None:
     flask.g.permissions = flask.g.db.user_permissions_get(flask.g.email)
 
 
+@app.teardown_request
+def teardown_request(_: BaseException | None) -> None:
+    flask.g.db.p.closeall()
+
+
 @app.get("/")
 def index() -> str:
     session_email = flask.session.get("email")
