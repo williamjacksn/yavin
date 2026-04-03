@@ -279,7 +279,7 @@ def captains_log() -> str:
 @permission_required("captains-log")
 def captains_log_delete() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
-    db.captains_log_delete(flask.request.form.get("id"))
+    db.captains_log_delete(flask.request.values.get("id", ""))
     return flask.redirect(flask.url_for("captains_log"))
 
 
@@ -299,7 +299,7 @@ def captains_log_incoming() -> str:
 @app.post("/captains-log/modal/delete")
 def captains_log_modal_delete() -> str:
     return yavin.components.captains_log_modal_delete(
-        flask.request.values.get("log-id")
+        flask.request.values.get("log-id", "")
     )
 
 
