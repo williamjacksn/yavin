@@ -337,7 +337,30 @@ def dashboard_card_billboard() -> str:
 
 @app.get("/dashboard-card/callings")
 def dashboard_card_callings() -> str:
-    return yavin.components.dashboard_card_callings()
+    db: yavin.db.YavinDatabase = flask.g.db
+    callings = db.callings_list()
+    # Find the most recent calling that hasn't been released
+    current_calling = None
+    for calling in reversed(callings):
+        if calling.get("released_at") is None:
+            current_calling = calling
+            break
+    if current_calling is None and callings:
+        # If all are released, show the most recent one
+        current_calling = callings[-1]
+
+    if current_calling:
+        calling_name = current_calling.get("calling")
+        sustained_at = current_calling.get("sustained_at")
+        if sustained_at:
+            days = (yavin.util.today() - sustained_at).days
+            text = f"{calling_name}, {days} days"
+        else:
+            text = calling_name
+    else:
+        text = "No callings"
+
+    return yavin.components.dashboard_card_callings(text)
 
 
 @app.get("/dashboard-card/captains-log")
