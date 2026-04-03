@@ -15,6 +15,7 @@ import werkzeug.utils
 
 import yavin.components
 import yavin.db
+import yavin.db.app_sqlite
 import yavin.settings
 import yavin.tasks
 import yavin.util
@@ -23,6 +24,7 @@ import yavin.versions
 log = logging.getLogger(__name__)
 
 settings = yavin.settings.Settings()
+yavin.db.app_sqlite.connection_init(settings.database)
 
 app = flask.Flask(__name__)
 app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(  # ty:ignore[invalid-assignment]
@@ -589,6 +591,103 @@ def library_sync_now() -> werkzeug.Response:
     log.info("Got library sync request")
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for("library"))
+
+
+@app.get("/migrate")
+def migrate() -> werkzeug.Response:
+    con = yavin.db.app_sqlite.connection_get(settings.database)
+    yavin.db.app_sqlite.reset_data(con)
+    for r in flask.g.db.balances_accounts_list():
+        yavin.db.app_sqlite.balances_accounts_insert(
+            con, r["account_name"], r["account_id"]
+        )
+    for r in flask.g.db.balances_transactions_list_all():
+        yavin.db.app_sqlite.balances_transactions_insert(
+            con,
+            r["account_id"],
+            r["tx_date"],
+            r["tx_description"],
+            r["tx_id"],
+            r["tx_value"],
+        )
+    for r in flask.g.db.billboard_list_all():
+        yavin.db.app_sqlite.billboard_insert(
+            con, r["artist"], r["fetched_at"], r["id"], r["title"]
+        )
+    for r in flask.g.db.callings_list():
+        yavin.db.app_sqlite.callings_insert(
+            con,
+            r["calling"],
+            r["id"],
+            r["released_at"],
+            r["set_apart_at"],
+            r["sustained_at"],
+            r["ward"],
+        )
+    for r in flask.g.db.electricity_list():
+        yavin.db.app_sqlite.electricity_insert(
+            con, r["bill"], r["bill_date"], r["charge"], r["kwh"]
+        )
+    for r in flask.g.db.hymn_history_list():
+        yavin.db.app_sqlite.hymn_history_insert(con, r["date"], r["hymn_number"])
+    for r in flask.g.db.hymn_tags_list():
+        yavin.db.app_sqlite.hymn_tags_insert(con, r["hymn_number"], r["tag"])
+    for r in flask.g.db.hymns_list():
+        yavin.db.app_sqlite.hymns_insert(
+            con, r["first_line"], r["hymn_number"], r["title"]
+        )
+    for r in flask.g.db.jar_entries_list_all():
+        yavin.db.app_sqlite.jar_entries_insert(con, r["entry_date"], r["id"], r["paid"])
+    for r in flask.g.db.library_books_list_all():
+        yavin.db.app_sqlite.library_books_insert(
+            con,
+            r["credential_id"],
+            r["due"],
+            r["id"],
+            r["item_id"],
+            r["medium"],
+            r["renewable"],
+            r["title"],
+        )
+    for r in flask.g.db.library_credentials_list():
+        yavin.db.app_sqlite.library_credentials_insert(
+            con,
+            r["balance"],
+            r["display_name"],
+            r["id"],
+            r["library"],
+            r["library_type"],
+            r["password"],
+            r["username"],
+        )
+    for r in flask.g.db.movie_people_list():
+        yavin.db.app_sqlite.movie_people_insert(con, r["id"], r["person"])
+    for r in flask.g.db.movie_picks_list():
+        yavin.db.app_sqlite.movie_picks_insert(
+            con, r["id"], r["person_id"], r["pick_date"], r["pick_text"], r["pick_url"]
+        )
+    for r in flask.g.db.phone_usage_list():
+        yavin.db.app_sqlite.phone_usage_insert(
+            con,
+            r["end_date"],
+            r["id"],
+            r["megabytes"],
+            r["messages"],
+            r["minutes"],
+            r["start_date"],
+        )
+    for k, v in flask.g.db.settings_list().items():
+        yavin.db.app_sqlite.settings_insert(con, k, v)
+    for r in flask.g.db.tithing_income_list_all():
+        yavin.db.app_sqlite.tithing_income_insert(
+            con, r["amount"], r["date"], r["description"], r["id"], r["tithing_paid"]
+        )
+    for r in flask.g.db.user_permissions_list():
+        yavin.db.app_sqlite.user_permissions_insert(con, r.email, r.permissions_db)
+    for r in flask.g.db.weight_entries_list(limit=300):
+        yavin.db.app_sqlite.weight_entries_insert(con, r["entry_date"], r["weight"])
+    con.close()
+    return flask.redirect(flask.url_for("index"))
 
 
 @app.get("/movie-night")
