@@ -596,6 +596,7 @@ def library_sync_now() -> werkzeug.Response:
 @app.get("/migrate")
 def migrate() -> werkzeug.Response:
     con = yavin.db.app_sqlite.connection_get(settings.database)
+    yavin.db.app_sqlite.migrate(con)
     yavin.db.app_sqlite.reset_data(con)
     for r in flask.g.db.balances_accounts_list():
         yavin.db.app_sqlite.balances_accounts_insert(
