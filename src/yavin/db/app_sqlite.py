@@ -37,7 +37,7 @@ _register_adapters_and_converters()
 
 
 def balances_accounts_insert(
-    con: sqlite3.Connection, account_name: str, id: uuid.UUID
+    con: sqlite3.Connection, account_name: str, id_: uuid.UUID
 ) -> None:
     sql = """
         insert into balances_accounts (account_name, id)
@@ -45,7 +45,7 @@ def balances_accounts_insert(
     """
     params = {
         "account_name": account_name,
-        "id": id,
+        "id": id_,
     }
     con.execute(sql, params)
     con.commit()
