@@ -235,10 +235,12 @@ def callings_add() -> werkzeug.Response:
         "sustained_at": yavin.util.str_to_date(
             flask.request.values.get("sustained_at")
         ),
-        "set_apart_at": flask.request.values.get("set_apart_at")
-        and yavin.util.str_to_date(flask.request.values.get("set_apart_at")),
-        "released_at": flask.request.values.get("released_at")
-        and yavin.util.str_to_date(flask.request.values.get("released_at")),
+        "set_apart_at": yavin.util.str_to_date(flask.request.values.get("set_apart_at"))
+        if "set_apart_at" in flask.request.values
+        else None,
+        "released_at": yavin.util.str_to_date(flask.request.values.get("released_at"))
+        if "released_at" in flask.request.values
+        else None,
     }
     db.callings_insert(params)
     return flask.redirect(flask.url_for("callings"))
