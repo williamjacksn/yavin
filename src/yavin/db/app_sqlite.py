@@ -509,6 +509,7 @@ def phone_usage_insert(
     con.commit()
 
 
+# noinspection SqlWithoutWhere
 def reset_data(con: sqlite3.Connection) -> None:
     sql = [
         "delete from balances_accounts",
