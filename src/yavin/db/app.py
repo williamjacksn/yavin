@@ -131,6 +131,14 @@ class YavinDatabase(fort.PostgresDatabase):
         }
         self.u(sql, params)
 
+    def callings_list(self) -> list[dict]:
+        sql = """
+            select id, ward, calling, sustained_at, set_apart_at, released_at
+            from callings
+            order by sustained_at
+        """
+        return self.q(sql)
+
     # captain's log
 
     def captains_log_delete(self, id_: str) -> None:

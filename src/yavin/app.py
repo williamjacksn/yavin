@@ -212,6 +212,13 @@ def billboard() -> str:
     return yavin.components.billboard()
 
 
+@app.get("/callings")
+@permission_required("callings")
+def callings() -> str:
+    db: yavin.db.YavinDatabase = flask.g.db
+    return yavin.components.callings(db.callings_list())
+
+
 @app.get("/captains-log")
 @permission_required("captains-log")
 def captains_log() -> str:

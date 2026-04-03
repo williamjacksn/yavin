@@ -407,6 +407,58 @@ def billboard() -> str:
     )
 
 
+def callings(records: list) -> str:
+    rows = []
+    for record in records:
+        sustained_at = record.get("sustained_at")
+        released_at = record.get("released_at")
+        if sustained_at:
+            end_date = released_at or yavin.util.today()
+            days = (end_date - sustained_at).days
+        else:
+            days = None
+        rows.append(
+            htpy.tr[
+                htpy.td[record.get("ward")],
+                htpy.td[record.get("calling")],
+                htpy.td[sustained_at and sustained_at.isoformat()],
+                htpy.td[
+                    record.get("set_apart_at")
+                    and record.get("set_apart_at").isoformat()
+                ],
+                htpy.td[released_at and released_at.isoformat()],
+                htpy.td(".text-end")[days if days is not None else ""],
+            ]
+        )
+    content = [
+        _page_title("Callings"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table.table-striped")[
+                    htpy.thead[
+                        htpy.tr[
+                            htpy.th["Ward"],
+                            htpy.th["Calling"],
+                            htpy.th["Sustained"],
+                            htpy.th["Set apart"],
+                            htpy.th["Released"],
+                            htpy.th(".text-end")["Days"],
+                        ]
+                    ],
+                    htpy.tbody[rows],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,
+        "Yavin / Callings",
+    )
+
+
 def captains_log() -> str:
     tbody = htpy.tbody[
         (
