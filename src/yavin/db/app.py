@@ -93,6 +93,13 @@ class YavinDatabase(fort.PostgresDatabase):
         }
         return self.q(sql, params)
 
+    def balances_transactions_list_all(self) -> list[dict]:
+        sql = """
+            select account_id, tx_date, tx_description, tx_id, tx_value
+            from balances_transactions
+        """
+        return self.q(sql)
+
     # billboard
 
     def billboard_get_latest(self) -> BillboardRow:
@@ -119,6 +126,13 @@ class YavinDatabase(fort.PostgresDatabase):
             "title": title,
         }
         self.u(sql, params)
+
+    def billboard_list_all(self) -> list[BillboardRow]:
+        sql = """
+            select artist, fetched_at, id, title
+            from billboard_number_one
+        """
+        return self.q(sql)
 
     def billboard_update_fetched_at(self, _id: uuid.UUID) -> None:
         sql = """
@@ -241,6 +255,27 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         return self.q(sql)
 
+    def hymn_history_list(self) -> list[dict]:
+        sql = """
+            select date, hymn_number
+            from hymn_history
+        """
+        return self.q(sql)
+
+    def hymn_tags_list(self) -> list[dict]:
+        sql = """
+            select hymn_number, tag
+            from hymn_tags
+        """
+        return self.q(sql)
+
+    def hymns_list(self) -> list[dict]:
+        sql = """
+            select first_line, hymn_number, title
+            from hymns
+        """
+        return self.q(sql)
+
     # jar
 
     def jar_entries_days_since_last(self) -> int:
@@ -283,6 +318,13 @@ class YavinDatabase(fort.PostgresDatabase):
             "offset": 10 * (page - 1),
         }
         return self.q(sql, params)
+
+    def jar_entries_list_all(self) -> list[dict]:
+        sql = """
+            select entry_date, id, paid
+            from jar_entries
+        """
+        return self.q(sql)
 
     # library
 
@@ -343,6 +385,13 @@ class YavinDatabase(fort.PostgresDatabase):
             from library_books b
             join library_credentials c on c.id = b.credential_id
             order by due, title
+        """
+        return self.q(sql)
+
+    def library_books_list_all(self) -> list[dict]:
+        sql = """
+            select credential_id, due, id, item_id, medium, renewable, title
+            from library_books
         """
         return self.q(sql)
 
@@ -536,6 +585,13 @@ class YavinDatabase(fort.PostgresDatabase):
             "description": description,
         }
         self.u(sql, params)
+
+    def tithing_income_list_all(self) -> list[dict]:
+        sql = """
+            select amount, date, description, id, tithing_paid
+            from tithing_income
+        """
+        return self.q(sql)
 
     def tithing_income_list_unpaid(self) -> list[dict]:
         sql = """
