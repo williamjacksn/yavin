@@ -228,22 +228,36 @@ def callings_add_form() -> str:
 @app.post("/callings/add")
 @permission_required("callings")
 def callings_add() -> werkzeug.Response:
+    response = flask.redirect(flask.url_for("callings"))
     db: yavin.db.YavinDatabase = flask.g.db
+
+    sustained_at = flask.request.values.get("sustained_at")
+    if sustained_at is None:
+        flask.flash("Sustain date is required", "danger")
+        return response
+    sustained_at_date = yavin.util.str_to_date(sustained_at)
+
+    set_apart_at = flask.request.values.get("set_apart_at")
+    if set_apart_at is None:
+        set_apart_at_date = None
+    else:
+        set_apart_at_date = yavin.util.str_to_date(set_apart_at)
+
+    released_at = flask.request.values.get("released_at")
+    if released_at is None:
+        released_at_date = None
+    else:
+        released_at_date = yavin.util.str_to_date(released_at)
+
     params = {
         "ward": flask.request.values.get("ward"),
         "calling": flask.request.values.get("calling"),
-        "sustained_at": yavin.util.str_to_date(
-            flask.request.values.get("sustained_at")
-        ),
-        "set_apart_at": yavin.util.str_to_date(flask.request.values.get("set_apart_at"))
-        if "set_apart_at" in flask.request.values
-        else None,
-        "released_at": yavin.util.str_to_date(flask.request.values.get("released_at"))
-        if "released_at" in flask.request.values
-        else None,
+        "sustained_at": sustained_at_date,
+        "set_apart_at": set_apart_at_date,
+        "released_at": released_at_date,
     }
     db.callings_insert(params)
-    return flask.redirect(flask.url_for("callings"))
+    return response
 
 
 @app.get("/captains-log")
