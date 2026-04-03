@@ -27,10 +27,10 @@ def _back_to_library() -> htpy.Element:
 
 
 def _base(
-    title: str | markupsafe.Markup = "Yavin",
+    title: str | markupsafe.Markup | None = "Yavin",
     sign_in_block: htpy.Element | None = None,
     breadcrumb: htpy.Element | None = None,
-    content: htpy.Element | None = None,
+    content: htpy.Element | list[htpy.Element] | None = None,
     end_of_body: htpy.Element | None = None,
 ) -> htpy.Element:
     return htpy.html(lang="en")[
@@ -434,6 +434,15 @@ def callings(records: list) -> str:
         _page_title("Callings"),
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
+                htpy.button(
+                    ".btn.btn-success",
+                    hx_get=flask.url_for("callings_add_form"),
+                    hx_swap="outerHTML",
+                )["Add calling"]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
                 htpy.table(".d-block.table.table-striped")[
                     htpy.thead[
                         htpy.tr[
@@ -456,6 +465,66 @@ def callings(records: list) -> str:
         _back_to_home(),
         content,
         "Yavin / Callings",
+    )
+
+
+def callings_add_form() -> str:
+    return str(
+        htpy.form(action=flask.url_for("callings_add"), method="post")[
+            htpy.div(".g-1.row")[
+                htpy.div(".col-auto")[
+                    htpy.input(
+                        ".form-control",
+                        aria_label="Ward",
+                        name="ward",
+                        placeholder="Ward",
+                        required=True,
+                        type="text",
+                    )
+                ],
+                htpy.div(".col-auto")[
+                    htpy.input(
+                        ".form-control",
+                        aria_label="Calling",
+                        name="calling",
+                        placeholder="Calling",
+                        required=True,
+                        type="text",
+                    )
+                ],
+                htpy.div(".col-auto")[
+                    htpy.input(
+                        ".form-control",
+                        aria_label="Sustained",
+                        name="sustained_at",
+                        required=True,
+                        title="Sustained date",
+                        type="date",
+                    )
+                ],
+                htpy.div(".col-auto")[
+                    htpy.input(
+                        ".form-control",
+                        aria_label="Set apart",
+                        name="set_apart_at",
+                        title="Set apart date",
+                        type="date",
+                    )
+                ],
+                htpy.div(".col-auto")[
+                    htpy.input(
+                        ".form-control",
+                        aria_label="Released",
+                        name="released_at",
+                        title="Released date",
+                        type="date",
+                    )
+                ],
+                htpy.div(".col-auto")[
+                    htpy.button(".btn.btn-success", type="submit")["Save"]
+                ],
+            ]
+        ]
     )
 
 

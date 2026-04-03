@@ -219,6 +219,31 @@ def callings() -> str:
     return yavin.components.callings(db.callings_list())
 
 
+@app.get("/callings/add-form")
+@permission_required("callings")
+def callings_add_form() -> str:
+    return yavin.components.callings_add_form()
+
+
+@app.post("/callings/add")
+@permission_required("callings")
+def callings_add() -> werkzeug.Response:
+    db: yavin.db.YavinDatabase = flask.g.db
+    params = {
+        "ward": flask.request.values.get("ward"),
+        "calling": flask.request.values.get("calling"),
+        "sustained_at": yavin.util.str_to_date(
+            flask.request.values.get("sustained_at")
+        ),
+        "set_apart_at": flask.request.values.get("set_apart_at")
+        and yavin.util.str_to_date(flask.request.values.get("set_apart_at")),
+        "released_at": flask.request.values.get("released_at")
+        and yavin.util.str_to_date(flask.request.values.get("released_at")),
+    }
+    db.callings_insert(params)
+    return flask.redirect(flask.url_for("callings"))
+
+
 @app.get("/captains-log")
 @permission_required("captains-log")
 def captains_log() -> str:

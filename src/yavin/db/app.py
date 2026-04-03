@@ -131,6 +131,18 @@ class YavinDatabase(fort.PostgresDatabase):
         }
         self.u(sql, params)
 
+    def callings_insert(self, params: dict) -> None:
+        sql = """
+            insert into callings (
+                ward, calling, sustained_at, set_apart_at,
+                released_at
+            ) values (
+                %(ward)s, %(calling)s, %(sustained_at)s, %(set_apart_at)s,
+                %(released_at)s
+            )
+        """
+        self.u(sql, params)
+
     def callings_list(self) -> list[dict]:
         sql = """
             select id, ward, calling, sustained_at, set_apart_at, released_at
