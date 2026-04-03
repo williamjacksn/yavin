@@ -76,8 +76,8 @@ def teardown_request(_: BaseException | None) -> None:
 
 @app.get("/")
 def index() -> str:
-    session_email = flask.session.get("email")
-    if session_email is None:
+    session_email: str = flask.session.get("email", "")
+    if session_email is None or session_email == "":
         return yavin.components.index_signed_out()
     cards = [
         {
