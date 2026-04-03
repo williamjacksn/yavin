@@ -421,12 +421,12 @@ def callings(records: list) -> str:
             htpy.tr[
                 htpy.td[record.get("ward")],
                 htpy.td[record.get("calling")],
-                htpy.td[sustained_at and sustained_at.isoformat()],
-                htpy.td[
+                htpy.td(".text-nowrap")[sustained_at and sustained_at.isoformat()],
+                htpy.td(".text-nowrap")[
                     record.get("set_apart_at")
                     and record.get("set_apart_at").isoformat()
                 ],
-                htpy.td[released_at and released_at.isoformat()],
+                htpy.td(".text-nowrap")[released_at and released_at.isoformat()],
                 htpy.td(".text-end")[days if days is not None else ""],
             ]
         )
