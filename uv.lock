@@ -445,11 +445,14 @@ dependencies = [
     { name = "flask" },
     { name = "fort" },
     { name = "htpy" },
+    { name = "httpx" },
     { name = "lxml" },
+    { name = "markupsafe" },
     { name = "notch" },
     { name = "psycopg2-binary" },
     { name = "pyjwt" },
     { name = "waitress" },
+    { name = "werkzeug" },
 ]
 
 [package.dev-dependencies]
@@ -468,11 +471,14 @@ requires-dist = [
     { name = "flask", specifier = ">=3.1.2" },
     { name = "fort", specifier = ">=2025.1" },
     { name = "htpy", specifier = ">=25.12.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "lxml", specifier = ">=6.0.2" },
+    { name = "markupsafe", specifier = ">=3.0.3" },
     { name = "notch", specifier = ">=2025.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "waitress", specifier = ">=3.0.2" },
+    { name = "werkzeug", specifier = ">=3.1.6" },
 ]
 
 [package.metadata.requires-dev]
