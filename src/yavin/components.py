@@ -475,52 +475,65 @@ def callings_add_form() -> str:
         htpy.form(action=flask.url_for("callings_add"), method="post")[
             htpy.div(".g-1.row")[
                 htpy.div(".col-auto")[
-                    htpy.input(
-                        ".form-control",
-                        aria_label="Ward",
-                        name="ward",
-                        placeholder="Ward",
-                        required=True,
-                        type="text",
-                    )
+                    htpy.div(".input-group")[
+                        htpy.span(".input-group-text")["ward"],
+                        htpy.input(
+                            ".form-control",
+                            aria_label="Ward",
+                            name="ward",
+                            required=True,
+                            type="text",
+                        ),
+                    ]
                 ],
                 htpy.div(".col-auto")[
-                    htpy.input(
-                        ".form-control",
-                        aria_label="Calling",
-                        name="calling",
-                        placeholder="Calling",
-                        required=True,
-                        type="text",
-                    )
+                    htpy.div(".input-group")[
+                        htpy.span(".input-group-text")["calling"],
+                        htpy.input(
+                            ".form-control",
+                            aria_label="Calling",
+                            name="calling",
+                            required=True,
+                            type="text",
+                        ),
+                    ]
                 ],
                 htpy.div(".col-auto")[
-                    htpy.input(
-                        ".form-control",
-                        aria_label="Sustained",
-                        name="sustained_at",
-                        required=True,
-                        title="Sustained date",
-                        type="date",
-                    )
+                    htpy.div(".input-group")[
+                        htpy.span(".input-group-text")["sustained"],
+                        htpy.input(
+                            ".form-control",
+                            aria_label="Sustained",
+                            name="sustained_at",
+                            required=True,
+                            title="Sustained date",
+                            type="date",
+                        ),
+                    ]
                 ],
                 htpy.div(".col-auto")[
-                    htpy.input(
-                        ".form-control",
-                        aria_label="Set apart",
-                        name="set_apart_at",
-                        title="Set apart date",
-                        type="date",
-                    )
+                    htpy.div(".input-group")[
+                        htpy.span(".input-group-text")["set apart"],
+                        htpy.input(
+                            ".form-control",
+                            aria_label="Set apart",
+                            name="set_apart_at",
+                            title="Set apart date",
+                            type="date",
+                        ),
+                    ]
                 ],
                 htpy.div(".col-auto")[
-                    htpy.input(
-                        ".form-control",
-                        aria_label="Released",
-                        name="released_at",
-                        title="Released date",
-                        type="date",
-                    )
+                    htpy.div(".input-group")[
+                        htpy.span(".input-group-text")["released"],
+                        htpy.input(
+                            ".form-control",
+                            aria_label="Released",
+                            name="released_at",
+                            title="Released date",
+                            type="date",
+                        ),
+                    ]
                 ],
                 htpy.div(".col-auto")[
                     htpy.button(".btn.btn-success", type="submit")["Save"]
