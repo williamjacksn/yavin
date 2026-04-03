@@ -443,18 +443,20 @@ def callings(records: list) -> str:
         ],
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
-                htpy.table(".d-block.table.table-striped")[
-                    htpy.thead[
-                        htpy.tr[
-                            htpy.th["Ward"],
-                            htpy.th["Calling"],
-                            htpy.th["Sustained"],
-                            htpy.th["Set apart"],
-                            htpy.th["Released"],
-                            htpy.th(".text-end")["Days"],
-                        ]
-                    ],
-                    htpy.tbody[rows],
+                htpy.div(".table-responsive")[
+                    htpy.table(".table.table-striped")[
+                        htpy.thead[
+                            htpy.tr[
+                                htpy.th["Ward"],
+                                htpy.th["Calling"],
+                                htpy.th["Sustained"],
+                                htpy.th["Set apart"],
+                                htpy.th["Released"],
+                                htpy.th(".text-end")["Days"],
+                            ]
+                        ],
+                        htpy.tbody[rows],
+                    ]
                 ]
             ]
         ],
