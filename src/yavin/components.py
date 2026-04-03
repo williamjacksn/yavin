@@ -668,6 +668,10 @@ def dashboard_card_billboard(latest: str) -> str:
     return dashboard_card("Billboard Hot 100 #1", flask.url_for("billboard"), latest)
 
 
+def dashboard_card_callings() -> str:
+    return dashboard_card("Callings", flask.url_for("callings"), "Go")
+
+
 def dashboard_card_captains_log() -> str:
     return dashboard_card(
         markupsafe.Markup("Captain&#x02bc;s log"), flask.url_for("captains_log"), "Go"

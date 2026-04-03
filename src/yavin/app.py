@@ -89,6 +89,11 @@ def index() -> str:
             or "admin" in flask.g.permissions,
         },
         {
+            "url": flask.url_for("dashboard_card_callings"),
+            "visible": "callings" in flask.g.permissions
+            or "admin" in flask.g.permissions,
+        },
+        {
             "url": flask.url_for("dashboard_card_captains_log"),
             "visible": "captains-log" in flask.g.permissions
             or "admin" in flask.g.permissions,
@@ -328,6 +333,11 @@ def dashboard_card_billboard() -> str:
     else:
         text = f"{latest.get('title')} by {latest.get('artist')}"
     return yavin.components.dashboard_card_billboard(text)
+
+
+@app.get("/dashboard-card/callings")
+def dashboard_card_callings() -> str:
+    return yavin.components.dashboard_card_callings()
 
 
 @app.get("/dashboard-card/captains-log")
