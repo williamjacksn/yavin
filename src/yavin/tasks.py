@@ -29,12 +29,15 @@ def _notify(subject: str, body: str) -> None:
     msg["From"] = app_settings.get("smtp_from_address", "")
     msg["To"] = settings.admin_email
     msg.set_content(body, subtype="html")
-    with smtplib.SMTP_SSL(host=app_settings.get("smtp_server", "")) as s:
-        s.login(
-            user=app_settings.get("smtp_username", ""),
-            password=app_settings.get("smtp_password", ""),
-        )
-        s.send_message(msg)
+    if "smtp_server" in app_settings:
+        with smtplib.SMTP_SSL(host=app_settings.get("smtp_server", "")) as s:
+            s.login(
+                user=app_settings.get("smtp_username", ""),
+                password=app_settings.get("smtp_password", ""),
+            )
+            s.send_message(msg)
+    else:
+        log.warning("Can't send email. SMTP server is not configured")
 
 
 def billboard_number_one_fetch() -> None:
