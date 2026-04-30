@@ -3,7 +3,7 @@ import datetime
 import decimal
 import logging
 import uuid
-from typing import TypedDict
+from typing import TypedDict, cast
 
 import fort
 
@@ -108,8 +108,7 @@ class YavinDatabase(fort.PostgresDatabase):
             order by fetched_at desc
             limit 1
         """
-        row: BillboardRow = self.q_one(sql)
-        return row
+        return cast(BillboardRow, cast(object, self.q_one(sql)))
 
     def billboard_insert(self, artist: str, title: str) -> None:
         sql = """
@@ -131,7 +130,7 @@ class YavinDatabase(fort.PostgresDatabase):
             select artist, fetched_at, id, title
             from billboard_number_one
         """
-        return self.q(sql)
+        return cast(list[BillboardRow], cast(object, self.q(sql)))
 
     def billboard_update_fetched_at(self, _id: uuid.UUID) -> None:
         sql = """
@@ -353,7 +352,7 @@ class YavinDatabase(fort.PostgresDatabase):
             from library_credentials
             order by display_name
         """
-        rows: list[LibraryCredential] = self.q(sql)
+        rows = cast(list[LibraryCredential], cast(object, self.q(sql)))
         return rows
 
     def library_books_count(self) -> dict:
@@ -363,7 +362,7 @@ class YavinDatabase(fort.PostgresDatabase):
                 count(*) filter (where due < current_date) overdue_count
             from library_books
         """
-        return self.q_one(sql)
+        return self.q_one(sql) or {}
 
     def library_books_insert(self, params: dict) -> None:
         sql = """
@@ -449,7 +448,7 @@ class YavinDatabase(fort.PostgresDatabase):
             order by last_pick_date nulls first, id
             limit 1
         """
-        return self.q_one(sql)
+        return self.q_one(sql) or {}
 
     def movie_picks_delete(self, params: dict) -> None:
         sql = """

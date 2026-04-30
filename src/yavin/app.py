@@ -442,10 +442,10 @@ def electricity() -> str:
 @permission_required("electricity")
 def electricity_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
-    bill_date = yavin.util.str_to_date(flask.request.form.get("bill_date"))
-    kwh = int(flask.request.form.get("kwh"))
-    charge = decimal.Decimal(flask.request.form.get("charge"))
-    bill = decimal.Decimal(flask.request.form.get("bill"))
+    bill_date = yavin.util.str_to_date(flask.request.values["bill_date"])
+    kwh = int(flask.request.values["kwh"])
+    charge = decimal.Decimal(flask.request.values["charge"])
+    bill = decimal.Decimal(flask.request.values["bill"])
     db.electricity_insert(bill_date, kwh, charge, bill)
     return flask.redirect(flask.url_for("electricity"))
 
@@ -462,14 +462,14 @@ def expenses() -> str | werkzeug.Response:
     valid_start_date = False
     valid_end_date = False
     try:
-        start_date = yavin.util.str_to_date(flask.request.values.get("start_date"))
+        start_date = yavin.util.str_to_date(flask.request.values["start_date"])
         valid_start_date = True
     except TypeError, ValueError:
         log.warning(
             f"Invalid start_date provided: {flask.request.values.get('start_date')}"
         )
     try:
-        end_date = yavin.util.str_to_date(flask.request.values.get("end_date"))
+        end_date = yavin.util.str_to_date(flask.request.values["end_date"])
         valid_end_date = True
     except TypeError, ValueError:
         log.warning(
@@ -521,7 +521,7 @@ def jar() -> str:
 @permission_required("jar")
 def jar_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
-    entry_date = yavin.util.str_to_date(flask.request.form.get("entry_date"))
+    entry_date = yavin.util.str_to_date(flask.request.values["entry_date"])
     log.info(f"Adding new jar entry for {entry_date}")
     db.jar_entries_insert(entry_date)
     return flask.redirect(flask.url_for("jar"))
@@ -774,13 +774,11 @@ def phone() -> str:
 def phone_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     kwargs = {
-        "start_date": datetime.date.fromisoformat(
-            flask.request.values.get("start-date")
-        ),
-        "end_date": datetime.date.fromisoformat(flask.request.values.get("end-date")),
-        "minutes": int(flask.request.values.get("minutes")),
-        "messages": int(flask.request.values.get("messages")),
-        "megabytes": int(flask.request.values.get("megabytes")),
+        "start_date": datetime.date.fromisoformat(flask.request.values["start-date"]),
+        "end_date": datetime.date.fromisoformat(flask.request.values["end-date"]),
+        "minutes": int(flask.request.values["minutes"]),
+        "messages": int(flask.request.values["messages"]),
+        "megabytes": int(flask.request.values["megabytes"]),
     }
     db.phone_usage_insert(**kwargs)
     return flask.redirect(flask.url_for("phone"))
@@ -799,9 +797,9 @@ def tithing() -> str:
 @permission_required("tithing")
 def tithing_income_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
-    date = datetime.datetime.strptime(flask.request.values.get("tx-date"), "%Y-%m-%d")
-    amount = decimal.Decimal(flask.request.values.get("tx-value"))
-    description = flask.request.values.get("tx-description")
+    date = datetime.datetime.strptime(flask.request.values["tx-date"], "%Y-%m-%d")
+    amount = decimal.Decimal(flask.request.values["tx-value"])
+    description = flask.request.values["tx-description"]
     db.tithing_income_insert(date, amount, description)
     return flask.redirect(flask.url_for("tithing"))
 
@@ -838,10 +836,10 @@ def weight() -> str:
 @permission_required("weight")
 def weight_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
-    entry_date = yavin.util.str_to_date(flask.request.form.get("entry_date"))
+    entry_date = yavin.util.str_to_date(flask.request.values["entry_date"])
     current = db.weight_entries_get_for_date(entry_date)
     if current is None:
-        entry_weight = flask.request.form.get("weight")
+        entry_weight = flask.request.values["weight"]
         log.info(f"Adding new weight entry for {entry_date}: {entry_weight} lbs")
         db.weight_entries_insert(entry_date, decimal.Decimal(entry_weight))
     else:
