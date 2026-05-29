@@ -179,10 +179,15 @@ def app_settings_update() -> werkzeug.Response:
 
     bool_settings = [
         "debug_layout",
+        "scheduled_tasks_enabled",
     ]
     for setting_id in bool_settings:
         setting_value = "true" if setting_id in flask.request.values else "false"
         db.settings_update(setting_id, setting_value)
+
+    # Apply scheduled tasks setting immediately
+    scheduled_tasks_enabled = "scheduled_tasks_enabled" in flask.request.values
+    _manage_scheduled_tasks(scheduled_tasks_enabled)
 
     return flask.redirect(flask.url_for("app_settings"))
 
@@ -973,9 +978,44 @@ def sign_out() -> werkzeug.Response:
     return flask.redirect(flask.url_for("index"))
 
 
+def _manage_scheduled_tasks(enabled: bool) -> None:
+    """Add or remove scheduled tasks based on the enabled flag."""
+    job_ids = ["billboard_fetch", "library_sync", "library_notify"]
+
+    # Remove existing jobs first to avoid duplicates
+    for job_id in job_ids:
+        job = yavin.tasks.scheduler.get_job(job_id)
+        if job:
+            yavin.tasks.scheduler.remove_job(job_id)
+
+    if enabled:
+        log.info("Adding scheduled tasks")
+        yavin.tasks.scheduler.add_job(
+            yavin.tasks.billboard_number_one_fetch,
+            "interval",
+            hours=24,
+            start_date=yavin.util.in_two_minutes(),
+            id="billboard_fetch",
+        )
+        yavin.tasks.scheduler.add_job(
+            yavin.tasks.library_sync,
+            "interval",
+            hours=6,
+            start_date=yavin.util.in_two_minutes(),
+            id="library_sync",
+        )
+        yavin.tasks.scheduler.add_job(
+            yavin.tasks.library_notify,
+            "cron",
+            day="*",
+            hour="3",
+            id="library_notify",
+        )
+
+
 def main() -> None:
     log.info(f"Welcome to Yavin {yavin.versions.app_version}")
-    if settings.dsn is None:
+    if settings.dsn == "":
         log.critical(
             "Missing environment variable DSN; I cannot start without a database"
         )
@@ -987,21 +1027,9 @@ def main() -> None:
             db.user_permissions_add(settings.admin_email, "admin")
 
         yavin.tasks.scheduler.start()
-        yavin.tasks.scheduler.add_job(
-            yavin.tasks.billboard_number_one_fetch,
-            "interval",
-            hours=24,
-            start_date=yavin.util.in_two_minutes(),
-        )
-        yavin.tasks.scheduler.add_job(
-            yavin.tasks.library_sync,
-            "interval",
-            hours=6,
-            start_date=yavin.util.in_two_minutes(),
-        )
-        yavin.tasks.scheduler.add_job(
-            yavin.tasks.library_notify, "cron", day="*", hour="3"
-        )
+        _app_settings = db.settings_list()
+        scheduled_tasks_enabled = _app_settings.get("scheduled_tasks_enabled") == "true"
+        _manage_scheduled_tasks(scheduled_tasks_enabled)
 
         waitress.serve(
             app,

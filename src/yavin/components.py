@@ -222,6 +222,17 @@ def app_settings() -> str:
     ]
     fs_other = htpy.fieldset[
         htpy.legend["Other settings"],
+        htpy.div(".form-check")[
+            htpy.input(
+                "#scheduled_tasks_enabled.form-check-input",
+                name="scheduled_tasks_enabled",
+                type="checkbox",
+                checked=(flask.g.app_settings.get("scheduled_tasks_enabled") == "true"),
+            ),
+            htpy.label(".form-check-label", for_="scheduled_tasks_enabled")[
+                "Enable scheduled tasks"
+            ],
+        ],
         htpy.div(".form-check.mb-3")[
             htpy.input(
                 "#debug_layout.form-check-input",
