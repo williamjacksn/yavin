@@ -9,6 +9,7 @@ import uuid
 import flask
 import httpx
 import jwt
+import pygal
 import waitress
 import werkzeug.middleware.proxy_fix
 import werkzeug.utils
@@ -738,6 +739,20 @@ def mileage_delete() -> werkzeug.Response:
     entry_date = yavin.util.str_to_date(flask.request.values["entry-date"])
     db.mileage_entries_delete(entry_date)
     return flask.redirect(flask.url_for("mileage"))
+
+
+@app.get("/mileage/svg")
+@permission_required("mileage")
+def mileage_svg() -> werkzeug.Response:
+    db: yavin.db.YavinDatabase = flask.g.db
+    entries = [(e["entry_date"], e["mileage"]) for e in db.mileage_entries_list_all()]
+    chart = pygal.DateLine(title="Mileage", x_label_rotation=45)
+    chart.value_formatter = lambda x: f"{x:,}"
+    chart.add(
+        "Budget", [(datetime.date(2026, 5, 27), 0), (datetime.date(2029, 5, 26), 30000)]
+    )
+    chart.add("Actual", entries)
+    return chart.render_response()
 
 
 @app.get("/movie-night")

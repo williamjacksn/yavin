@@ -1846,38 +1846,41 @@ def mileage(mileage_entries: list[dict], default_mileage: int) -> str:
         ],
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
-                htpy.form(action=flask.url_for("mileage_add"), method="post")[
-                    htpy.div(".g-1.row")[
-                        htpy.div(".col-auto")[
+                htpy.form(
+                    ".g-1.row", action=flask.url_for("mileage_add"), method="post"
+                )[
+                    htpy.div(".col-auto")[
+                        htpy.input(
+                            ".form-control",
+                            name="entry-date",
+                            required=True,
+                            title="Entry date",
+                            type="date",
+                            value=yavin.util.today().isoformat(),
+                        )
+                    ],
+                    htpy.div(".col-auto")[
+                        htpy.div(".input-group")[
                             htpy.input(
                                 ".form-control",
-                                name="entry-date",
+                                min=0,
+                                name="mileage",
                                 required=True,
-                                title="Entry date",
-                                type="date",
-                                value=yavin.util.today().isoformat(),
-                            )
-                        ],
-                        htpy.div(".col-auto")[
-                            htpy.div(".input-group")[
-                                htpy.input(
-                                    ".form-control",
-                                    min=0,
-                                    name="mileage",
-                                    required=True,
-                                    title="Mileage",
-                                    type="number",
-                                    value=default_mileage,
-                                ),
-                                htpy.span(".input-group-text")["miles"],
-                            ]
-                        ],
-                        htpy.div(".col-auto")[
-                            htpy.button(".btn.btn-success", type="submit")["Save"]
-                        ],
-                    ]
+                                title="Mileage",
+                                type="number",
+                                value=default_mileage,
+                            ),
+                            htpy.span(".input-group-text")["miles"],
+                        ]
+                    ],
+                    htpy.div(".col-auto")[
+                        htpy.button(".btn.btn-success", type="submit")["Save"]
+                    ],
                 ]
             ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[htpy.object(data=flask.url_for("mileage_svg"))]
         ],
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
@@ -1894,7 +1897,6 @@ def mileage(mileage_entries: list[dict], default_mileage: int) -> str:
                                     htpy.form(
                                         action=flask.url_for("mileage_delete"),
                                         method="post",
-                                        style="display: inline;",
                                     )[
                                         htpy.input(
                                             type="hidden",

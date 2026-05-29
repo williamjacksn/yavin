@@ -451,6 +451,7 @@ class YavinDatabase(fort.PostgresDatabase):
         sql = """
             select entry_date, mileage
             from mileage_entries
+            order by entry_date
         """
         return self.q(sql)
 
