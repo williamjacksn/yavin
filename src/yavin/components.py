@@ -137,7 +137,7 @@ def _user_menu(email: str, is_admin: bool) -> htpy.Element:
 
 
 def app_settings() -> str:
-    fs_expenses = htpy.fieldset[
+    fs_expenses = htpy.fieldset(".border-bottom.pb-3.mb-3")[
         htpy.legend["Expenses"],
         htpy.div(".mb-3")[
             htpy.label(".form-label", for_="expenses_db")["Expenses database path"],
@@ -149,7 +149,7 @@ def app_settings() -> str:
             ),
         ],
     ]
-    fs_smtp = htpy.fieldset[
+    fs_smtp = htpy.fieldset(".border-bottom.pb-3.mb-3")[
         htpy.legend["SMTP settings"],
         htpy.div(".mb-3")[
             htpy.label(".form-label", for_="smtp_server")["SMTP server"],
@@ -188,7 +188,7 @@ def app_settings() -> str:
             ),
         ],
     ]
-    fs_mileage = htpy.fieldset[
+    fs_mileage = htpy.fieldset(".border-bottom.pb-3.mb-3")[
         htpy.legend["Mileage"],
         htpy.div(".mb-3")[
             htpy.label(".form-label", for_="mileage_start_date")["Lease start date"],
