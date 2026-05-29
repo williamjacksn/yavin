@@ -713,6 +713,10 @@ def dashboard_card_library(books_count: int, overdue_count: int) -> str:
     return dashboard_card("Library", flask.url_for("library"), card_text)
 
 
+def dashboard_card_mileage(text: str) -> str:
+    return dashboard_card("Mileage", flask.url_for("mileage"), text)
+
+
 def dashboard_card_movie_night(next_pick: str) -> str:
     return dashboard_card(
         "Movie night", flask.url_for("movie_night"), f"Next pick: {next_pick}"
@@ -1818,4 +1822,102 @@ def weight(weight_entries: list[dict], default_weight: decimal.Decimal) -> str:
     ]
     return signed_in(
         flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Weight"
+    )
+
+
+def mileage(mileage_entries: list[dict], default_mileage: int) -> str:
+    messages = flask.get_flashed_messages(with_categories=True)
+    log.debug(messages)
+    content = [
+        _page_title("Mileage"),
+        messages
+        and htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                (
+                    htpy.div(class_=["alert", "alert-dismissible", category])[
+                        htpy.button(
+                            ".btn-close", data_bs_dismiss="alert", type="button"
+                        ),
+                        message,
+                    ]
+                    for category, message in messages
+                )
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.form(action=flask.url_for("mileage_add"), method="post")[
+                    htpy.div(".g-1.row")[
+                        htpy.div(".col-auto")[
+                            htpy.input(
+                                ".form-control",
+                                name="entry-date",
+                                required=True,
+                                title="Entry date",
+                                type="date",
+                                value=yavin.util.today().isoformat(),
+                            )
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.div(".input-group")[
+                                htpy.input(
+                                    ".form-control",
+                                    min=0,
+                                    name="mileage",
+                                    required=True,
+                                    title="Mileage",
+                                    type="number",
+                                    value=default_mileage,
+                                ),
+                                htpy.span(".input-group-text")["miles"],
+                            ]
+                        ],
+                        htpy.div(".col-auto")[
+                            htpy.button(".btn.btn-success", type="submit")["Save"]
+                        ],
+                    ]
+                ]
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.table(".d-block.table")[
+                    htpy.thead[
+                        htpy.tr[htpy.th["Date"], htpy.th["Mileage"], htpy.th["Actions"]]
+                    ],
+                    htpy.tbody[
+                        (
+                            htpy.tr[
+                                htpy.td[entry["entry_date"].isoformat()],
+                                htpy.td[entry.get("mileage")],
+                                htpy.td[
+                                    htpy.form(
+                                        action=flask.url_for("mileage_delete"),
+                                        method="post",
+                                        style="display: inline;",
+                                    )[
+                                        htpy.input(
+                                            type="hidden",
+                                            name="entry-date",
+                                            value=entry["entry_date"].isoformat(),
+                                        ),
+                                        htpy.button(
+                                            ".btn.btn-sm.btn-danger", type="submit"
+                                        )[htpy.i(".bi-trash-fill")],
+                                    ]
+                                ],
+                            ]
+                            for entry in mileage_entries
+                        )
+                    ],
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,
+        "Yavin / Mileage",
     )

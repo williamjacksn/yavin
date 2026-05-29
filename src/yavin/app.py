@@ -120,6 +120,11 @@ def index() -> str:
             or "admin" in flask.g.permissions,
         },
         {
+            "url": flask.url_for("dashboard_card_mileage"),
+            "visible": "mileage" in flask.g.permissions
+            or "admin" in flask.g.permissions,
+        },
+        {
             "url": flask.url_for("dashboard_card_movie_night"),
             "visible": "movie-night" in flask.g.permissions
             or "admin" in flask.g.permissions,
@@ -396,6 +401,11 @@ def dashboard_card_library() -> str:
     )
 
 
+@app.get("/dashboard-card/mileage")
+def dashboard_card_mileage() -> str:
+    return yavin.components.dashboard_card_mileage("Go")
+
+
 @app.get("/dashboard-card/movie-night")
 def dashboard_card_movie_night() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
@@ -661,6 +671,8 @@ def migrate() -> werkzeug.Response:
             r["password"],
             r["username"],
         )
+    for r in flask.g.db.mileage_entries_list_all():
+        yavin.db.app_sqlite.mileage_entries_insert(con, r["entry_date"], r["mileage"])
     for r in flask.g.db.movie_people_list():
         yavin.db.app_sqlite.movie_people_insert(con, r["id"], r["person"])
     for r in flask.g.db.movie_picks_list():
@@ -689,6 +701,43 @@ def migrate() -> werkzeug.Response:
         yavin.db.app_sqlite.weight_entries_insert(con, r["entry_date"], r["weight"])
     con.close()
     return flask.redirect(flask.url_for("index"))
+
+
+@app.get("/mileage")
+@permission_required("mileage")
+def mileage() -> str:
+    db: yavin.db.YavinDatabase = flask.g.db
+    mileage_entries = db.mileage_entries_list()
+    default_mileage = 0
+    if mileage_entries:
+        default_mileage = mileage_entries[0].get("mileage", 0)
+    return yavin.components.mileage(mileage_entries, default_mileage)
+
+
+@app.post("/mileage/add")
+@permission_required("mileage")
+def mileage_add() -> werkzeug.Response:
+    db: yavin.db.YavinDatabase = flask.g.db
+    entry_date = yavin.util.str_to_date(flask.request.values["entry-date"])
+    current = db.mileage_entries_get_for_date(entry_date)
+    if current is None:
+        entry_mileage = int(flask.request.values["mileage"])
+        log.info(f"Adding new mileage entry for {entry_date}: {entry_mileage} miles")
+        db.mileage_entries_insert(entry_date, entry_mileage)
+    else:
+        flask.flash(
+            f"There is already a mileage entry for {entry_date}.", "alert-danger"
+        )
+    return flask.redirect(flask.url_for("mileage"))
+
+
+@app.post("/mileage/delete")
+@permission_required("mileage")
+def mileage_delete() -> werkzeug.Response:
+    db: yavin.db.YavinDatabase = flask.g.db
+    entry_date = yavin.util.str_to_date(flask.request.values["entry-date"])
+    db.mileage_entries_delete(entry_date)
+    return flask.redirect(flask.url_for("mileage"))
 
 
 @app.get("/movie-night")

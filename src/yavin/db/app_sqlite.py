@@ -392,6 +392,12 @@ def migrate(con: sqlite3.Connection) -> None:
             )
         """)
         con.execute("""
+            create table mileage_entries (
+                entry_date date primary key,
+                mileage integer
+            )
+        """)
+        con.execute("""
             create table movie_people (
                 id uuid primary key,
                 person text
@@ -444,6 +450,21 @@ def migrate(con: sqlite3.Connection) -> None:
             )
         """)
         schema_versions_insert(con, 1)
+
+
+def mileage_entries_insert(
+    con: sqlite3.Connection, entry_date: datetime.date, mileage: int
+) -> None:
+    sql = """
+        insert into mileage_entries (
+            entry_date, mileage
+        ) values (
+            :entry_date, :mileage
+        )
+    """
+    params = {"entry_date": entry_date, "mileage": mileage}
+    con.execute(sql, params)
+    con.commit()
 
 
 def movie_people_insert(con: sqlite3.Connection, id_: uuid.UUID, person: str) -> None:
@@ -523,6 +544,7 @@ def reset_data(con: sqlite3.Connection) -> None:
         "delete from jar_entries",
         "delete from library_books",
         "delete from library_credentials",
+        "delete from mileage_entries",
         "delete from movie_people",
         "delete from movie_picks",
         "delete from phone_usage",

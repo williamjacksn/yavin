@@ -409,6 +409,51 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         self.u(sql)
 
+    # mileage
+
+    def mileage_entries_insert(self, entry_date: datetime.date, mileage: int) -> None:
+        sql = """
+            insert into mileage_entries (entry_date, mileage)
+            values (%(entry_date)s, %(mileage)s)
+            on conflict (entry_date) do nothing
+        """
+        params = {"entry_date": entry_date, "mileage": mileage}
+        self.u(sql, params)
+
+    def mileage_entries_delete(self, entry_date: datetime.date) -> None:
+        sql = """
+            delete from mileage_entries
+            where entry_date = %(entry_date)s
+        """
+        params = {"entry_date": entry_date}
+        self.u(sql, params)
+
+    def mileage_entries_list(self, limit: int = 100) -> list[dict]:
+        sql = """
+            select entry_date, mileage
+            from mileage_entries
+            order by entry_date desc
+            limit %(limit)s
+        """
+        params = {"limit": limit}
+        return self.q(sql, params)
+
+    def mileage_entries_get_for_date(self, entry_date: datetime.date) -> dict | None:
+        sql = """
+            select entry_date, mileage
+            from mileage_entries
+            where entry_date = %(entry_date)s
+        """
+        params = {"entry_date": entry_date}
+        return self.q_one(sql, params)
+
+    def mileage_entries_list_all(self) -> list[dict]:
+        sql = """
+            select entry_date, mileage
+            from mileage_entries
+        """
+        return self.q(sql)
+
     # movie night
 
     def movie_people_insert(self, params: dict) -> None:
@@ -864,6 +909,15 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             """)
             self._add_schema_version(23)
+        if self.version < 24:
+            self.log.debug("Migrating to version 24")
+            self.u("""
+                create table mileage_entries (
+                    entry_date date primary key,
+                    mileage integer not null check (mileage >= 0)
+                )
+            """)
+            self._add_schema_version(24)
 
     def _add_schema_version(self, schema_version: int) -> None:
         self._version = schema_version
