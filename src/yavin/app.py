@@ -161,6 +161,9 @@ def app_settings_update() -> werkzeug.Response:
 
     text_settings = [
         "expenses_db",
+        "mileage_allowance",
+        "mileage_end_date",
+        "mileage_start_date",
         "smtp_from_address",
         "smtp_password",
         "smtp_server",
@@ -748,9 +751,17 @@ def mileage_svg() -> werkzeug.Response:
     entries = [(e["entry_date"], e["mileage"]) for e in db.mileage_entries_list_all()]
     chart = pygal.DateLine(title="Mileage", x_label_rotation=45)
     chart.value_formatter = lambda x: f"{int(x):,}"
-    chart.add(
-        "Budget", [(datetime.date(2026, 5, 27), 0), (datetime.date(2029, 5, 26), 30000)]
-    )
+
+    start_date_str = flask.g.app_settings.get("mileage_start_date")
+    end_date_str = flask.g.app_settings.get("mileage_end_date")
+    allowance_str = flask.g.app_settings.get("mileage_allowance")
+
+    if start_date_str and end_date_str and allowance_str:
+        start_date = yavin.util.str_to_date(start_date_str)
+        end_date = yavin.util.str_to_date(end_date_str)
+        allowance = int(allowance_str)
+        chart.add("Budget", [(start_date, 0), (end_date, allowance)])
+
     chart.add("Actual", entries)
     return chart.render_response()
 

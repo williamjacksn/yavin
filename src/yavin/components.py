@@ -188,6 +188,38 @@ def app_settings() -> str:
             ),
         ],
     ]
+    fs_mileage = htpy.fieldset[
+        htpy.legend["Mileage"],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="mileage_start_date")["Lease start date"],
+            htpy.input(
+                "#mileage_start_date.form-control",
+                name="mileage_start_date",
+                type="date",
+                value=flask.g.app_settings.get("mileage_start_date"),
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="mileage_end_date")["Lease end date"],
+            htpy.input(
+                "#mileage_end_date.form-control",
+                name="mileage_end_date",
+                type="date",
+                value=flask.g.app_settings.get("mileage_end_date"),
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="mileage_allowance")[
+                "Total mileage allowance"
+            ],
+            htpy.input(
+                "#mileage_allowance.form-control",
+                name="mileage_allowance",
+                type="number",
+                value=flask.g.app_settings.get("mileage_allowance"),
+            ),
+        ],
+    ]
     fs_other = htpy.fieldset[
         htpy.legend["Other settings"],
         htpy.div(".form-check.mb-3")[
@@ -208,6 +240,7 @@ def app_settings() -> str:
             htpy.div(".col-12.col-sm-10.col-md-8.col-lg-7.col-xl-4")[
                 htpy.form(action=flask.url_for("app_settings_update"), method="post")[
                     fs_expenses,
+                    fs_mileage,
                     fs_smtp,
                     fs_other,
                     htpy.button(".btn.btn-primary", type="submit")["Save"],
