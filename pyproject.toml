@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "apscheduler>=3.11.2",
-    "bibliocommons>=2025.3",
+    "bibliocommons>=2026.0",
     "biblionix>=2026.0",
     "cssselect>=1.4.0",
     "flask>=3.1.3",

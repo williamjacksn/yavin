@@ -28,16 +28,16 @@ wheels = [
 
 [[package]]
 name = "bibliocommons"
-version = "2025.3"
+version = "2026.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssselect" },
     { name = "httpx" },
     { name = "lxml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/88/78/c055fbf25f05664d68de57d701039b91a55627424308ad684cc6f48993a5/bibliocommons-2025.3.tar.gz", hash = "sha256:03ca760177523dee94abf307c6df4269b039d50b6021cd386b8696b6a9609df2", size = 1918, upload-time = "2025-09-05T20:00:11.705Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/67/59483c0a202c6d3eaace1d44fe4d96a0e0799a880d65230cebad7820472a/bibliocommons-2026.0.tar.gz", hash = "sha256:7b0371328f114e659e7ebfc96dd7a0c0b191e19b2d5901b876115829867041da", size = 1945, upload-time = "2026-05-28T15:53:03.724Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/bf/d70a924230f021d01d751e6e1692dc49aaa9edc8173a21212b4779884267/bibliocommons-2025.3-py3-none-any.whl", hash = "sha256:d5002a4a420992612498abf48d1cd25c9a14e90607abfce95932268b6dbf33b0", size = 2578, upload-time = "2025-09-05T20:00:10.765Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/ea/e6a27cafa41e51bd987f0d6507f439774d97f0ac1ca2200a95d53bec62a6/bibliocommons-2026.0-py3-none-any.whl", hash = "sha256:0bd577646070417122059fff4b31f884215dea0a51689152b5b1bf724ff48b65", size = 2571, upload-time = "2026-05-28T15:53:02.9Z" },
 ]
 
 [[package]]
@@ -491,7 +491,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "apscheduler", specifier = ">=3.11.2" },
-    { name = "bibliocommons", specifier = ">=2025.3" },
+    { name = "bibliocommons", specifier = ">=2026.0" },
     { name = "biblionix", specifier = ">=2026.0" },
     { name = "cssselect", specifier = ">=1.4.0" },
     { name = "flask", specifier = ">=3.1.3" },
