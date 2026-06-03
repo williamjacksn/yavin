@@ -329,8 +329,8 @@ def captains_log_modal_edit() -> str:
 @permission_required("captains-log")
 def captains_log_update() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
-    log_text = flask.request.form.get("log_text")
-    db.captains_log_update(flask.request.form.get("id"), log_text)
+    log_text = flask.request.values["log_text"]
+    db.captains_log_update(flask.request.values["id"], log_text)
     return flask.redirect(flask.url_for("captains_log"))
 
 
@@ -366,8 +366,8 @@ def dashboard_card_callings() -> str:
         current_calling = callings[-1]
 
     if current_calling:
-        calling_name = current_calling.get("calling")
-        sustained_at = current_calling.get("sustained_at")
+        calling_name = current_calling["calling"]
+        sustained_at = current_calling["sustained_at"]
         if sustained_at:
             days = (yavin.util.today() - sustained_at).days
             text = f"{calling_name}, {days} days"
@@ -406,7 +406,7 @@ def dashboard_card_library() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     counts = db.library_books_count()
     return yavin.components.dashboard_card_library(
-        counts.get("books_count"), counts.get("overdue_count")
+        counts["books_count"], counts["overdue_count"]
     )
 
 
@@ -422,7 +422,7 @@ def dashboard_card_movie_night() -> str:
     if next_pick is None:
         next_pick_person = "Unknown"
     else:
-        next_pick_person = next_pick.get("person")
+        next_pick_person = next_pick["person"]
     return yavin.components.dashboard_card_movie_night(next_pick_person)
 
 
@@ -905,9 +905,7 @@ def weight() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     weight_entries = db.weight_entries_list()
     default_weight = (
-        weight_entries[0].get("weight")
-        if weight_entries
-        else yavin.components.DECIMAL_ZERO
+        weight_entries[0]["weight"] if weight_entries else yavin.components.DECIMAL_ZERO
     )
     return yavin.components.weight(weight_entries, default_weight)
 

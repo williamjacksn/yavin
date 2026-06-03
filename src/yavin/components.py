@@ -30,7 +30,7 @@ def _base(
     title: str | markupsafe.Markup | None = "Yavin",
     sign_in_block: htpy.Element | None = None,
     breadcrumb: htpy.Element | None = None,
-    content: htpy.Element | list[htpy.Element] | None = None,
+    content: htpy.Renderable | list[htpy.Renderable] | list[htpy.Element] | None = None,
     end_of_body: htpy.Element | None = None,
 ) -> htpy.Element:
     return htpy.html(lang="en")[
@@ -670,7 +670,7 @@ def captains_log_modal_edit(log_entry: dict) -> str:
     content = htpy.div(".modal-content")[
         htpy.div(".modal-header")[
             htpy.h5(".modal-title")[
-                yavin.util.clean_datetime(log_entry.get("log_timestamp")), " UTC"
+                yavin.util.clean_datetime(log_entry["log_timestamp"]), " UTC"
             ],
             htpy.button(".btn-close", data_bs_dismiss="modal", type="button"),
         ],
@@ -910,7 +910,7 @@ def email_library_item_due(due_books: list[dict]) -> str:
                         " (",
                         b.get("medium"),
                         ") is due on ",
-                        b.get("due").isoformat(),
+                        b["due"].isoformat(),
                         " (",
                         b.get("account_name"),
                         ")",
@@ -1151,7 +1151,7 @@ def library(library_books: list[dict]) -> str:
                     htpy.tbody[
                         [
                             htpy.tr[
-                                htpy.td[b.get("due").isoformat()],
+                                htpy.td[b["due"].isoformat()],
                                 htpy.td[
                                     htpy.span(".badge.bg-dark")[b.get("medium")],
                                     " ",
@@ -1325,10 +1325,10 @@ def movie_night(picks: list[dict], people: list[dict]) -> str:
                                     if pick.get("pick_url")
                                     else pick.get("pick_text"),
                                     " on ",
-                                    pick.get("pick_date").strftime("%B "),
-                                    pick.get("pick_date").day,
+                                    pick["pick_date"].strftime("%B "),
+                                    pick["pick_date"].day,
                                     ", ",
-                                    pick.get("pick_date").year,
+                                    pick["pick_date"].year,
                                     ".",
                                 ],
                                 htpy.td(".text-end")[
@@ -1430,7 +1430,7 @@ def movie_night_modal_pick(people: list[dict], pick: dict | None = None) -> str:
                         name="pick_date",
                         required=True,
                         type="date",
-                        value=pick.get("pick_date").isoformat()
+                        value=pick["pick_date"].isoformat()
                         if pick
                         else yavin.util.today().isoformat(),
                     ),
@@ -1623,7 +1623,7 @@ def signed_in(
     email: str,
     permissions: list[str],
     breadcrumb: htpy.Element | None = None,
-    content: htpy.Element | list[htpy.Element] | None = None,
+    content: htpy.Renderable | list[htpy.Renderable] | list[htpy.Element] | None = None,
     title: str | None = None,
 ) -> str:
     is_admin = "admin" in permissions
@@ -1854,7 +1854,7 @@ def weight(weight_entries: list[dict], default_weight: decimal.Decimal) -> str:
                     htpy.tbody[
                         (
                             htpy.tr[
-                                htpy.td[entry.get("entry_date").isoformat()],
+                                htpy.td[entry["entry_date"].isoformat()],
                                 htpy.td[str(entry.get("weight"))],
                             ]
                             for entry in weight_entries
@@ -1865,7 +1865,11 @@ def weight(weight_entries: list[dict], default_weight: decimal.Decimal) -> str:
         ],
     ]
     return signed_in(
-        flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Weight"
+        flask.g.email,
+        flask.g.permissions,
+        _back_to_home(),
+        content,  # ty:ignore[invalid-argument-type]
+        "Yavin / Weight",
     )
 
 
@@ -1964,6 +1968,6 @@ def mileage(mileage_entries: list[dict], default_mileage: int) -> str:
         flask.g.email,
         flask.g.permissions,
         _back_to_home(),
-        content,
+        content,  # ty:ignore[invalid-argument-type]
         "Yavin / Mileage",
     )

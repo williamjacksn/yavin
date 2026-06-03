@@ -173,7 +173,7 @@ class YavinDatabase(fort.PostgresDatabase):
         params = {"id": uuid.UUID(hex=id_)}
         self.u(sql, params)
 
-    def captains_log_get(self, log_id: uuid.UUID) -> dict | None:
+    def captains_log_get(self, log_id: uuid.UUID) -> dict:
         sql = """
             select id, log_text, log_timestamp from captains_log
             where id = %(id)s
@@ -186,6 +186,7 @@ class YavinDatabase(fort.PostgresDatabase):
                 "log_text": row.get("log_text"),
                 "log_timestamp": row.get("log_timestamp"),
             }
+        return {}
 
     def captains_log_insert(
         self, log_text: str, log_timestamp: datetime.datetime | None = None
