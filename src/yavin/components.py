@@ -209,6 +209,15 @@ def app_settings() -> str:
             ),
         ],
         htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="mileage_start")["Lease start mileage"],
+            htpy.input(
+                "#mileage_start.form-control",
+                name="mileage_start",
+                type="number",
+                value=flask.g.app_settings.get("mileage_start"),
+            ),
+        ],
+        htpy.div(".mb-3")[
             htpy.label(".form-label", for_="mileage_allowance")[
                 "Total mileage allowance"
             ],
