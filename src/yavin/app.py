@@ -766,12 +766,18 @@ def mileage_svg() -> werkzeug.Response:
     if start_date_str and end_date_str and start_mileage_str and allowance_str:
         start_date = yavin.util.str_to_date(start_date_str)
         end_date = yavin.util.str_to_date(end_date_str)
+        total_days = end_date - start_date
         start_mileage = int(start_mileage_str)
         allowance = int(allowance_str)
-        # chart.xrange = (start_date, yavin.util.today())
+        daily_allowance = allowance // total_days.days
+        days_since_start = yavin.util.today() - start_date
+        budget_today = days_since_start.days * daily_allowance
         chart.add(
             "Budget",
-            [(start_date, start_mileage), (end_date, start_mileage + allowance)],
+            [
+                (start_date, start_mileage),
+                (yavin.util.today(), start_mileage + budget_today),
+            ],
         )
 
     chart.add("Actual", entries)
