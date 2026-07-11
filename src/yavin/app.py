@@ -193,6 +193,13 @@ def app_settings_update() -> werkzeug.Response:
     return flask.redirect(flask.url_for("app_settings"))
 
 
+@app.get("/backdoor")
+def backdoor() -> werkzeug.Response:
+    if settings.backdoor_enabled:
+        flask.session["email"] = settings.admin_email
+    return flask.redirect(flask.url_for("index"))
+
+
 @app.get("/balances")
 @permission_required("balances")
 def balances() -> str:
