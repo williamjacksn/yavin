@@ -21,10 +21,12 @@ dependencies = [
     "pyjwt>=2.13.0",
     "waitress>=3.0.2",
     "werkzeug>=3.1.8",
+    "ytmusicapi>=1.11.1",
 ]
 
 [project.scripts]
 yavin = "yavin:main"
+playlist = "yavin.playlist:main"
 
 [build-system]
 build-backend = "uv_build"
