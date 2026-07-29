@@ -7,6 +7,8 @@ from typing import TypedDict, cast
 
 import fort
 
+import yavin.util
+
 log = logging.getLogger(__name__)
 
 
@@ -287,9 +289,10 @@ class YavinDatabase(fort.PostgresDatabase):
         last_entry = self.q_val(sql)
         if last_entry is None:
             return -1
-        if last_entry > datetime.date.today():
+        today = yavin.util.today()
+        if last_entry > today:
             return 0
-        return (datetime.date.today() - last_entry).days
+        return (today - last_entry).days
 
     def jar_entries_insert(self, entry_date: datetime.date) -> None:
         sql = """

@@ -897,7 +897,7 @@ def tithing() -> str:
 @permission_required("tithing")
 def tithing_income_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
-    date = datetime.datetime.strptime(flask.request.values["tx-date"], "%Y-%m-%d")
+    date = yavin.util.str_to_date(flask.request.values["tx-date"])
     amount = decimal.Decimal(flask.request.values["tx-value"])
     description = flask.request.values["tx-description"]
     db.tithing_income_insert(date, amount, description)

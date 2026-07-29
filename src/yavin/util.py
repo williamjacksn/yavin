@@ -11,11 +11,11 @@ def clean_datetime(d: datetime.datetime) -> str:
 
 
 def in_two_minutes() -> datetime.datetime:
-    return datetime.datetime.now() + datetime.timedelta(minutes=2)
+    return datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(minutes=2)
 
 
 def str_to_date(d: str) -> datetime.date:
-    return datetime.datetime.strptime(d, "%Y-%m-%d").date()
+    return datetime.date.fromisoformat(d)
 
 
 def today() -> datetime.date:

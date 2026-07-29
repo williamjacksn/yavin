@@ -30,14 +30,14 @@ playlist = "yavin.playlist:main"
 
 [build-system]
 build-backend = "uv_build"
-requires = ["uv-build>=0.11.28,<0.12.0"]
+requires = ["uv-build>=0.12.0,<0.13.0"]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.15.21",
-    "ty>=0.0.59",
-    "uv-build>=0.11.28",
+    "ruff>=0.16.0",
+    "ty>=0.0.64",
+    "uv-build>=0.12.0",
 ]
 
 [tool.ruff.lint]
-select = ["ANN", "E", "F", "FURB", "I", "PERF", "RUF", "S", "UP"]
+select = ["ANN", "DTZ", "E", "F", "FURB", "I", "PERF", "RUF", "S", "UP"]
