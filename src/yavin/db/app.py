@@ -10,13 +10,25 @@ import fort
 import yavin.util
 
 log = logging.getLogger(__name__)
+DEFAULT_UUID = uuid.UUID(int=0)
+DEFAULT_DATETIME = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
 
 
-class BillboardRow(TypedDict):
-    artist: str
-    fetched_at: datetime.datetime
-    id: uuid.UUID
-    title: str
+@dataclasses.dataclass
+class BillboardRow:
+    artist: str = ""
+    fetched_at: datetime.datetime = DEFAULT_DATETIME
+    id: uuid.UUID = DEFAULT_UUID
+    title: str = ""
+
+    @classmethod
+    def from_dict(cls, d: dict | None) -> BillboardRow:
+        if d:
+            return cls(d["artist"], d["fetched_at"], d["id"], d["title"])
+        return cls()
+
+    def __bool__(self) -> bool:
+        return bool(self.artist)
 
 
 class LibraryCredential(TypedDict):
@@ -110,7 +122,7 @@ class YavinDatabase(fort.PostgresDatabase):
             order by fetched_at desc
             limit 1
         """
-        return cast(BillboardRow, cast(object, self.q_one(sql)))
+        return BillboardRow.from_dict(self.q_one(sql))
 
     def billboard_insert(self, artist: str, title: str) -> None:
         sql = """
@@ -132,7 +144,7 @@ class YavinDatabase(fort.PostgresDatabase):
             select artist, fetched_at, id, title
             from billboard_number_one
         """
-        return cast(list[BillboardRow], cast(object, self.q(sql)))
+        return [BillboardRow.from_dict(row) for row in self.q(sql)]
 
     def billboard_update_fetched_at(self, _id: uuid.UUID) -> None:
         sql = """

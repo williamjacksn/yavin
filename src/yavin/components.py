@@ -8,6 +8,7 @@ import markupsafe
 import yavin.db
 import yavin.util
 import yavin.versions as v
+from yavin.db.app import BillboardRow
 
 log = logging.getLogger(__name__)
 
@@ -427,19 +428,15 @@ def balances_detail() -> str:
     )
 
 
-def billboard() -> str:
+def billboard(latest: BillboardRow) -> str:
     content = [
         _page_title("Billboard Hot 100 #1"),
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
-                htpy.p[
-                    htpy.strong[flask.g.latest.get("title")],
-                    " by ",
-                    flask.g.latest.get("artist"),
-                ],
+                htpy.p[htpy.strong[latest.title], " by ", latest.artist],
                 htpy.p[
                     "Last fetched: ",
-                    yavin.util.clean_datetime(flask.g.latest.get("fetched_at")),
+                    yavin.util.clean_datetime(latest.fetched_at),
                     " UTC",
                 ],
                 htpy.p[

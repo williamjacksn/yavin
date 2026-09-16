@@ -46,8 +46,8 @@ def billboard_number_one_fetch() -> None:
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
     latest = db.billboard_get_latest()
-    if latest and song == (latest.get("artist"), latest.get("title")):
-        db.billboard_update_fetched_at(latest.get("id"))
+    if latest and song == (latest.artist, latest.title):
+        db.billboard_update_fetched_at(latest.id)
     else:
         db.billboard_insert(song.artist, song.title)
         subject = "New Billboard Hot 100 #1"

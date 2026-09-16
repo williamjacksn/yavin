@@ -234,11 +234,12 @@ def balances_add_tx() -> werkzeug.Response:
 @app.get("/billboard")
 @permission_required("billboard")
 def billboard() -> str:
-    flask.g.latest = flask.g.db.billboard_get_latest()
-    if flask.g.latest is None:
+    db: yavin.db.YavinDatabase = flask.g.db
+    latest = db.billboard_get_latest()
+    if not latest:
         yavin.tasks.billboard_number_one_fetch()
-        flask.g.latest = flask.g.db.billboard_get_latest()
-    return yavin.components.billboard()
+        latest = db.billboard_get_latest()
+    return yavin.components.billboard(latest)
 
 
 @app.get("/callings")
@@ -351,11 +352,12 @@ def dashboard_card_balances() -> str:
 
 @app.get("/dashboard-card/billboard")
 def dashboard_card_billboard() -> str:
-    latest = flask.g.db.billboard_get_latest()
-    if latest is None:
-        text = "Unknown"
+    db: yavin.db.YavinDatabase = flask.g.db
+    latest = db.billboard_get_latest()
+    if latest:
+        text = f"{latest.title} by {latest.artist}"
     else:
-        text = f"{latest.get('title')} by {latest.get('artist')}"
+        text = "Unknown"
     return yavin.components.dashboard_card_billboard(text)
 
 
@@ -625,11 +627,12 @@ def migrate() -> werkzeug.Response:
     con = yavin.db.app_sqlite.connection_get(settings.database)
     yavin.db.app_sqlite.migrate(con)
     yavin.db.app_sqlite.reset_data(con)
-    for r in flask.g.db.balances_accounts_list():
+    db: yavin.db.YavinDatabase = flask.g.db
+    for r in db.balances_accounts_list():
         yavin.db.app_sqlite.balances_accounts_insert(
             con, r["account_name"], r["account_id"]
         )
-    for r in flask.g.db.balances_transactions_list_all():
+    for r in db.balances_transactions_list_all():
         yavin.db.app_sqlite.balances_transactions_insert(
             con,
             r["account_id"],
@@ -638,11 +641,9 @@ def migrate() -> werkzeug.Response:
             r["tx_id"],
             r["tx_value"],
         )
-    for r in flask.g.db.billboard_list_all():
-        yavin.db.app_sqlite.billboard_insert(
-            con, r["artist"], r["fetched_at"], r["id"], r["title"]
-        )
-    for r in flask.g.db.callings_list():
+    for r in db.billboard_list_all():
+        yavin.db.app_sqlite.billboard_insert(con, r.artist, r.fetched_at, r.id, r.title)
+    for r in db.callings_list():
         yavin.db.app_sqlite.callings_insert(
             con,
             r["calling"],
@@ -652,21 +653,21 @@ def migrate() -> werkzeug.Response:
             r["sustained_at"],
             r["ward"],
         )
-    for r in flask.g.db.electricity_list():
+    for r in db.electricity_list():
         yavin.db.app_sqlite.electricity_insert(
             con, r["bill"], r["bill_date"], r["charge"], r["kwh"]
         )
-    for r in flask.g.db.hymn_history_list():
+    for r in db.hymn_history_list():
         yavin.db.app_sqlite.hymn_history_insert(con, r["date"], r["hymn_number"])
-    for r in flask.g.db.hymn_tags_list():
+    for r in db.hymn_tags_list():
         yavin.db.app_sqlite.hymn_tags_insert(con, r["hymn_number"], r["tag"])
-    for r in flask.g.db.hymns_list():
+    for r in db.hymns_list():
         yavin.db.app_sqlite.hymns_insert(
             con, r["first_line"], r["hymn_number"], r["title"]
         )
-    for r in flask.g.db.jar_entries_list_all():
+    for r in db.jar_entries_list_all():
         yavin.db.app_sqlite.jar_entries_insert(con, r["entry_date"], r["id"], r["paid"])
-    for r in flask.g.db.library_books_list_all():
+    for r in db.library_books_list_all():
         yavin.db.app_sqlite.library_books_insert(
             con,
             r["credential_id"],
@@ -677,7 +678,7 @@ def migrate() -> werkzeug.Response:
             r["renewable"],
             r["title"],
         )
-    for r in flask.g.db.library_credentials_list():
+    for r in db.library_credentials_list():
         yavin.db.app_sqlite.library_credentials_insert(
             con,
             r["balance"],
@@ -688,15 +689,15 @@ def migrate() -> werkzeug.Response:
             r["password"],
             r["username"],
         )
-    for r in flask.g.db.mileage_entries_list_all():
+    for r in db.mileage_entries_list_all():
         yavin.db.app_sqlite.mileage_entries_insert(con, r["entry_date"], r["mileage"])
-    for r in flask.g.db.movie_people_list():
+    for r in db.movie_people_list():
         yavin.db.app_sqlite.movie_people_insert(con, r["id"], r["person"])
-    for r in flask.g.db.movie_picks_list():
+    for r in db.movie_picks_list():
         yavin.db.app_sqlite.movie_picks_insert(
             con, r["id"], r["person_id"], r["pick_date"], r["pick_text"], r["pick_url"]
         )
-    for r in flask.g.db.phone_usage_list():
+    for r in db.phone_usage_list():
         yavin.db.app_sqlite.phone_usage_insert(
             con,
             r["end_date"],
@@ -706,15 +707,15 @@ def migrate() -> werkzeug.Response:
             r["minutes"],
             r["start_date"],
         )
-    for k, v in flask.g.db.settings_list().items():
+    for k, v in db.settings_list().items():
         yavin.db.app_sqlite.settings_insert(con, k, v)
-    for r in flask.g.db.tithing_income_list_all():
+    for r in db.tithing_income_list_all():
         yavin.db.app_sqlite.tithing_income_insert(
             con, r["amount"], r["date"], r["description"], r["id"], r["tithing_paid"]
         )
-    for r in flask.g.db.user_permissions_list():
+    for r in db.user_permissions_list():
         yavin.db.app_sqlite.user_permissions_insert(con, r.email, r.permissions_db)
-    for r in flask.g.db.weight_entries_list(limit=300):
+    for r in db.weight_entries_list(limit=300):
         yavin.db.app_sqlite.weight_entries_insert(con, r["entry_date"], r["weight"])
     con.close()
     return flask.redirect(flask.url_for("index"))
