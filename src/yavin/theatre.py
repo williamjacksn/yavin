@@ -141,7 +141,35 @@ def entry_form(
     )
 
 
-def page(error: str = "") -> str:
+def performance_card(entry: Mapping) -> h.Element:
+    return h.article(".card.h-100")[
+        h.div(".card-body.text-break")[
+            h.h3(".h5.card-title")[entry["show"]],
+            h.p(".fw-semibold")[entry["performer"]],
+            h.dl(".mb-3")[
+                [
+                    h.div(".mb-2")[
+                        h.dt(".small.text-body-secondary")[label],
+                        h.dd(".mb-0")[
+                            str(entry[key])
+                            if entry[key] is not None and entry[key] != ""
+                            else "Not recorded"
+                        ],
+                    ]
+                    for key, label in FIELDS.items()
+                    if key not in ("performer", "show")
+                ]
+            ],
+            h.a(
+                ".btn.btn-outline-primary",
+                href=flask.url_for("theatre_edit", entry_id=entry["id"]),
+                aria_label=f"Edit {entry['performer']} in {entry['show']}",
+            )["Edit entry"],
+        ]
+    ]
+
+
+def page() -> str:
     entries = flask.g.db.theatre_list()
     selected = flask.request.args.get("performer", "")
     shown = [e for e in entries if not selected or e["performer"] == selected]
@@ -155,11 +183,13 @@ def page(error: str = "") -> str:
             h.div(".alert.alert-success")[message]
             for message in flask.get_flashed_messages()
         ],
-        h.div(".alert.alert-danger", role="alert")[error] if error else None,
-        h.a(
-            ".btn.btn-success.mb-3",
-            href=flask.url_for("theatre_add"),
-        )["Add entry"],
+        h.div(".d-flex.flex-wrap.gap-2.mb-3")[
+            h.a(".btn.btn-success", href=flask.url_for("theatre_add"))["Add entry"],
+            h.a(
+                ".btn.btn-outline-primary",
+                href=flask.url_for("theatre_transfer"),
+            )["Import / export"],
+        ],
         h.h2["Performance log"],
         h.div(".input-group.mb-3.w-auto")[
             h.label(".input-group-text", for_="filter-performer")["Performer"],
@@ -190,18 +220,22 @@ def page(error: str = "") -> str:
                 "recorded performer appearances · "
                 f"{sum(e['performances'] is None for e in shown)} unknown counts"
             ],
-            h.div(".table-responsive")[
+            h.div(".d-xl-none.row.row-cols-1.row-cols-md-2.g-3.mb-3")[
+                [h.div(".col")[performance_card(entry)] for entry in shown]
+            ],
+            h.div(".d-none.d-xl-block.table-responsive")[
                 h.table(".table.table-striped")[
                     h.thead[
                         h.tr[
-                            [h.th[label] for label in FIELDS.values()], h.th["Actions"]
+                            [h.th(scope="col")[label] for label in FIELDS.values()],
+                            h.th(scope="col")["Actions"],
                         ]
                     ],
                     h.tbody[
                         [
                             h.tr[
                                 [
-                                    h.td[
+                                    h.td(".text-break")[
                                         str(e[key])
                                         if e[key] is not None and e[key] != ""
                                         else "—"
@@ -210,8 +244,12 @@ def page(error: str = "") -> str:
                                 ],
                                 h.td[
                                     h.a(
+                                        ".btn.btn-sm.btn-outline-primary",
                                         href=flask.url_for(
                                             "theatre_edit", entry_id=e["id"]
+                                        ),
+                                        aria_label=(
+                                            f"Edit {e['performer']} in {e['show']}"
                                         ),
                                     )["Edit"]
                                 ],
@@ -224,7 +262,19 @@ def page(error: str = "") -> str:
             if shown
             else h.p["No entries yet for this selection."],
         ],
-        h.h2["CSV import and export"],
+    ]
+    return components.signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        h.a(".btn.btn-outline-dark", href=flask.url_for("index"))["Home"],
+        content,
+        "Yavin / Musical theatre",
+    )
+
+
+def transfer_page(error: str = "") -> str:
+    content = h.div[
+        h.h1(".mt-3")["CSV import and export"],
         h.p[
             "Import the original spreadsheet or an exported file. "
             "Exact matching entries are skipped. Export includes all performers."
@@ -247,13 +297,14 @@ def page(error: str = "") -> str:
             ),
             h.button(".btn.btn-primary", type="submit")["Import CSV"],
         ],
+        h.div(".alert.alert-danger", role="alert")[error] if error else None,
     ]
     return components.signed_in(
         flask.g.email,
         flask.g.permissions,
-        h.a(".btn.btn-outline-dark", href=flask.url_for("index"))["Home"],
+        h.a(".btn.btn-outline-dark", href=flask.url_for("theatre"))["Musical theatre"],
         content,
-        "Yavin / Musical theatre",
+        "Yavin / Musical theatre / Import and export",
     )
 
 
@@ -282,7 +333,7 @@ def import_csv() -> tuple[str, int] | Response:
             raise ValueError("CSV must be smaller than 2 MB.")
         entries = parse_csv(data.decode("utf-8-sig"))
     except (UnicodeError, ValueError, csv.Error) as error:
-        return page(error=str(error)), 400
+        return transfer_page(error=str(error)), 400
     flask.g.db.theatre_import(json.dumps(entries, default=str))
     flask.flash("Import complete. Exact matching entries were skipped.")
     return flask.redirect(flask.url_for("theatre"))

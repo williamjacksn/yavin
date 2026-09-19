@@ -195,6 +195,12 @@ def theatre_edit(entry_id: uuid.UUID) -> str | tuple[str, int] | werkzeug.Respon
     return flask.redirect(flask.url_for("theatre"))
 
 
+@app.get("/theatre/import-export")
+@permission_required("theatre")
+def theatre_transfer() -> str:
+    return yavin.theatre.transfer_page()
+
+
 @app.get("/theatre/export")
 @permission_required("theatre")
 def theatre_export() -> flask.Response:
