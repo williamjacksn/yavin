@@ -161,9 +161,19 @@ def page(error: str = "") -> str:
             href=flask.url_for("theatre_add"),
         )["Add entry"],
         h.h2["Performance log"],
-        h.form(".d-flex.gap-2.mb-3", method="get", action=flask.url_for("theatre"))[
-            h.label(".form-label", for_="filter-performer")["Performer"],
-            h.select("#filter-performer.form-select.w-auto", name="performer")[
+        h.div(".input-group.mb-3.w-auto")[
+            h.label(".input-group-text", for_="filter-performer")["Performer"],
+            h.select(
+                "#filter-performer.form-select",
+                name="performer",
+                hx_get=flask.url_for("theatre"),
+                hx_trigger="change",
+                hx_target="#theatre-results",
+                hx_select="#theatre-results",
+                hx_swap="outerHTML",
+                hx_push_url="true",
+                hx_sync="this:replace",
+            )[
                 [
                     h.option(value="")["All performers"],
                     [
@@ -172,45 +182,48 @@ def page(error: str = "") -> str:
                     ],
                 ]
             ],
-            h.button(".btn.btn-primary", type="submit")["Filter"],
         ],
-        h.p[
-            f"{len(shown)} entries · "
-            f"{sum(e['performances'] or 0 for e in shown)} "
-            "recorded performer appearances · "
-            f"{sum(e['performances'] is None for e in shown)} unknown counts"
-        ],
-        h.div(".table-responsive")[
-            h.table(".table.table-striped")[
-                h.thead[
-                    h.tr[[h.th[label] for label in FIELDS.values()], h.th["Actions"]]
-                ],
-                h.tbody[
-                    [
+        h.div("#theatre-results", aria_live="polite")[
+            h.p[
+                f"{len(shown)} entries · "
+                f"{sum(e['performances'] or 0 for e in shown)} "
+                "recorded performer appearances · "
+                f"{sum(e['performances'] is None for e in shown)} unknown counts"
+            ],
+            h.div(".table-responsive")[
+                h.table(".table.table-striped")[
+                    h.thead[
                         h.tr[
-                            [
-                                h.td[
-                                    str(e[key])
-                                    if e[key] is not None and e[key] != ""
-                                    else "—"
-                                ]
-                                for key in FIELDS
-                            ],
-                            h.td[
-                                h.a(
-                                    href=flask.url_for(
-                                        "theatre_edit", entry_id=e["id"]
-                                    ),
-                                )["Edit"]
-                            ],
+                            [h.th[label] for label in FIELDS.values()], h.th["Actions"]
                         ]
-                        for e in shown
-                    ]
-                ],
+                    ],
+                    h.tbody[
+                        [
+                            h.tr[
+                                [
+                                    h.td[
+                                        str(e[key])
+                                        if e[key] is not None and e[key] != ""
+                                        else "—"
+                                    ]
+                                    for key in FIELDS
+                                ],
+                                h.td[
+                                    h.a(
+                                        href=flask.url_for(
+                                            "theatre_edit", entry_id=e["id"]
+                                        ),
+                                    )["Edit"]
+                                ],
+                            ]
+                            for e in shown
+                        ]
+                    ],
+                ]
             ]
-        ]
-        if shown
-        else h.p["No entries yet for this selection."],
+            if shown
+            else h.p["No entries yet for this selection."],
+        ],
         h.h2["CSV import and export"],
         h.p[
             "Import the original spreadsheet or an exported file. "
