@@ -19,6 +19,7 @@ import yavin.db
 import yavin.db.app_sqlite
 import yavin.settings
 import yavin.tasks
+import yavin.theatre
 import yavin.util
 import yavin.versions
 
@@ -135,6 +136,11 @@ def index() -> str:
             "visible": "phone" in flask.g.permissions or "admin" in flask.g.permissions,
         },
         {
+            "url": flask.url_for("dashboard_card_theatre"),
+            "visible": "theatre" in flask.g.permissions
+            or "admin" in flask.g.permissions,
+        },
+        {
             "url": flask.url_for("dashboard_card_tithing"),
             "visible": "tithing" in flask.g.permissions
             or "admin" in flask.g.permissions,
@@ -152,6 +158,59 @@ def index() -> str:
 @permission_required("admin")
 def app_settings() -> str:
     return yavin.components.app_settings()
+
+
+@app.get("/theatre")
+@permission_required("theatre")
+def theatre() -> str:
+    return yavin.theatre.page()
+
+
+@app.post("/theatre/add")
+@permission_required("theatre")
+def theatre_add() -> str | tuple[str, int] | werkzeug.Response:
+    try:
+        entry = yavin.theatre.validate(flask.request.form)
+    except ValueError as error:
+        return yavin.theatre.page(flask.request.form, str(error)), 400
+    flask.g.db.theatre_save(entry)
+    return flask.redirect(flask.url_for("theatre"))
+
+
+@app.route("/theatre/<uuid:entry_id>/edit", methods=["GET", "POST"])
+@permission_required("theatre")
+def theatre_edit(entry_id: uuid.UUID) -> str | tuple[str, int] | werkzeug.Response:
+    entry = next((e for e in flask.g.db.theatre_list() if e["id"] == entry_id), None)
+    if entry is None:
+        flask.abort(404)
+    if flask.request.method == "GET":
+        return yavin.theatre.page(entry, entry_id=entry_id)
+    try:
+        updated = yavin.theatre.validate(flask.request.form)
+    except ValueError as error:
+        return yavin.theatre.page(flask.request.form, str(error), entry_id), 400
+    flask.g.db.theatre_save(updated, entry_id)
+    return flask.redirect(flask.url_for("theatre"))
+
+
+@app.get("/theatre/export")
+@permission_required("theatre")
+def theatre_export() -> flask.Response:
+    return yavin.theatre.export_csv()
+
+
+@app.post("/theatre/import")
+@permission_required("theatre")
+def theatre_import() -> tuple[str, int] | werkzeug.Response:
+    return yavin.theatre.import_csv()
+
+
+@app.get("/dashboard-card/theatre")
+@permission_required("theatre")
+def dashboard_card_theatre() -> str:
+    return yavin.components.dashboard_card(
+        "Musical theatre", flask.url_for("theatre"), "Record roles and performances"
+    )
 
 
 @app.post("/app-settings/update")

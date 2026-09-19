@@ -56,6 +56,58 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # balances
 
+    def theatre_list(self) -> list[dict]:
+        return self.q("""
+            select * from theatre_entries
+            order by first_show desc nulls first, show, performer, id
+        """)
+
+    def theatre_save(self, entry: dict, entry_id: uuid.UUID | None = None) -> None:
+        params = {**entry, "id": entry_id or uuid.uuid4()}
+        if entry_id is not None:
+            self.u(
+                """
+                update theatre_entries set performer=%(performer)s, show=%(show)s,
+                    first_show=%(first_show)s, last_show=%(last_show)s,
+                    performances=%(performances)s, role=%(role)s,
+                    company=%(company)s, director=%(director)s
+                where id=%(id)s
+            """,
+                params,
+            )
+        else:
+            self.u(
+                """
+                insert into theatre_entries
+                    (id, performer, show, first_show, last_show, performances,
+                     role, company, director)
+                values (%(id)s, %(performer)s, %(show)s, %(first_show)s,
+                        %(last_show)s, %(performances)s, %(role)s,
+                        %(company)s, %(director)s)
+            """,
+                params,
+            )
+
+    def theatre_import(self, entries: str) -> None:
+        self.u(
+            """
+            insert into theatre_entries
+                (performer, show, first_show, last_show, performances,
+                 role, company, director)
+            select distinct r.* from jsonb_to_recordset(%(entries)s::jsonb) as r(
+                performer text, show text, first_show date, last_show date,
+                performances integer, role text, company text, director text)
+            where not exists (
+                select 1 from theatre_entries e where
+                (e.performer, e.show, e.first_show, e.last_show, e.performances,
+                 e.role, e.company, e.director) is not distinct from
+                (r.performer, r.show, r.first_show, r.last_show, r.performances,
+                 r.role, r.company, r.director)
+            )
+        """,
+            {"entries": entries},
+        )
+
     def balances_accounts_count(self) -> int:
         sql = """
             select count(*)
@@ -935,6 +987,23 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             """)
             self._add_schema_version(24)
+
+        if self.version < 25:
+            self.u("""
+                create table theatre_entries (
+                    id uuid primary key default gen_random_uuid(),
+                    performer text not null check (trim(performer) <> ''),
+                    show text not null check (trim(show) <> ''),
+                    first_show date,
+                    last_show date,
+                    performances integer check (performances >= 0),
+                    role text not null default '',
+                    company text not null default '',
+                    director text not null default '',
+                    check (last_show >= first_show)
+                )
+            """)
+            self._add_schema_version(25)
 
     def _add_schema_version(self, schema_version: int) -> None:
         self._version = schema_version
