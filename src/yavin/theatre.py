@@ -70,8 +70,8 @@ def parse_csv(text: str) -> list[dict]:
 
 
 def entry_form(
-    values: Mapping | None = None, entry_id: uuid.UUID | None = None
-) -> h.Element:
+    values: Mapping | None = None, error: str = "", entry_id: uuid.UUID | None = None
+) -> str:
     entries = flask.g.db.theatre_list()
     values = values or {}
     controls = []
@@ -114,8 +114,11 @@ def entry_form(
         if entry_id
         else flask.url_for("theatre_add")
     )
-    return h.div("#theatre-form")[
-        h.h2["Edit entry" if entry_id else "Add entry"],
+    title = "Edit entry" if entry_id else "Add entry"
+    content = h.div[
+        h.h1(".mt-3")[title],
+        h.p["Leave unknown dates and counts blank."],
+        h.div(".alert.alert-danger", role="alert")[error] if error else None,
         h.form(".row.g-3.mb-4", action=save_url, method="post")[
             controls,
             h.div(".col-12")[
@@ -124,19 +127,21 @@ def entry_form(
                 h.a(
                     ".btn.btn-outline-secondary",
                     href=flask.url_for("theatre"),
-                    hx_get=flask.url_for("theatre"),
-                    hx_select="#theatre-form",
-                    hx_target="#theatre-form",
-                    hx_swap="outerHTML",
                 )["Cancel"],
             ],
         ],
     ]
 
+    return components.signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        h.a(".btn.btn-outline-dark", href=flask.url_for("theatre"))["Musical theatre"],
+        content,
+        f"Yavin / Musical theatre / {title}",
+    )
 
-def page(
-    values: Mapping | None = None, error: str = "", entry_id: uuid.UUID | None = None
-) -> str:
+
+def page(error: str = "") -> str:
     entries = flask.g.db.theatre_list()
     selected = flask.request.args.get("performer", "")
     shown = [e for e in entries if not selected or e["performer"] == selected]
@@ -154,13 +159,7 @@ def page(
         h.a(
             ".btn.btn-success.mb-3",
             href=flask.url_for("theatre_add"),
-            hx_get=flask.url_for("theatre_add"),
-            hx_target="#theatre-form",
-            hx_swap="outerHTML show:top",
         )["Add entry"],
-        entry_form(values, entry_id=entry_id)
-        if values is not None or entry_id is not None
-        else h.div("#theatre-form"),
         h.h2["Performance log"],
         h.form(".d-flex.gap-2.mb-3", method="get", action=flask.url_for("theatre"))[
             h.label(".form-label", for_="filter-performer")["Performer"],
@@ -202,11 +201,6 @@ def page(
                                     href=flask.url_for(
                                         "theatre_edit", entry_id=e["id"]
                                     ),
-                                    hx_get=flask.url_for(
-                                        "theatre_edit", entry_id=e["id"]
-                                    ),
-                                    hx_target="#theatre-form",
-                                    hx_swap="outerHTML show:top",
                                 )["Edit"]
                             ],
                         ]

@@ -170,13 +170,11 @@ def theatre() -> str:
 @permission_required("theatre")
 def theatre_add() -> str | tuple[str, int] | werkzeug.Response:
     if flask.request.method == "GET":
-        if flask.request.headers.get("HX-Request") == "true":
-            return str(yavin.theatre.entry_form())
-        return yavin.theatre.page({})
+        return yavin.theatre.entry_form()
     try:
         entry = yavin.theatre.validate(flask.request.form)
     except ValueError as error:
-        return yavin.theatre.page(flask.request.form, str(error)), 400
+        return yavin.theatre.entry_form(flask.request.form, str(error)), 400
     flask.g.db.theatre_save(entry)
     return flask.redirect(flask.url_for("theatre"))
 
@@ -188,13 +186,11 @@ def theatre_edit(entry_id: uuid.UUID) -> str | tuple[str, int] | werkzeug.Respon
     if entry is None:
         flask.abort(404)
     if flask.request.method == "GET":
-        if flask.request.headers.get("HX-Request") == "true":
-            return str(yavin.theatre.entry_form(entry, entry_id=entry_id))
-        return yavin.theatre.page(entry, entry_id=entry_id)
+        return yavin.theatre.entry_form(entry, entry_id=entry_id)
     try:
         updated = yavin.theatre.validate(flask.request.form)
     except ValueError as error:
-        return yavin.theatre.page(flask.request.form, str(error), entry_id), 400
+        return yavin.theatre.entry_form(flask.request.form, str(error), entry_id), 400
     flask.g.db.theatre_save(updated, entry_id)
     return flask.redirect(flask.url_for("theatre"))
 
