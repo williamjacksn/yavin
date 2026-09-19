@@ -166,9 +166,13 @@ def theatre() -> str:
     return yavin.theatre.page()
 
 
-@app.post("/theatre/add")
+@app.route("/theatre/add", methods=["GET", "POST"])
 @permission_required("theatre")
 def theatre_add() -> str | tuple[str, int] | werkzeug.Response:
+    if flask.request.method == "GET":
+        if flask.request.headers.get("HX-Request") == "true":
+            return str(yavin.theatre.entry_form())
+        return yavin.theatre.page({})
     try:
         entry = yavin.theatre.validate(flask.request.form)
     except ValueError as error:
@@ -184,6 +188,8 @@ def theatre_edit(entry_id: uuid.UUID) -> str | tuple[str, int] | werkzeug.Respon
     if entry is None:
         flask.abort(404)
     if flask.request.method == "GET":
+        if flask.request.headers.get("HX-Request") == "true":
+            return str(yavin.theatre.entry_form(entry, entry_id=entry_id))
         return yavin.theatre.page(entry, entry_id=entry_id)
     try:
         updated = yavin.theatre.validate(flask.request.form)
