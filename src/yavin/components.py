@@ -34,24 +34,10 @@ def _base(
     content: htpy.Renderable | list[htpy.Renderable] | list[htpy.Element] | None = None,
     end_of_body: htpy.Element | None = None,
 ) -> htpy.Element:
+    if title is None:
+        title = "Yavin"
     return htpy.html(lang="en")[
-        htpy.head[
-            htpy.meta(charset="utf-8"),
-            htpy.meta(
-                content="width=device-width, initial-scale=1, shrink-to-fit=no",
-                name="viewport",
-            ),
-            htpy.title[title],
-            htpy.link(href=flask.url_for("favicon"), rel="icon"),
-            htpy.link(
-                href=f"{_cdn}/bootstrap@{v.bs}/dist/css/bootstrap.min.css",
-                rel="stylesheet",
-            ),
-            htpy.link(
-                href=f"{_cdn}/bootstrap-icons@{v.bi}/font/bootstrap-icons.min.css",
-                rel="stylesheet",
-            ),
-        ],
+        _head(title),
         htpy.body[
             htpy.div(".container-fluid")[
                 htpy.div(".pt-3.row")[
@@ -107,6 +93,26 @@ def _footer() -> htpy.Element:
 
 def _page_title(title: str | markupsafe.Markup) -> htpy.Element:
     return htpy.div(".pt-3.row")[htpy.div(".col")[htpy.h1[title]]]
+
+
+def _head(title: str | markupsafe.Markup) -> htpy.Element:
+    return htpy.head[
+        htpy.meta(charset="utf-8"),
+        htpy.meta(
+            content="width=device-width, initial-scale=1, shrink-to-fit=no",
+            name="viewport",
+        ),
+        htpy.title[title],
+        htpy.link(href=flask.url_for("favicon"), rel="icon"),
+        htpy.link(
+            href=f"{_cdn}/bootstrap@{v.bs}/dist/css/bootstrap.min.css",
+            rel="stylesheet",
+        ),
+        htpy.link(
+            href=f"{_cdn}/bootstrap-icons@{v.bi}/font/bootstrap-icons.min.css",
+            rel="stylesheet",
+        ),
+    ]
 
 
 def _sign_in() -> htpy.Element:
