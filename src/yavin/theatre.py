@@ -135,7 +135,7 @@ def entry_form(
     return components.signed_in(
         flask.g.email,
         flask.g.permissions,
-        h.a(".btn.btn-outline-dark", href=flask.url_for("theatre"))["Musical theatre"],
+        components._breadcrumb(flask.url_for("theatre"), "Musical theatre"),
         content,
         f"Yavin / Musical theatre / {title}",
     )
@@ -266,7 +266,7 @@ def page() -> str:
     return components.signed_in(
         flask.g.email,
         flask.g.permissions,
-        h.a(".btn.btn-outline-dark", href=flask.url_for("index"))["Home"],
+        components._back_to_home(),
         content,
         "Yavin / Musical theatre",
     )
@@ -302,7 +302,7 @@ def transfer_page(error: str = "") -> str:
     return components.signed_in(
         flask.g.email,
         flask.g.permissions,
-        h.a(".btn.btn-outline-dark", href=flask.url_for("theatre"))["Musical theatre"],
+        components._breadcrumb(flask.url_for("theatre"), "Musical theatre"),
         content,
         "Yavin / Musical theatre / Import and export",
     )
