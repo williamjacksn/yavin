@@ -142,26 +142,50 @@ def entry_form(
 
 
 def performance_card(entry: Mapping) -> h.Element:
+    count = entry["performances"]
+    performances = (
+        "Performances"
+        if count is None
+        else f"{count} performance{'s' if count != 1 else ''}"
+    )
+    first = entry["first_show"]
+    last = entry["last_show"]
+
+    def date_label(value: datetime.date) -> str:
+        return f"{value:%b} {value.day}, {value.year}"
+
+    if first and last:
+        if first == last:
+            performances += f" on {date_label(first)}"
+        else:
+            performances += f" between {date_label(first)} and {date_label(last)}"
+    elif first:
+        performances += f" starting {date_label(first)} (last show not recorded)"
+    elif last:
+        performances += f" ending {date_label(last)} (first show not recorded)"
+    else:
+        performances += " (dates not recorded)"
+    if count is None:
+        performances += "; count not recorded"
+
     return h.article(".card.h-100")[
         h.div(".card-body.text-break")[
             h.h3(".h5.card-title")[entry["show"]],
-            h.p(".fw-semibold")[entry["performer"]],
-            h.dl(".mb-3")[
-                [
-                    h.div(".mb-2")[
-                        h.dt(".small.text-body-secondary")[label],
-                        h.dd(".mb-0")[
-                            str(entry[key])
-                            if entry[key] is not None and entry[key] != ""
-                            else "Not recorded"
-                        ],
-                    ]
-                    for key, label in FIELDS.items()
-                    if key not in ("performer", "show")
-                ]
+            h.p[
+                h.strong[entry["performer"]],
+                [" performed as ", h.strong[entry["role"]]]
+                if entry["role"]
+                else " participated (role not recorded)",
             ],
+            h.p[performances],
+            h.p(".mb-1")["Presented by ", entry["company"]]
+            if entry["company"]
+            else None,
+            h.p(".mb-1")["Directed by ", entry["director"]]
+            if entry["director"]
+            else None,
             h.a(
-                ".btn.btn-outline-primary",
+                ".btn.btn-outline-primary.mt-3",
                 href=flask.url_for("theatre_edit", entry_id=entry["id"]),
                 aria_label=f"Edit {entry['performer']} in {entry['show']}",
             )["Edit entry"],
