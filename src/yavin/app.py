@@ -104,15 +104,15 @@ def index() -> str:
             or "admin" in flask.g.permissions,
         },
         {
-            "url": flask.url_for("dashboard_card_electricity"),
-            "visible": "electricity" in flask.g.permissions
-            or "admin" in flask.g.permissions,
-        },
-        {
             "url": flask.url_for("dashboard_card_dreamlight"),
             "visible": "dreamlight" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
+        # {
+        #     "url": flask.url_for("dashboard_card_electricity"),
+        #     "visible": "electricity" in flask.g.permissions
+        #     or "admin" in flask.g.permissions,
+        # },
         {
             "url": flask.url_for("dashboard_card_expenses"),
             "visible": "expenses" in flask.g.permissions
@@ -138,14 +138,15 @@ def index() -> str:
             or "admin" in flask.g.permissions,
         },
         {
-            "url": flask.url_for("dashboard_card_phone"),
-            "visible": "phone" in flask.g.permissions or "admin" in flask.g.permissions,
-        },
-        {
             "url": flask.url_for("dashboard_card_theatre"),
             "visible": "theatre" in flask.g.permissions
             or "admin" in flask.g.permissions,
         },
+        # {
+        #     "url": flask.url_for("dashboard_card_phone"),
+        #     "visible": "phone" in flask.g.permissions
+        #     or "admin" in flask.g.permissions,
+        # },
         {
             "url": flask.url_for("dashboard_card_tithing"),
             "visible": "tithing" in flask.g.permissions
@@ -198,9 +199,9 @@ def dreamlight_lookup_update(
 @permission_required("dreamlight")
 def dashboard_card_dreamlight() -> str:
     return yavin.components.dashboard_card(
-        "Disney Dreamlight Valley",
+        "Dreamlight",
         flask.url_for("dreamlight"),
-        "Track characters and skill assignments",
+        "Track characters",
     )
 
 
@@ -261,7 +262,7 @@ def theatre_import() -> tuple[str, int] | werkzeug.Response:
 @permission_required("theatre")
 def dashboard_card_theatre() -> str:
     return yavin.components.dashboard_card(
-        "Musical theatre", flask.url_for("theatre"), "Record roles and performances"
+        "Musical theatre", flask.url_for("theatre"), "Record performances"
     )
 
 
