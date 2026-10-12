@@ -137,11 +137,18 @@ def select(
     blank: str = "Choose…",
     required: bool = False,
     control_id: str | None = None,
+    show_label: bool = True,
 ) -> h.Element:
     control_id = control_id or name
     return h.div[
-        h.label(".form-label", for_=control_id)[label],
-        h.select(".form-select", id=control_id, name=name, required=required)[
+        h.label(".form-label", for_=control_id)[label] if show_label else None,
+        h.select(
+            ".form-select",
+            id=control_id,
+            name=name,
+            required=required,
+            aria_label=label if not show_label else None,
+        )[
             h.option(value="", selected=value == "")[blank],
             h.option(value="unassigned", selected=value == "unassigned")["Unassigned"]
             if name == "skill"
@@ -343,6 +350,7 @@ def page(error: str = "") -> str:
                                         str(c["skill_id"]) if c["skill_id"] else "",
                                         "Unassigned",
                                         control_id=f"skill-{c['id']}",
+                                        show_label=False,
                                     ),
                                     h.button(".btn.btn-outline-primary", type="submit")[
                                         "Save"
