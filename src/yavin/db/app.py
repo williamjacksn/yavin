@@ -1,5 +1,5 @@
 import dataclasses
-import datetime
+import datetime as dt
 import decimal
 import logging
 import uuid
@@ -11,13 +11,13 @@ import yavin.util
 
 log = logging.getLogger(__name__)
 DEFAULT_UUID = uuid.UUID(int=0)
-DEFAULT_DATETIME = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+DEFAULT_DATETIME = dt.datetime(1970, 1, 1, tzinfo=dt.UTC)
 
 
 @dataclasses.dataclass
 class BillboardRow:
     artist: str = ""
-    fetched_at: datetime.datetime = DEFAULT_DATETIME
+    fetched_at: dt.datetime = DEFAULT_DATETIME
     id: uuid.UUID = DEFAULT_UUID
     title: str = ""
 
@@ -325,14 +325,14 @@ class YavinDatabase(fort.PostgresDatabase):
         return {}
 
     def captains_log_insert(
-        self, log_text: str, log_timestamp: datetime.datetime | None = None
+        self, log_text: str, log_timestamp: dt.datetime | None = None
     ) -> None:
         sql = """
             insert into captains_log (id, log_timestamp, log_text)
             values (%(id)s, %(log_timestamp)s, %(log_text)s)
         """
         if log_timestamp is None:
-            log_timestamp = datetime.datetime.now(datetime.UTC)
+            log_timestamp = dt.datetime.now(dt.UTC)
         params = {
             "id": uuid.uuid4(),
             "log_text": log_text,
@@ -363,7 +363,7 @@ class YavinDatabase(fort.PostgresDatabase):
 
     def electricity_insert(
         self,
-        bill_date: datetime.date,
+        bill_date: dt.date,
         kwh: int,
         charge: decimal.Decimal,
         bill: decimal.Decimal,
@@ -428,7 +428,7 @@ class YavinDatabase(fort.PostgresDatabase):
             return 0
         return (today - last_entry).days
 
-    def jar_entries_insert(self, entry_date: datetime.date) -> None:
+    def jar_entries_insert(self, entry_date: dt.date) -> None:
         sql = """
             select max(id) max_id
             from jar_entries
@@ -549,7 +549,7 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # mileage
 
-    def mileage_entries_insert(self, entry_date: datetime.date, mileage: int) -> None:
+    def mileage_entries_insert(self, entry_date: dt.date, mileage: int) -> None:
         sql = """
             insert into mileage_entries (entry_date, mileage)
             values (%(entry_date)s, %(mileage)s)
@@ -558,7 +558,7 @@ class YavinDatabase(fort.PostgresDatabase):
         params = {"entry_date": entry_date, "mileage": mileage}
         self.u(sql, params)
 
-    def mileage_entries_delete(self, entry_date: datetime.date) -> None:
+    def mileage_entries_delete(self, entry_date: dt.date) -> None:
         sql = """
             delete from mileage_entries
             where entry_date = %(entry_date)s
@@ -576,7 +576,7 @@ class YavinDatabase(fort.PostgresDatabase):
         params = {"limit": limit}
         return self.q(sql, params)
 
-    def mileage_entries_get_for_date(self, entry_date: datetime.date) -> dict | None:
+    def mileage_entries_get_for_date(self, entry_date: dt.date) -> dict | None:
         sql = """
             select entry_date, mileage
             from mileage_entries
@@ -684,8 +684,8 @@ class YavinDatabase(fort.PostgresDatabase):
 
     def phone_usage_insert(
         self,
-        start_date: datetime.date,
-        end_date: datetime.date,
+        start_date: dt.date,
+        end_date: dt.date,
         minutes: int,
         messages: int,
         megabytes: int,
@@ -755,7 +755,7 @@ class YavinDatabase(fort.PostgresDatabase):
         return self.q_val(sql)
 
     def tithing_income_insert(
-        self, date: datetime.date, amount: decimal.Decimal, description: str
+        self, date: dt.date, amount: decimal.Decimal, description: str
     ) -> None:
         sql = """
             insert into tithing_income (date, amount, description)
@@ -838,7 +838,7 @@ class YavinDatabase(fort.PostgresDatabase):
     # weight
 
     def weight_entries_get_for_date(
-        self, entry_date: datetime.date
+        self, entry_date: dt.date
     ) -> decimal.Decimal | None:
         sql = """
             select entry_date, weight
@@ -858,7 +858,7 @@ class YavinDatabase(fort.PostgresDatabase):
         return self.q_one(sql)
 
     def weight_entries_insert(
-        self, entry_date: datetime.date, weight: decimal.Decimal
+        self, entry_date: dt.date, weight: decimal.Decimal
     ) -> None:
         sql = """
             insert into weight_entries (entry_date, weight)
@@ -1147,7 +1147,7 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         params = {
             "schema_version": schema_version,
-            "migration_date": datetime.datetime.now(datetime.UTC),
+            "migration_date": dt.datetime.now(dt.UTC),
         }
         self.u(sql, params)
 

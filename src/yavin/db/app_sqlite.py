@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import decimal
 import logging
 import sqlite3
@@ -14,10 +14,10 @@ def _register_adapters_and_converters() -> None:
     sqlite3.register_adapter(bool, str)
     sqlite3.register_converter("bool", convert_bool)
 
-    def convert_date(value: bytes) -> datetime.date:
-        return datetime.date.fromisoformat(value.decode())
+    def convert_date(value: bytes) -> dt.date:
+        return dt.date.fromisoformat(value.decode())
 
-    sqlite3.register_adapter(datetime.date, str)
+    sqlite3.register_adapter(dt.date, str)
     sqlite3.register_converter("date", convert_date)
 
     def convert_decimal(value: bytes) -> decimal.Decimal:
@@ -54,7 +54,7 @@ def balances_accounts_insert(
 def balances_transactions_insert(
     con: sqlite3.Connection,
     account_id: uuid.UUID,
-    tx_date: datetime.date,
+    tx_date: dt.date,
     tx_description: str,
     tx_id: uuid.UUID,
     tx_value: decimal.Decimal,
@@ -80,7 +80,7 @@ def balances_transactions_insert(
 def billboard_insert(
     con: sqlite3.Connection,
     artist: str,
-    fetched_at: datetime.datetime,
+    fetched_at: dt.datetime,
     id_: uuid.UUID,
     title: str,
 ) -> None:
@@ -105,9 +105,9 @@ def callings_insert(
     con: sqlite3.Connection,
     calling: str,
     id_: uuid.UUID,
-    released_at: datetime.date,
-    set_apart_at: datetime.date,
-    sustained_at: datetime.date,
+    released_at: dt.date,
+    set_apart_at: dt.date,
+    sustained_at: dt.date,
     ward: str,
 ) -> None:
     sql = """
@@ -145,7 +145,7 @@ def connection_init(path: str) -> None:
 def electricity_insert(
     con: sqlite3.Connection,
     bill: decimal.Decimal,
-    bill_date: datetime.date,
+    bill_date: dt.date,
     charge: decimal.Decimal,
     kwh: int,
 ) -> None:
@@ -179,7 +179,7 @@ def get_schema_version(con: sqlite3.Connection) -> int:
 
 
 def hymn_history_insert(
-    con: sqlite3.Connection, date: datetime.date, hymn_number: int
+    con: sqlite3.Connection, date: dt.date, hymn_number: int
 ) -> None:
     sql = """
         insert into hymn_history (date, hymn_number) values (:date, :hymn_number)
@@ -214,7 +214,7 @@ def hymns_insert(
 
 
 def jar_entries_insert(
-    con: sqlite3.Connection, entry_date: datetime.date, id_: int, paid: bool
+    con: sqlite3.Connection, entry_date: dt.date, id_: int, paid: bool
 ) -> None:
     sql = """
         insert into jar_entries (entry_date, id, paid) values (:entry_date, :id, :paid)
@@ -227,7 +227,7 @@ def jar_entries_insert(
 def library_books_insert(
     con: sqlite3.Connection,
     credential_id: uuid.UUID,
-    due: datetime.date,
+    due: dt.date,
     id_: uuid.UUID,
     item_id: str,
     medium: str,
@@ -453,7 +453,7 @@ def migrate(con: sqlite3.Connection) -> None:
 
 
 def mileage_entries_insert(
-    con: sqlite3.Connection, entry_date: datetime.date, mileage: int
+    con: sqlite3.Connection, entry_date: dt.date, mileage: int
 ) -> None:
     sql = """
         insert into mileage_entries (
@@ -480,7 +480,7 @@ def movie_picks_insert(
     con: sqlite3.Connection,
     id_: uuid.UUID,
     person_id: uuid.UUID,
-    pick_date: datetime.date,
+    pick_date: dt.date,
     pick_text: str,
     pick_url: str,
 ) -> None:
@@ -504,12 +504,12 @@ def movie_picks_insert(
 
 def phone_usage_insert(
     con: sqlite3.Connection,
-    end_date: datetime.date,
+    end_date: dt.date,
     id_: uuid.UUID,
     megabytes: int,
     messages: int,
     minutes: int,
-    start_date: datetime.date,
+    start_date: dt.date,
 ) -> None:
     sql = """
         insert into phone_usage (
@@ -565,7 +565,7 @@ def schema_versions_insert(con: sqlite3.Connection, schema_version: int) -> None
     """
     params = {
         "schema_version": schema_version,
-        "migration_timestamp": datetime.datetime.now(datetime.UTC),
+        "migration_timestamp": dt.datetime.now(dt.UTC),
     }
     con.execute(sql, params)
     con.commit()
@@ -602,10 +602,10 @@ def table_exists(con: sqlite3.Connection, table_name: str) -> bool:
 def tithing_income_insert(
     con: sqlite3.Connection,
     amount: decimal.Decimal,
-    date: datetime.date,
+    date: dt.date,
     description: str,
     id_: uuid.UUID,
-    tithing_paid: datetime.date,
+    tithing_paid: dt.date,
 ) -> None:
     sql = """
         insert into tithing_income (
@@ -637,7 +637,7 @@ def user_permissions_insert(
 
 
 def weight_entries_insert(
-    con: sqlite3.Connection, entry_date: datetime.date, weight: decimal.Decimal
+    con: sqlite3.Connection, entry_date: dt.date, weight: decimal.Decimal
 ) -> None:
     sql = """
         insert into weight_entries (

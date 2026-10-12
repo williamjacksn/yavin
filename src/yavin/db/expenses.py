@@ -1,11 +1,11 @@
-import datetime
+import datetime as dt
 
 import fort
 
 
 class ExpensesDatabase(fort.SQLiteDatabase):
     def get_expenses(
-        self, account_prefix: str, start_date: datetime.date, end_date: datetime.date
+        self, account_prefix: str, start_date: dt.date, end_date: dt.date
     ) -> list[dict]:
         sql = """
             select

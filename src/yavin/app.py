@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import decimal
 import functools
 import logging
@@ -597,8 +597,8 @@ def expenses() -> str | werkzeug.Response:
     if ex_db_path is None:
         return flask.redirect(flask.url_for("app_settings"))
     ex_db = yavin.db.ExpensesDatabase(flask.g.app_settings.get("expenses_db"))
-    start_date = datetime.date(2000, 1, 1)
-    end_date = datetime.date(2000, 1, 1)
+    start_date = dt.date(2000, 1, 1)
+    end_date = dt.date(2000, 1, 1)
     valid_start_date = False
     valid_end_date = False
     try:
@@ -986,8 +986,8 @@ def phone() -> str:
 def phone_add() -> werkzeug.Response:
     db: yavin.db.YavinDatabase = flask.g.db
     kwargs = {
-        "start_date": datetime.date.fromisoformat(flask.request.values["start-date"]),
-        "end_date": datetime.date.fromisoformat(flask.request.values["end-date"]),
+        "start_date": dt.date.fromisoformat(flask.request.values["start-date"]),
+        "end_date": dt.date.fromisoformat(flask.request.values["end-date"]),
         "minutes": int(flask.request.values["minutes"]),
         "messages": int(flask.request.values["messages"]),
         "megabytes": int(flask.request.values["megabytes"]),

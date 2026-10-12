@@ -1,7 +1,7 @@
 """Musical theatre log: one entry per performer and production."""
 
 import csv
-import datetime
+import datetime as dt
 import io
 import json
 import uuid
@@ -33,9 +33,7 @@ def validate(values: Mapping[str, str]) -> dict:
     result: dict = dict(entry)
     for key in ("first_show", "last_show"):
         try:
-            result[key] = (
-                datetime.date.fromisoformat(entry[key]) if entry[key] else None
-            )
+            result[key] = dt.date.fromisoformat(entry[key]) if entry[key] else None
         except ValueError:
             raise ValueError(f"{FIELDS[key]} must be a valid date.") from None
     if (
@@ -151,7 +149,7 @@ def performance_card(entry: Mapping) -> h.Element:
     first = entry["first_show"]
     last = entry["last_show"]
 
-    def date_label(value: datetime.date) -> str:
+    def date_label(value: dt.date) -> str:
         return f"{value:%b} {value.day}, {value.year}"
 
     if first and last:
