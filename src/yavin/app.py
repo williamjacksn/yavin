@@ -17,6 +17,7 @@ import werkzeug.utils
 import yavin.components
 import yavin.db
 import yavin.db.app_sqlite
+import yavin.dreamlight
 import yavin.settings
 import yavin.tasks
 import yavin.theatre
@@ -108,6 +109,11 @@ def index() -> str:
             or "admin" in flask.g.permissions,
         },
         {
+            "url": flask.url_for("dashboard_card_dreamlight"),
+            "visible": "dreamlight" in flask.g.permissions
+            or "admin" in flask.g.permissions,
+        },
+        {
             "url": flask.url_for("dashboard_card_expenses"),
             "visible": "expenses" in flask.g.permissions
             or "admin" in flask.g.permissions,
@@ -158,6 +164,44 @@ def index() -> str:
 @permission_required("admin")
 def app_settings() -> str:
     return yavin.components.app_settings()
+
+
+@app.get("/dreamlight")
+@permission_required("dreamlight")
+def dreamlight() -> str:
+    return yavin.dreamlight.page()
+
+
+@app.post("/dreamlight/characters/add")
+@permission_required("dreamlight")
+def dreamlight_character_add() -> str | tuple[str, int] | werkzeug.Response:
+    return yavin.dreamlight.character_add()
+
+
+@app.post("/dreamlight/characters/<uuid:character_id>/<action>")
+@permission_required("dreamlight")
+def dreamlight_character_update(
+    character_id: uuid.UUID, action: str
+) -> str | tuple[str, int] | werkzeug.Response:
+    return yavin.dreamlight.character_update(character_id, action)
+
+
+@app.post("/dreamlight/lists/<kind>/<action>")
+@permission_required("dreamlight")
+def dreamlight_lookup_update(
+    kind: str, action: str
+) -> str | tuple[str, int] | werkzeug.Response:
+    return yavin.dreamlight.lookup_update(kind, action)
+
+
+@app.get("/dashboard-card/dreamlight")
+@permission_required("dreamlight")
+def dashboard_card_dreamlight() -> str:
+    return yavin.components.dashboard_card(
+        "Disney Dreamlight Valley",
+        flask.url_for("dreamlight"),
+        "Track characters and skill assignments",
+    )
 
 
 @app.get("/theatre")

@@ -54,6 +54,76 @@ class UserPermissions:
 class YavinDatabase(fort.PostgresDatabase):
     _version: int = -1
 
+    # Disney Dreamlight Valley
+
+    @staticmethod
+    def dreamlight_table(kind: str) -> str:
+        return {
+            "area": "dreamlight_areas",
+            "universe": "dreamlight_universes",
+            "skill": "dreamlight_skills",
+        }[kind]
+
+    def dreamlight_lookup_list(self, kind: str) -> list[dict]:
+        table = self.dreamlight_table(kind)
+        return self.q(f"select id, name from {table} order by lower(name), id")  # noqa: S608
+
+    def dreamlight_lookup_save(
+        self, kind: str, name: str, entry_id: uuid.UUID | None = None
+    ) -> None:
+        table = self.dreamlight_table(kind)
+        if entry_id is None:
+            self.u(
+                f"insert into {table} (name) values (%(name)s)",  # noqa: S608
+                {"name": name},
+            )
+        else:
+            self.u(
+                f"update {table} set name=%(name)s where id=%(id)s",  # noqa: S608
+                {"name": name, "id": entry_id},
+            )
+
+    def dreamlight_lookup_delete(self, kind: str, entry_id: uuid.UUID) -> None:
+        table = self.dreamlight_table(kind)
+        self.u(f"delete from {table} where id=%(id)s", {"id": entry_id})  # noqa: S608
+
+    def dreamlight_characters_list(self) -> list[dict]:
+        return self.q("""
+            select c.*, a.name as area, u.name as universe, s.name as skill
+            from dreamlight_characters c
+            join dreamlight_areas a on a.id=c.area_id
+            join dreamlight_universes u on u.id=c.universe_id
+            left join dreamlight_skills s on s.id=c.skill_id
+            order by lower(c.name), c.id
+        """)
+
+    def dreamlight_character_add(
+        self, name: str, area_id: uuid.UUID, universe_id: uuid.UUID
+    ) -> None:
+        self.u(
+            """
+            insert into dreamlight_characters (name, area_id, universe_id)
+            values (%(name)s, %(area_id)s, %(universe_id)s)
+            """,
+            {"name": name, "area_id": area_id, "universe_id": universe_id},
+        )
+
+    def dreamlight_character_skill(
+        self, character_id: uuid.UUID, skill_id: uuid.UUID | None
+    ) -> None:
+        self.u(
+            """
+            update dreamlight_characters set skill_id=%(skill_id)s where id=%(id)s
+            """,
+            {"id": character_id, "skill_id": skill_id},
+        )
+
+    def dreamlight_character_delete(self, character_id: uuid.UUID) -> None:
+        self.u(
+            "delete from dreamlight_characters where id=%(id)s",
+            {"id": character_id},
+        )
+
     # balances
 
     def theatre_list(self) -> list[dict]:
@@ -1004,6 +1074,70 @@ class YavinDatabase(fort.PostgresDatabase):
                 )
             """)
             self._add_schema_version(25)
+
+        if self.version < 26:
+            for kind in ("area", "universe", "skill"):
+                table = self.dreamlight_table(kind)
+                self.u(f"""
+                    create table {table} (
+                        id uuid primary key default gen_random_uuid(),
+                        name text not null check (trim(name) <> '')
+                    );
+                    create unique index {table}_name on {table} (lower(name));
+                """)
+            self.u("""
+                create table dreamlight_characters (
+                    id uuid primary key default gen_random_uuid(),
+                    name text not null check (trim(name) <> ''),
+                    area_id uuid not null references dreamlight_areas(id),
+                    universe_id uuid not null references dreamlight_universes(id),
+                    skill_id uuid references dreamlight_skills(id)
+                );
+                create unique index dreamlight_characters_name
+                    on dreamlight_characters (lower(name));
+                create index dreamlight_characters_area
+                    on dreamlight_characters (area_id);
+                create index dreamlight_characters_universe
+                    on dreamlight_characters (universe_id);
+                create index dreamlight_characters_skill
+                    on dreamlight_characters (skill_id);
+                create function dreamlight_fixed_character() returns trigger
+                    language plpgsql as $$
+                begin
+                    if (new.name, new.area_id, new.universe_id) is distinct from
+                       (old.name, old.area_id, old.universe_id) then
+                        raise exception 'Character name, Area and Universe are fixed'
+                            using errcode = '23514';
+                    end if;
+                    return new;
+                end;
+                $$;
+                create trigger dreamlight_fixed_character
+                    before update on dreamlight_characters
+                    for each row execute function dreamlight_fixed_character();
+                create function dreamlight_fixed_lookup() returns trigger
+                    language plpgsql as $$
+                begin
+                    if new.name is distinct from old.name and exists (
+                        select 1 from dreamlight_characters
+                        where (tg_table_name = 'dreamlight_areas' and area_id=old.id)
+                           or (tg_table_name = 'dreamlight_universes'
+                               and universe_id=old.id)
+                    ) then
+                        raise exception 'This name is used by a character'
+                            using errcode = '23514';
+                    end if;
+                    return new;
+                end;
+                $$;
+                create trigger dreamlight_fixed_area
+                    before update on dreamlight_areas
+                    for each row execute function dreamlight_fixed_lookup();
+                create trigger dreamlight_fixed_universe
+                    before update on dreamlight_universes
+                    for each row execute function dreamlight_fixed_lookup();
+            """)
+            self._add_schema_version(26)
 
     def _add_schema_version(self, schema_version: int) -> None:
         self._version = schema_version
