@@ -77,7 +77,7 @@ def entry_form(
         kind = "date" if key in ("first_show", "last_show") else "text"
         if key == "performances":
             kind = "number"
-        attributes = (
+        attributes: dict[str, int | str] = (
             {"min": 0, "max": 2147483647, "step": 1} if kind == "number" else {}
         )
         if kind == "text":
