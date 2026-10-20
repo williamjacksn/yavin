@@ -1675,6 +1675,7 @@ def tithing() -> str:
         ],
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
+                htpy.h2(".h4")["Unpaid income"],
                 htpy.table(".d-block.table.table-striped")[
                     htpy.thead[
                         htpy.tr[
@@ -1693,7 +1694,52 @@ def tithing() -> str:
                             for t in flask.g.transactions
                         )
                     ],
-                ]
+                ],
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.h2(".h4")["Income history"],
+                (
+                    htpy.p(".text-muted")["No income transactions yet."]
+                    if not flask.g.income_by_month
+                    else None
+                ),
+                (
+                    htpy.section(".mb-4")[
+                        htpy.h3(".h5")[month.strftime("%B %Y")],
+                        htpy.div(".table-responsive")[
+                            htpy.table(".table.table-striped")[
+                                htpy.thead[
+                                    htpy.tr[
+                                        htpy.th(scope="col")["Date"],
+                                        htpy.th(scope="col")["Description"],
+                                        htpy.th(".text-end", scope="col")["Amount"],
+                                        htpy.th(scope="col")["Tithing paid"],
+                                    ]
+                                ],
+                                htpy.tbody[
+                                    (
+                                        htpy.tr[
+                                            htpy.td[t["date"].isoformat()],
+                                            htpy.td[t["description"]],
+                                            htpy.td(".text-end")[
+                                                "$ ", f"{t['amount']:,.2f}"
+                                            ],
+                                            htpy.td[
+                                                t["tithing_paid"].isoformat()
+                                                if t["tithing_paid"] is not None
+                                                else "Unpaid"
+                                            ],
+                                        ]
+                                        for t in transactions
+                                    )
+                                ],
+                            ]
+                        ],
+                    ]
+                    for month, transactions in flask.g.income_by_month.items()
+                ),
             ]
         ],
         htpy.div("#modal-add-tx.modal")[

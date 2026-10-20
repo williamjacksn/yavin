@@ -1003,6 +1003,13 @@ def tithing() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
     flask.g.tithing_owed = db.tithing_get_current_owed()
     flask.g.transactions = db.tithing_income_list_unpaid()
+    income_by_month = {}
+    for transaction in sorted(
+        db.tithing_income_list_all(), key=lambda t: t["date"], reverse=True
+    ):
+        month = transaction["date"].replace(day=1)
+        income_by_month.setdefault(month, []).append(transaction)
+    flask.g.income_by_month = income_by_month
     return yavin.components.tithing()
 
 
