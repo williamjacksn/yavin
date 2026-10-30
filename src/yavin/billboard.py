@@ -1,6 +1,7 @@
 import collections
 import logging
 
+import certifi
 import httpx2
 import lxml.html
 
@@ -12,7 +13,7 @@ Song = collections.namedtuple("Song", "artist title")
 def fetch_number_one() -> Song:
     log.info("Fetching Billboard Hot 100 #1")
     url = "https://www.billboard.com/charts/hot-100/"
-    resp = httpx2.get(url)
+    resp = httpx2.get(url, verify=certifi.where())
     resp.raise_for_status()
     doc = lxml.html.document_fromstring(resp.content)
 
