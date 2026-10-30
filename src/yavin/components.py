@@ -5,7 +5,6 @@ import logging
 import flask
 import htpy
 import markupsafe
-import tello_usage
 
 import yavin.db
 import yavin.util
@@ -238,27 +237,6 @@ def app_settings() -> str:
             ),
         ],
     ]
-    fs_tello = htpy.fieldset(".border-bottom.pb-3.mb-3")[
-        htpy.legend["Tello"],
-        htpy.div(".mb-3")[
-            htpy.label(".form-label", for_="tello_username")["Tello email address"],
-            htpy.input(
-                "#tello_username.form-control",
-                name="tello_username",
-                type="text",
-                value=flask.g.app_settings.get("tello_username"),
-            ),
-        ],
-        htpy.div(".mb-3")[
-            htpy.label(".form-label", for_="tello_password")["Tello password"],
-            htpy.input(
-                "#tello_password.form-control",
-                name="tello_password",
-                type="password",
-                value=flask.g.app_settings.get("tello_password"),
-            ),
-        ],
-    ]
     fs_other = htpy.fieldset[
         htpy.legend["Other settings"],
         htpy.div(".form-check")[
@@ -292,7 +270,6 @@ def app_settings() -> str:
                     fs_expenses,
                     fs_mileage,
                     fs_smtp,
-                    fs_tello,
                     fs_other,
                     htpy.button(".btn.btn-primary", type="submit")["Save"],
                 ]
@@ -964,7 +941,7 @@ def email_library_item_due(due_books: list[dict]) -> str:
     return str(content)
 
 
-def email_tello_low_data(balances: list[tello_usage.Balance]) -> str:
+def email_tello_low_data(balances: list[dict]) -> str:
     content = htpy.html(lang="en")[
         htpy.body[
             htpy.p["Hello,"],
@@ -972,13 +949,13 @@ def email_tello_low_data(balances: list[tello_usage.Balance]) -> str:
             htpy.ul[
                 (
                     htpy.li[
-                        htpy.strong[b.line],
+                        htpy.strong[b["line"]],
                         ": ",
-                        b.remaining,
+                        b["remaining"],
                         " remaining / ",
-                        b.allowance,
-                        f" ({b.percentage_available}% available)",
-                        b.renewal_date and f"; renews on {b.renewal_date}",
+                        b["allowance"],
+                        f" ({b['percentage_available']}% available)",
+                        b["renewal_date"] and f"; renews on {b['renewal_date']}",
                     ]
                     for b in balances
                 )
@@ -1761,16 +1738,13 @@ def tello(balances: list[dict]) -> str:
             " UTC",
         ]
     else:
-        last_fetched = ["No data has been fetched yet."]
+        last_fetched = [
+            "No data has been submitted yet. Run ",
+            htpy.code["tello-submit"],
+            " to send balances to Yavin.",
+        ]
     content = [
         _page_title("Tello"),
-        htpy.div(".pt-3.row")[
-            htpy.div(".col")[
-                htpy.a(".btn.btn-primary.mb-2", href=flask.url_for("tello_sync_now"))[
-                    htpy.i(".bi-arrow-repeat"), " Sync now"
-                ],
-            ]
-        ],
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
                 htpy.p[last_fetched],

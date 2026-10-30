@@ -8,8 +8,6 @@ import apscheduler.schedulers.background
 import bibliocommons
 import biblionix
 import httpx
-import httpx2
-import tello_usage
 
 import yavin.billboard
 import yavin.components
@@ -131,39 +129,21 @@ def library_sync_biblionix(
         db.library_books_insert(params)
 
 
-def tello_sync() -> None:
-    log.info("Syncing Tello balances")
+def tello_store(balances: list[dict]) -> None:
+    """Save balances collected by the tello-submit script, then send an email if
+    any line is low on data. Each balance has the keys allowance, line,
+    percentage_available, remaining, renewal_date, and subscription_id."""
+    log.info(f"Storing {len(balances)} Tello balances")
     settings = yavin.settings.Settings()
     db = yavin.db.YavinDatabase(settings.dsn)
-    app_settings = db.settings_list()
-    username = app_settings.get("tello_username", "")
-    password = app_settings.get("tello_password", "")
-    if not (username and password):
-        log.warning("Can't sync Tello balances. Tello credentials are not configured")
-        return
-    try:
-        with tello_usage.TelloClient() as client:
-            balances = client.balances(username, password)
-    except (tello_usage.TelloError, httpx2.HTTPError) as e:
-        log.error(f"Tello sync failed: {e}")
-        return
     fetched_at = dt.datetime.now(tz=dt.UTC)
     for b in balances:
-        params = {
-            "allowance": b.allowance,
-            "fetched_at": fetched_at,
-            "line": b.line,
-            "percentage_available": b.percentage_available,
-            "remaining": b.remaining,
-            "renewal_date": b.renewal_date,
-            "subscription_id": b.subscription_id,
-        }
-        db.tello_balances_insert(params)
+        db.tello_balances_insert({**b, "fetched_at": fetched_at})
     low = [
         b
         for b in balances
-        if b.percentage_available is not None
-        and b.percentage_available < TELLO_LOW_DATA_PERCENTAGE
+        if b["percentage_available"] is not None
+        and b["percentage_available"] < TELLO_LOW_DATA_PERCENTAGE
     ]
     if low:
         log.info("Sending Tello low data notification email")

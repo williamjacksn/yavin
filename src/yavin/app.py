@@ -1,6 +1,7 @@
 import datetime as dt
 import decimal
 import functools
+import hmac
 import logging
 import typing
 import urllib.parse
@@ -287,8 +288,6 @@ def app_settings_update() -> werkzeug.Response:
         "smtp_password",
         "smtp_server",
         "smtp_username",
-        "tello_password",
-        "tello_username",
     ]
     for k, v in flask.request.values.items():
         log.debug(f"{k}: {v!r}")
@@ -845,6 +844,18 @@ def migrate() -> werkzeug.Response:
         )
     for k, v in db.settings_list().items():
         yavin.db.app_sqlite.settings_insert(con, k, v)
+    for r in db.tello_balances_list_all():
+        yavin.db.app_sqlite.tello_balances_insert(
+            con,
+            r["allowance"],
+            r["fetched_at"],
+            r["id"],
+            r["line"],
+            r["percentage_available"],
+            r["remaining"],
+            r["renewal_date"],
+            r["subscription_id"],
+        )
     for r in db.tithing_income_list_all():
         yavin.db.app_sqlite.tithing_income_insert(
             con, r["amount"], r["date"], r["description"], r["id"], r["tithing_paid"]
@@ -1028,12 +1039,64 @@ def tello() -> str:
     return yavin.components.tello(db.tello_balances_list_latest())
 
 
-@app.get("/tello/sync-now")
-@permission_required("tello")
-def tello_sync_now() -> werkzeug.Response:
-    log.info("Got Tello sync request")
-    yavin.tasks.tello_sync()
-    return flask.redirect(flask.url_for("tello"))
+def _tello_balance_from_json(item: object) -> dict:
+    """Validate one balance submitted to /tello/incoming. Raise ValueError if the
+    balance is not usable."""
+    if not isinstance(item, dict):
+        msg = "each balance must be an object"
+        raise TypeError(msg)
+    balance = {}
+    for key in ("allowance", "line", "remaining", "subscription_id"):
+        value = item.get(key)
+        if not isinstance(value, str) or not value.strip():
+            msg = f"{key} must be a non-empty string"
+            raise ValueError(msg)
+        balance[key] = value.strip()
+    renewal_date = item.get("renewal_date")
+    if renewal_date is not None:
+        if not isinstance(renewal_date, str):
+            msg = "renewal_date must be a YYYY-MM-DD string or null"
+            raise ValueError(msg)
+        renewal_date = dt.date.fromisoformat(renewal_date)
+    balance["renewal_date"] = renewal_date
+    pct = item.get("percentage_available")
+    if pct is not None:
+        if isinstance(pct, bool) or not isinstance(pct, int | float):
+            msg = "percentage_available must be a number or null"
+            raise ValueError(msg)
+        if not 0 <= pct <= 100:
+            msg = "percentage_available must be between 0 and 100"
+            raise ValueError(msg)
+        pct = decimal.Decimal(str(pct))
+    balance["percentage_available"] = pct
+    return balance
+
+
+@app.post("/tello/incoming")
+def tello_incoming() -> tuple[dict, int]:
+    """Receive balances from the tello-submit script. Authenticate with the header
+    "Authorization: Bearer <ADMIN_AUTH_PHRASE>"."""
+    expected = settings.admin_auth_phrase
+    scheme, _, token = flask.request.headers.get("Authorization", "").partition(" ")
+    if not expected:
+        log.warning("Rejecting Tello submission. ADMIN_AUTH_PHRASE is not configured")
+        return {"error": "authorization failure"}, 401
+    if scheme.lower() != "bearer" or not hmac.compare_digest(
+        token.strip().lower().encode(), expected.encode()
+    ):
+        log.warning("Rejecting Tello submission with a bad authorization header")
+        return {"error": "authorization failure"}, 401
+    payload = flask.request.get_json(silent=True)
+    if not isinstance(payload, dict) or not isinstance(payload.get("balances"), list):
+        return {"error": "request body must be a JSON object with a balances list"}, 400
+    try:
+        balances = [_tello_balance_from_json(item) for item in payload["balances"]]
+    except (TypeError, ValueError) as e:
+        return {"error": str(e)}, 400
+    if not balances:
+        return {"error": "balances must not be empty"}, 400
+    yavin.tasks.tello_store(balances)
+    return {"stored": len(balances)}, 200
 
 
 @app.get("/tello/<subscription_id>")
@@ -1217,7 +1280,7 @@ def sign_out() -> werkzeug.Response:
 
 def _manage_scheduled_tasks(enabled: bool) -> None:
     """Add or remove scheduled tasks based on the enabled flag."""
-    job_ids = ["billboard_fetch", "library_sync", "library_notify", "tello_sync"]
+    job_ids = ["billboard_fetch", "library_sync", "library_notify"]
 
     # Remove existing jobs first to avoid duplicates
     for job_id in job_ids:
@@ -1247,13 +1310,6 @@ def _manage_scheduled_tasks(enabled: bool) -> None:
             day="*",
             hour="3",
             id="library_notify",
-        )
-        yavin.tasks.scheduler.add_job(
-            yavin.tasks.tello_sync,
-            "interval",
-            hours=24,
-            start_date=yavin.util.in_two_minutes(),
-            id="tello_sync",
         )
 
 

@@ -29,7 +29,7 @@ services:
     image: ghcr.io/williamjacksn/yavin
     init: true
     volumes:
-      - ./:/app
+      - ./src:/app/src
 
 volumes:
   postgres-data:

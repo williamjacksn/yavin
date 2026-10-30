@@ -29,6 +29,7 @@ dependencies = [
 [project.scripts]
 yavin = "yavin:main"
 playlist = "yavin.playlist:main"
+tello-submit = "yavin.tello_submit:main"
 
 [build-system]
 build-backend = "uv_build"

@@ -769,6 +769,15 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         return self.q(sql)
 
+    def tello_balances_list_all(self) -> list[dict]:
+        sql = """
+            select
+                allowance, fetched_at, id, line, percentage_available, remaining,
+                renewal_date, subscription_id
+            from tello_balances
+        """
+        return self.q(sql)
+
     def tello_balances_list_for_subscription(self, subscription_id: str) -> list[dict]:
         sql = """
             select
@@ -1191,6 +1200,15 @@ class YavinDatabase(fort.PostgresDatabase):
                     on tello_balances (fetched_at);
             """)
             self._add_schema_version(27)
+
+        if self.version < 28:
+            # Tello balances are now submitted by the tello-submit script, so the
+            # server no longer needs Tello credentials
+            self.u("""
+                delete from settings
+                where setting_id in ('tello_password', 'tello_username')
+            """)
+            self._add_schema_version(28)
 
     def _add_schema_version(self, schema_version: int) -> None:
         self._version = schema_version

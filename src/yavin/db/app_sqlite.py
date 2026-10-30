@@ -20,6 +20,12 @@ def _register_adapters_and_converters() -> None:
     sqlite3.register_adapter(dt.date, str)
     sqlite3.register_converter("date", convert_date)
 
+    def convert_timestamp(value: bytes) -> dt.datetime:
+        return dt.datetime.fromisoformat(value.decode())
+
+    sqlite3.register_adapter(dt.datetime, str)
+    sqlite3.register_converter("timestamp", convert_timestamp)
+
     def convert_decimal(value: bytes) -> decimal.Decimal:
         return decimal.Decimal(value.decode())
 
@@ -450,6 +456,21 @@ def migrate(con: sqlite3.Connection) -> None:
             )
         """)
         schema_versions_insert(con, 1)
+    if current_version < 2:
+        log.info("Migrating database to schema version 2")
+        con.execute("""
+            create table tello_balances (
+                allowance text,
+                fetched_at timestamp,
+                id uuid primary key,
+                line text,
+                percentage_available decimal,
+                remaining text,
+                renewal_date date,
+                subscription_id text
+            )
+        """)
+        schema_versions_insert(con, 2)
 
 
 def mileage_entries_insert(
@@ -549,6 +570,7 @@ def reset_data(con: sqlite3.Connection) -> None:
         "delete from movie_picks",
         "delete from phone_usage",
         "delete from settings",
+        "delete from tello_balances",
         "delete from tithing_income",
         "delete from user_permissions",
         "delete from weight_entries",
@@ -597,6 +619,40 @@ def table_exists(con: sqlite3.Connection, table_name: str) -> bool:
         if row["table_count"] == 0:
             return False
     return True
+
+
+def tello_balances_insert(
+    con: sqlite3.Connection,
+    allowance: str,
+    fetched_at: dt.datetime,
+    id_: uuid.UUID,
+    line: str,
+    percentage_available: decimal.Decimal | None,
+    remaining: str,
+    renewal_date: dt.date | None,
+    subscription_id: str,
+) -> None:
+    sql = """
+        insert into tello_balances (
+            allowance, fetched_at, id, line, percentage_available, remaining,
+            renewal_date, subscription_id
+        ) values (
+            :allowance, :fetched_at, :id, :line, :percentage_available, :remaining,
+            :renewal_date, :subscription_id
+        )
+    """
+    params = {
+        "allowance": allowance,
+        "fetched_at": fetched_at,
+        "id": id_,
+        "line": line,
+        "percentage_available": percentage_available,
+        "remaining": remaining,
+        "renewal_date": renewal_date,
+        "subscription_id": subscription_id,
+    }
+    con.execute(sql, params)
+    con.commit()
 
 
 def tithing_income_insert(
