@@ -10,6 +10,7 @@ import flask
 import httpx
 import jwt
 import pygal
+import pygal.style
 import waitress
 import werkzeug.middleware.proxy_fix
 import werkzeug.utils
@@ -148,6 +149,10 @@ def index() -> str:
         #     or "admin" in flask.g.permissions,
         # },
         {
+            "url": flask.url_for("dashboard_card_tello"),
+            "visible": "tello" in flask.g.permissions or "admin" in flask.g.permissions,
+        },
+        {
             "url": flask.url_for("dashboard_card_tithing"),
             "visible": "tithing" in flask.g.permissions
             or "admin" in flask.g.permissions,
@@ -281,6 +286,8 @@ def app_settings_update() -> werkzeug.Response:
         "smtp_password",
         "smtp_server",
         "smtp_username",
+        "tello_password",
+        "tello_username",
     ]
     for k, v in flask.request.values.items():
         log.debug(f"{k}: {v!r}")
@@ -551,6 +558,22 @@ def dashboard_card_movie_night() -> str:
 @app.get("/dashboard-card/phone")
 def dashboard_card_phone() -> str:
     return yavin.components.dashboard_card_phone()
+
+
+@app.get("/dashboard-card/tello")
+def dashboard_card_tello() -> str:
+    db: yavin.db.YavinDatabase = flask.g.db
+    balances = db.tello_balances_list_latest()
+    if balances:
+        parts = []
+        for b in balances:
+            tag = b["line"].split()[-1]
+            pct = b["percentage_available"]
+            parts.append(f"{tag} {'n/a' if pct is None else f'{pct}%'}")
+        text = " / ".join(parts)
+    else:
+        text = "No data yet"
+    return yavin.components.dashboard_card_tello(text)
 
 
 @app.get("/dashboard-card/tithing")
@@ -997,6 +1020,77 @@ def phone_add() -> werkzeug.Response:
     return flask.redirect(flask.url_for("phone"))
 
 
+@app.get("/tello")
+@permission_required("tello")
+def tello() -> str:
+    db: yavin.db.YavinDatabase = flask.g.db
+    return yavin.components.tello(db.tello_balances_list_latest())
+
+
+@app.get("/tello/sync-now")
+@permission_required("tello")
+def tello_sync_now() -> werkzeug.Response:
+    log.info("Got Tello sync request")
+    yavin.tasks.tello_sync()
+    return flask.redirect(flask.url_for("tello"))
+
+
+@app.get("/tello/<subscription_id>")
+@permission_required("tello")
+def tello_line(subscription_id: str) -> str:
+    db: yavin.db.YavinDatabase = flask.g.db
+    history = db.tello_balances_list_for_subscription(subscription_id)
+    if not history:
+        flask.abort(404)
+    return yavin.components.tello_line(subscription_id, history)
+
+
+@app.get("/tello/<subscription_id>/svg")
+@permission_required("tello")
+def tello_line_svg(subscription_id: str) -> werkzeug.Response:
+    db: yavin.db.YavinDatabase = flask.g.db
+    history = db.tello_balances_list_for_subscription(subscription_id)
+    points = []
+    for b in history:
+        gb = yavin.util.data_amount_gb(b["remaining"])
+        if gb is not None:
+            points.append((b["fetched_at"].astimezone(dt.UTC), gb))
+    style = pygal.style.Style(
+        background="transparent",
+        plot_background="transparent",
+        colors=("#0d6efd",),
+        guide_stroke_color="#dee2e6",
+        major_guide_stroke_color="#dee2e6",
+        label_font_size=16,
+        major_label_font_size=16,
+        tooltip_font_size=16,
+    )
+    # Small screens get a narrower chart, so its labels scale down less
+    small = flask.request.args.get("size") == "small"
+    chart = pygal.DateTimeLine(
+        width=400 if small else 800,
+        height=300 if small else 400,
+        style=style,
+        show_legend=False,
+        include_x_axis=True,
+        stroke_style={"width": 2},
+        dots_size=3 if small else 4,
+        x_labels_major_count=3 if small else 5,
+        show_minor_x_labels=False,
+        truncate_label=-1,
+    )
+    chart.value_formatter = lambda x: f"{x:g} GB"
+    chart.x_value_formatter = lambda d: d.strftime("%b %d" if small else "%Y-%m-%d")
+    chart.add(
+        "Remaining",
+        points,
+        formatter=lambda p: (
+            f"{dt.datetime.fromtimestamp(p[0], tz=dt.UTC):%Y-%m-%d}: {p[1]:,.2f} GB"
+        ),
+    )
+    return chart.render_response()
+
+
 @app.get("/tithing")
 @permission_required("tithing")
 def tithing() -> str:
@@ -1118,7 +1212,7 @@ def sign_out() -> werkzeug.Response:
 
 def _manage_scheduled_tasks(enabled: bool) -> None:
     """Add or remove scheduled tasks based on the enabled flag."""
-    job_ids = ["billboard_fetch", "library_sync", "library_notify"]
+    job_ids = ["billboard_fetch", "library_sync", "library_notify", "tello_sync"]
 
     # Remove existing jobs first to avoid duplicates
     for job_id in job_ids:
@@ -1148,6 +1242,13 @@ def _manage_scheduled_tasks(enabled: bool) -> None:
             day="*",
             hour="3",
             id="library_notify",
+        )
+        yavin.tasks.scheduler.add_job(
+            yavin.tasks.tello_sync,
+            "interval",
+            hours=24,
+            start_date=yavin.util.in_two_minutes(),
+            id="tello_sync",
         )
 
 

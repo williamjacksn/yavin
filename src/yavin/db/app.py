@@ -744,6 +744,42 @@ class YavinDatabase(fort.PostgresDatabase):
         params = {"setting_id": setting_id, "setting_value": setting_value}
         self.u(sql, params)
 
+    # tello
+
+    def tello_balances_insert(self, params: dict) -> None:
+        sql = """
+            insert into tello_balances (
+                allowance, fetched_at, line, percentage_available, remaining,
+                renewal_date, subscription_id
+            ) values (
+                %(allowance)s, %(fetched_at)s, %(line)s, %(percentage_available)s,
+                %(remaining)s, %(renewal_date)s, %(subscription_id)s
+            )
+        """
+        self.u(sql, params)
+
+    def tello_balances_list_latest(self) -> list[dict]:
+        sql = """
+            select
+                allowance, fetched_at, line, percentage_available, remaining,
+                renewal_date, subscription_id
+            from tello_balances
+            where fetched_at = (select max(fetched_at) from tello_balances)
+            order by line
+        """
+        return self.q(sql)
+
+    def tello_balances_list_for_subscription(self, subscription_id: str) -> list[dict]:
+        sql = """
+            select
+                allowance, fetched_at, line, percentage_available, remaining,
+                renewal_date, subscription_id
+            from tello_balances
+            where subscription_id = %(subscription_id)s
+            order by fetched_at
+        """
+        return self.q(sql, {"subscription_id": subscription_id})
+
     # tithing
 
     def tithing_get_current_owed(self) -> decimal.Decimal:
@@ -1138,6 +1174,23 @@ class YavinDatabase(fort.PostgresDatabase):
                     for each row execute function dreamlight_fixed_lookup();
             """)
             self._add_schema_version(26)
+
+        if self.version < 27:
+            self.u("""
+                create table tello_balances (
+                    id uuid primary key default gen_random_uuid(),
+                    fetched_at timestamptz not null,
+                    subscription_id text not null,
+                    line text not null,
+                    remaining text not null,
+                    allowance text not null,
+                    renewal_date date,
+                    percentage_available numeric
+                );
+                create index tello_balances_fetched_at
+                    on tello_balances (fetched_at);
+            """)
+            self._add_schema_version(27)
 
     def _add_schema_version(self, schema_version: int) -> None:
         self._version = schema_version

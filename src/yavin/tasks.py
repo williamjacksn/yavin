@@ -1,3 +1,4 @@
+import datetime as dt
 import email.message
 import email.utils
 import logging
@@ -7,6 +8,8 @@ import apscheduler.schedulers.background
 import bibliocommons
 import biblionix
 import httpx
+import httpx2
+import tello_usage
 
 import yavin.billboard
 import yavin.components
@@ -16,6 +19,7 @@ import yavin.util
 
 log = logging.getLogger(__name__)
 scheduler = apscheduler.schedulers.background.BackgroundScheduler()
+TELLO_LOW_DATA_PERCENTAGE = 10
 
 
 def _notify(subject: str, body: str) -> None:
@@ -125,3 +129,43 @@ def library_sync_biblionix(
             "title": item.title,
         }
         db.library_books_insert(params)
+
+
+def tello_sync() -> None:
+    log.info("Syncing Tello balances")
+    settings = yavin.settings.Settings()
+    db = yavin.db.YavinDatabase(settings.dsn)
+    app_settings = db.settings_list()
+    username = app_settings.get("tello_username", "")
+    password = app_settings.get("tello_password", "")
+    if not (username and password):
+        log.warning("Can't sync Tello balances. Tello credentials are not configured")
+        return
+    try:
+        with tello_usage.TelloClient() as client:
+            balances = client.balances(username, password)
+    except (tello_usage.TelloError, httpx2.HTTPError) as e:
+        log.error(f"Tello sync failed: {e}")
+        return
+    fetched_at = dt.datetime.now(tz=dt.UTC)
+    for b in balances:
+        params = {
+            "allowance": b.allowance,
+            "fetched_at": fetched_at,
+            "line": b.line,
+            "percentage_available": b.percentage_available,
+            "remaining": b.remaining,
+            "renewal_date": b.renewal_date,
+            "subscription_id": b.subscription_id,
+        }
+        db.tello_balances_insert(params)
+    low = [
+        b
+        for b in balances
+        if b.percentage_available is not None
+        and b.percentage_available < TELLO_LOW_DATA_PERCENTAGE
+    ]
+    if low:
+        log.info("Sending Tello low data notification email")
+        subject = "Tello low data alert"
+        _notify(subject, yavin.components.email_tello_low_data(low))

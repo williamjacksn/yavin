@@ -1,9 +1,11 @@
+import datetime as dt
 import decimal
 import logging
 
 import flask
 import htpy
 import markupsafe
+import tello_usage
 
 import yavin.db
 import yavin.util
@@ -236,6 +238,27 @@ def app_settings() -> str:
             ),
         ],
     ]
+    fs_tello = htpy.fieldset(".border-bottom.pb-3.mb-3")[
+        htpy.legend["Tello"],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="tello_username")["Tello email address"],
+            htpy.input(
+                "#tello_username.form-control",
+                name="tello_username",
+                type="text",
+                value=flask.g.app_settings.get("tello_username"),
+            ),
+        ],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="tello_password")["Tello password"],
+            htpy.input(
+                "#tello_password.form-control",
+                name="tello_password",
+                type="password",
+                value=flask.g.app_settings.get("tello_password"),
+            ),
+        ],
+    ]
     fs_other = htpy.fieldset[
         htpy.legend["Other settings"],
         htpy.div(".form-check")[
@@ -269,6 +292,7 @@ def app_settings() -> str:
                     fs_expenses,
                     fs_mileage,
                     fs_smtp,
+                    fs_tello,
                     fs_other,
                     htpy.button(".btn.btn-primary", type="submit")["Save"],
                 ]
@@ -783,6 +807,10 @@ def dashboard_card_phone() -> str:
     return dashboard_card("Phone usage", flask.url_for("phone"), "Go")
 
 
+def dashboard_card_tello(text: str) -> str:
+    return dashboard_card("Tello", flask.url_for("tello"), text)
+
+
 def dashboard_card_tithing(tithing_owed: decimal.Decimal) -> str:
     card_text = f"Currently owed: ${tithing_owed:,.2f}"
     return dashboard_card("Tithing", flask.url_for("tithing"), card_text)
@@ -928,6 +956,31 @@ def email_library_item_due(due_books: list[dict]) -> str:
                         ")",
                     ]
                     for b in due_books
+                )
+            ],
+            htpy.p["(This is an automated message.)"],
+        ]
+    ]
+    return str(content)
+
+
+def email_tello_low_data(balances: list[tello_usage.Balance]) -> str:
+    content = htpy.html(lang="en")[
+        htpy.body[
+            htpy.p["Hello,"],
+            htpy.p["The following Tello lines are running low on data."],
+            htpy.ul[
+                (
+                    htpy.li[
+                        htpy.strong[b.line],
+                        ": ",
+                        b.remaining,
+                        " remaining / ",
+                        b.allowance,
+                        f" ({b.percentage_available}% available)",
+                        b.renewal_date and f"; renews on {b.renewal_date}",
+                    ]
+                    for b in balances
                 )
             ],
             htpy.p["(This is an automated message.)"],
@@ -1646,6 +1699,176 @@ def signed_in(
         content=content,
     )
     return str(content)
+
+
+def tello(balances: list[dict]) -> str:
+    today = yavin.util.today()
+    rows = []
+    cards = []
+    for b in balances:
+        pct = b["percentage_available"]
+        if pct is None:
+            pct_text = "Unknown"
+            bar = None
+        else:
+            pct_text = f"{pct}%"
+            bar = htpy.div(
+                ".progress",
+                role="progressbar",
+                aria_label="Data available",
+                aria_valuenow=str(pct),
+                aria_valuemin="0",
+                aria_valuemax="100",
+                style="height: 0.5rem",
+            )[htpy.div(".progress-bar", style=f"width: {pct}%")]
+        renewal_date = b["renewal_date"]
+        if renewal_date:
+            days_left = max(0, (renewal_date - today).days)
+            plural = "" if days_left == 1 else "s"
+            renewal = f"{renewal_date.isoformat()} ({days_left} day{plural} left)"
+        else:
+            renewal = "Unknown"
+        usage = [b["remaining"], " / ", b["allowance"]]
+        line_href = flask.url_for("tello_line", subscription_id=b["subscription_id"])
+        rows.append(
+            htpy.tr[
+                htpy.td[htpy.a(href=line_href)[b["line"]]],
+                htpy.td[usage],
+                htpy.td(style="min-width: 8rem")[pct_text, bar],
+                htpy.td[renewal],
+            ]
+        )
+        cards.append(
+            htpy.div(".card.mb-3")[
+                htpy.div(".card-body")[
+                    htpy.h5(".card-title")[
+                        htpy.a(".stretched-link", href=line_href)[b["line"]]
+                    ],
+                    htpy.p(".card-text.mb-2")[
+                        usage, pct is not None and f" ({pct_text} available)"
+                    ],
+                    bar and htpy.div(".mb-2")[bar],
+                    htpy.p(".card-text.text-body-secondary")[
+                        f"Renews {renewal}" if renewal_date else "Renewal date unknown"
+                    ],
+                ]
+            ]
+        )
+    if balances:
+        last_fetched = [
+            "Last fetched: ",
+            yavin.util.clean_datetime(balances[0]["fetched_at"].astimezone(dt.UTC)),
+            " UTC",
+        ]
+    else:
+        last_fetched = ["No data has been fetched yet."]
+    content = [
+        _page_title("Tello"),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.a(".btn.btn-primary.mb-2", href=flask.url_for("tello_sync_now"))[
+                    htpy.i(".bi-arrow-repeat"), " Sync now"
+                ],
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.p[last_fetched],
+                htpy.div(".d-md-none")[cards],
+                balances
+                and htpy.table(".d-none.d-md-table.table.align-middle")[
+                    htpy.thead[
+                        htpy.tr[
+                            htpy.th["Line"],
+                            htpy.th["Remaining"],
+                            htpy.th["Available"],
+                            htpy.th["Renews"],
+                        ]
+                    ],
+                    htpy.tbody[rows],
+                ],
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Tello"
+    )
+
+
+def tello_line(subscription_id: str, history: list[dict]) -> str:
+    line = history[-1]["line"]
+    wide = ".d-none.d-md-table-cell"
+    rows = []
+    for b in reversed(history):
+        fetched_at = b["fetched_at"].astimezone(dt.UTC)
+        rows.append(
+            htpy.tr[
+                htpy.td(".text-nowrap")[
+                    fetched_at.date().isoformat(),
+                    htpy.span(".d-none.d-md-inline")[f" {fetched_at:%H:%M} UTC"],
+                ],
+                htpy.td(".text-nowrap")[
+                    b["remaining"],
+                    htpy.span(".d-none.d-md-inline")[" / ", b["allowance"]],
+                ],
+                htpy.td[
+                    "Unknown"
+                    if b["percentage_available"] is None
+                    else f"{b['percentage_available']}%"
+                ],
+                htpy.td(wide)[
+                    b["renewal_date"].isoformat() if b["renewal_date"] else "Unknown"
+                ],
+            ]
+        )
+    content = [
+        _page_title(line),
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.h5["Data remaining"],
+                htpy.object(
+                    ".d-md-none.w-100",
+                    data=flask.url_for(
+                        "tello_line_svg", subscription_id=subscription_id, size="small"
+                    ),
+                    type="image/svg+xml",
+                    aria_label=f"Chart of data remaining over time for {line}",
+                ),
+                htpy.object(
+                    ".d-none.d-md-block.w-100",
+                    data=flask.url_for(
+                        "tello_line_svg", subscription_id=subscription_id
+                    ),
+                    type="image/svg+xml",
+                    aria_label=f"Chart of data remaining over time for {line}",
+                ),
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                htpy.div(".table-responsive")[
+                    htpy.table(".table")[
+                        htpy.thead[
+                            htpy.tr[
+                                htpy.th["Fetched"],
+                                htpy.th["Remaining"],
+                                htpy.th["Available"],
+                                htpy.th(wide)["Renews"],
+                            ]
+                        ],
+                        htpy.tbody[rows],
+                    ]
+                ]
+            ]
+        ],
+    ]
+    return signed_in(
+        flask.g.email,
+        flask.g.permissions,
+        _breadcrumb(flask.url_for("tello"), "Tello"),
+        content,
+        f"Yavin / Tello / {line}",
+    )
 
 
 def tithing() -> str:
