@@ -614,15 +614,16 @@ wheels = [
 
 [[package]]
 name = "tello-usage"
-version = "2026.1"
+version = "2026.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
+    { name = "certifi" },
     { name = "httpx2" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/ee/3d09f0fc18ba07ec6133d8ba250c4b5be3a5ffc7049f311cb72d09898b11/tello_usage-2026.1.tar.gz", hash = "sha256:ea9087a71780eaf4fb4f5c17b2acada305d63f40b497147fc4436ebfaf7988c8", size = 8671, upload-time = "2026-10-22T17:28:51.804Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/43/ab/73e29a40ebf9f9e014c9419803a35340dd551215609a4f670bdc9506127b/tello_usage-2026.2.tar.gz", hash = "sha256:fe47e43f84d8dc479385e2906ea27e9515d82db6f9a53ba0b8f976c4dd72069d", size = 8713, upload-time = "2026-10-30T20:59:26.23Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/86/51dc16385ef6e8edcc9e3f29025d949e544c4de0e68696fd4ec744df372a/tello_usage-2026.1-py3-none-any.whl", hash = "sha256:87907f88240d1e1918b172d688a2db7f8e96b840440d6d20301ddcd06c19c5dd", size = 9942, upload-time = "2026-10-22T17:28:50.648Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/d4/8d833bbbfaba88e049b232f88535c846e9341c35c830271bc8ffb25b2dd5/tello_usage-2026.2-py3-none-any.whl", hash = "sha256:285fb8f67e169bf64f2694cb6036e2a6ed4771a2e5656cd9e11a5c428346fb11", size = 9978, upload-time = "2026-10-30T20:59:25.117Z" },
 ]
 
 [[package]]
@@ -795,7 +796,7 @@ requires-dist = [
     { name = "psycopg2-binary", specifier = ">=2.9.13" },
     { name = "pygal", specifier = ">=3.1.3" },
     { name = "pyjwt", specifier = ">=2.15.1" },
-    { name = "tello-usage", specifier = ">=2026.1" },
+    { name = "tello-usage", specifier = ">=2026.2" },
     { name = "waitress", specifier = ">=3.0.2" },
     { name = "werkzeug", specifier = ">=3.1.9" },
     { name = "ytmusicapi", specifier = ">=1.12.3" },
