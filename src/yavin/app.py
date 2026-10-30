@@ -7,7 +7,7 @@ import urllib.parse
 import uuid
 
 import flask
-import httpx
+import httpx2
 import jwt
 import pygal
 import pygal.style
@@ -1167,7 +1167,7 @@ def authorize() -> werkzeug.Response:
         log.debug(f"{key}: {value}")
     if flask.session.get("state") != flask.request.values.get("state"):
         return flask.Response("State mismatch", 401)
-    discovery_document = httpx.get(settings.openid_discovery_document).json()
+    discovery_document = httpx2.get(settings.openid_discovery_document).json()
     token_endpoint = discovery_document.get("token_endpoint")
     data = {
         "code": flask.request.values.get("code"),
@@ -1176,7 +1176,7 @@ def authorize() -> werkzeug.Response:
         "redirect_uri": flask.url_for("authorize", _external=True),
         "grant_type": "authorization_code",
     }
-    resp = httpx.post(token_endpoint, data=data).json()
+    resp = httpx2.post(token_endpoint, data=data).json()
     id_token = resp.get("id_token")
     algorithms = discovery_document.get("id_token_signing_alg_values_supported")
     claim = jwt.decode(
@@ -1198,7 +1198,7 @@ def sign_in() -> werkzeug.Response:
         "redirect_uri": redirect_uri,
         "state": state,
     }
-    discovery_document = httpx.get(settings.openid_discovery_document).json()
+    discovery_document = httpx2.get(settings.openid_discovery_document).json()
     auth_endpoint = discovery_document.get("authorization_endpoint")
     auth_url = f"{auth_endpoint}?{urllib.parse.urlencode(query)}"
     return flask.redirect(auth_url, 307)
