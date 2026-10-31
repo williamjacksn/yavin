@@ -116,6 +116,116 @@ class DreamlightTests(unittest.TestCase):
             self.assertEqual(response.status_code, 400)
         self.db.dreamlight_character_skill.assert_not_called()
 
+    def test_skill_shows_as_text_with_pencil_until_edited(self) -> None:
+        document = lxml.html.fromstring(self.client.get("/dreamlight").data)
+        self.assertFalse(document.xpath("//select[@name='skill_id']"))
+        # Each character's skill appears in a card for small screens and a table
+        # row for wider screens
+        for view in ("card", "row"):
+            element_id = f"skill-{view}-{self.character['id']}"
+            (display,) = document.xpath(f"//*[@id='{element_id}']")
+            self.assertEqual(display.text_content().strip(), "Unassigned")
+            (button,) = display.xpath(".//button[.//i[contains(@class, 'bi-pencil')]]")
+            self.assertEqual(
+                button.get("hx-get"), self.character_path(f"skill-form?view={view}")
+            )
+            self.assertEqual(button.get("hx-target"), f"#{element_id}")
+
+            form = lxml.html.fromstring(
+                self.client.get(self.character_path(f"skill-form?view={view}")).data
+            )
+            self.assertEqual(form.get("id"), element_id)
+            self.assertEqual(
+                form.get("hx-post"), self.character_path(f"skill?view={view}")
+            )
+            self.assertEqual(
+                form.xpath(".//button[text()='Cancel']/@hx-get"),
+                [self.character_path(f"skill?view={view}")],
+            )
+            self.assertEqual(
+                form.xpath(".//select[@name='skill_id']/option[@selected]/text()"),
+                ["Unassigned"],
+            )
+
+            cancel = lxml.html.fromstring(
+                self.client.get(self.character_path(f"skill?view={view}")).data
+            )
+            self.assertEqual(cancel.get("id"), element_id)
+            self.assertEqual(cancel.text_content().strip(), "Unassigned")
+        unknown = lxml.html.fromstring(
+            self.client.get(self.character_path("skill?view=nope")).data
+        )
+        self.assertEqual(unknown.get("id"), f"skill-row-{self.character['id']}")
+        for path in ("skill", "skill-form"):
+            self.assertEqual(
+                self.client.get(
+                    f"/dreamlight/characters/{uuid.uuid4()}/{path}"
+                ).status_code,
+                404,
+            )
+
+    def test_htmx_skill_save_refreshes_every_copy_and_totals(self) -> None:
+        mining = self.lists["skill"][0]
+
+        def save(character_id: uuid.UUID, skill_id: uuid.UUID | None) -> None:
+            self.character.update(skill_id=skill_id, skill=mining["name"])
+
+        self.db.dreamlight_character_skill.side_effect = save
+        response = self.client.post(
+            self.character_path("skill?view=card"),
+            data={"skill_id": str(mining["id"])},
+            headers={"HX-Request": "true"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["HX-Reswap"], "none")
+        self.db.dreamlight_character_skill.assert_called_once_with(
+            self.character["id"], mining["id"]
+        )
+        document = lxml.html.fromstring(f"<div>{response.data.decode()}</div>")
+        for view in ("card", "row"):
+            (display,) = document.xpath(
+                f"//*[@id='skill-{view}-{self.character['id']}']"
+            )
+            self.assertEqual(display.get("hx-swap-oob"), "true")
+            self.assertEqual(display.text_content().strip(), "Mining")
+        (totals,) = document.xpath("//*[@id='skill-totals']")
+        self.assertEqual(totals.get("hx-swap-oob"), "true")
+        self.assertIn("Mining: 1", totals.text_content())
+        self.assertIn("Unassigned: 0", totals.text_content())
+
+        self.db.dreamlight_character_skill.reset_mock()
+        response = self.client.post(
+            self.character_path("skill?view=card"),
+            data={"skill_id": "bad"},
+            headers={"HX-Request": "true"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("HX-Reswap", response.headers)
+        form = lxml.html.fromstring(response.data)
+        self.assertEqual(form.get("id"), f"skill-card-{self.character['id']}")
+        self.assertIn("Choose a valid Skill.", form.text_content())
+        self.db.dreamlight_character_skill.assert_not_called()
+
+    def test_cards_and_table_both_list_filtered_characters(self) -> None:
+        document = lxml.html.fromstring(self.client.get("/dreamlight").data)
+        (card,) = document.xpath("//div[contains(@class, 'card-body')]")
+        self.assertEqual(card.xpath(".//h3/text()"), ["Mickey Mouse"])
+        self.assertIn("Mickey & Friends · Plaza", card.text_content())
+        # Delete forms keep the current filters in their query string
+        for actions in (
+            card.xpath(".//form/@action"),
+            document.xpath("//tbody/tr/td//form/@action"),
+        ):
+            self.assertEqual(
+                [a.split("?")[0] for a in actions], [self.character_path("delete")]
+            )
+        self.db.dreamlight_characters_list.return_value = []
+        document = lxml.html.fromstring(self.client.get("/dreamlight").data)
+        self.assertFalse(document.xpath("//div[contains(@class, 'card-body')]"))
+        message = "Add Areas and Universes below, then add your first character."
+        empty = document.xpath(f"//p[text()='{message}'] | //td[text()='{message}']")
+        self.assertEqual([e.tag for e in empty], ["p", "td"])
+
     def test_delete_and_unknown_character_or_action(self) -> None:
         self.assertEqual(
             self.client.get(self.character_path("delete")).status_code, 405
@@ -257,7 +367,12 @@ class DreamlightTests(unittest.TestCase):
 
     def test_permissions_cover_reads_and_mutations(self) -> None:
         self.db.user_permissions_get.return_value = []
-        for path in ("/dreamlight", "/dashboard-card/dreamlight"):
+        for path in (
+            "/dreamlight",
+            "/dashboard-card/dreamlight",
+            self.character_path("skill"),
+            self.character_path("skill-form"),
+        ):
             self.client.get(path)
         for path in (
             "/dreamlight/characters/add",

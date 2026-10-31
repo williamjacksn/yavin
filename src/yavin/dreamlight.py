@@ -12,6 +12,7 @@ from yavin import components
 
 KINDS = {"area": "Areas", "universe": "Universes", "skill": "Skills"}
 FILTERS = ("name", "area", "universe", "skill")
+SKILL_VIEWS = ("row", "card")
 
 
 def filters() -> dict[str, str]:
@@ -47,15 +48,18 @@ def valid_name(
     return name
 
 
-def mutation_error(error: Exception) -> tuple[str, int]:
-    message = (
+def mutation_message(error: Exception) -> str:
+    return (
         "The list changed or this name is already used. Review the current lists "
         "and try again. Referenced Areas and Universes cannot be changed; "
         "assigned Skills cannot be deleted."
         if isinstance(error, psycopg2.IntegrityError)
         else str(error)
     )
-    return page(message), 400
+
+
+def mutation_error(error: Exception) -> tuple[str, int]:
+    return page(mutation_message(error)), 400
 
 
 def character_add() -> str | tuple[str, int] | Response:
@@ -83,8 +87,8 @@ def character_update(
     if action not in ("skill", "delete"):
         flask.abort(404)
     db = flask.g.db
-    if not any(c["id"] == character_id for c in db.dreamlight_characters_list()):
-        flask.abort(404)
+    character = find_character(character_id)
+    htmx = flask.request.headers.get("HX-Request") == "true"
     try:
         if action == "delete":
             db.dreamlight_character_delete(character_id)
@@ -97,8 +101,139 @@ def character_update(
             )
             db.dreamlight_character_skill(character_id, skill_id)
     except (ValueError, psycopg2.IntegrityError) as error:
+        if htmx and action == "skill":
+            # htmx only swaps successful responses, so report the error in the form
+            return str(skill_form(character, skill_view(), mutation_message(error)))
         return mutation_error(error)
+    if htmx and action == "skill":
+        return skill_saved(character_id)
     return flask.redirect(action_url("dreamlight"))
+
+
+def find_character(character_id: uuid.UUID) -> dict:
+    for c in flask.g.db.dreamlight_characters_list():
+        if c["id"] == character_id:
+            return c
+    flask.abort(404)
+
+
+def skill_view() -> str:
+    """Which copy of a character's skill a request is for. The page shows each
+    character twice, in a table row on wider screens and in a card on small
+    screens."""
+    view = flask.request.args.get("view", "row")
+    return view if view in SKILL_VIEWS else "row"
+
+
+def skill_element_id(character: dict, view: str) -> str:
+    return f"skill-{view}-{character['id']}"
+
+
+def skill_display(character: dict, view: str, *, oob: bool = False) -> h.Element:
+    """The character's skill with a button that loads the skill form."""
+    element_id = skill_element_id(character, view)
+    return h.div(
+        ".d-flex.align-items-center.gap-1",
+        id=element_id,
+        hx_swap_oob="true" if oob else None,
+    )[
+        h.span[character["skill"]]
+        if character["skill_id"]
+        else h.span(".text-body-secondary")["Unassigned"],
+        h.button(
+            ".btn.btn-sm.btn-link",
+            type="button",
+            title="Edit skill",
+            aria_label=f"Edit skill for {character['name']}",
+            hx_get=flask.url_for(
+                "dreamlight_character_skill_form",
+                character_id=str(character["id"]),
+                view=view,
+            ),
+            hx_target=f"#{element_id}",
+            hx_swap="outerHTML",
+        )[h.i(".bi-pencil")],
+    ]
+
+
+def skill_form(character: dict, view: str, error: str = "") -> h.Element:
+    element_id = skill_element_id(character, view)
+    return h.form(
+        ".d-flex.flex-wrap.gap-2.align-items-end",
+        id=element_id,
+        action=action_url(
+            "dreamlight_character_update",
+            character_id=str(character["id"]),
+            action="skill",
+        ),
+        method="post",
+        hx_post=flask.url_for(
+            "dreamlight_character_update",
+            character_id=str(character["id"]),
+            action="skill",
+            view=view,
+        ),
+        hx_target="this",
+        hx_swap="outerHTML",
+    )[
+        select(
+            "skill_id",
+            f"Skill for {character['name']}",
+            flask.g.db.dreamlight_lookup_list("skill"),
+            str(character["skill_id"]) if character["skill_id"] else "",
+            "Unassigned",
+            control_id=f"skill-select-{view}-{character['id']}",
+            show_label=False,
+        ),
+        h.button(".btn.btn-outline-primary", type="submit")["Save"],
+        h.button(
+            ".btn.btn-outline-secondary",
+            type="button",
+            hx_get=flask.url_for(
+                "dreamlight_character_skill",
+                character_id=str(character["id"]),
+                view=view,
+            ),
+            hx_target=f"#{element_id}",
+            hx_swap="outerHTML",
+        )["Cancel"],
+        h.div(".text-danger.small.w-100")[error] if error else None,
+    ]
+
+
+def skill_saved(character_id: uuid.UUID) -> Response:
+    """Refresh every copy of the character's skill and the totals out of band."""
+    characters = flask.g.db.dreamlight_characters_list()
+    character = next(c for c in characters if c["id"] == character_id)
+    skills = flask.g.db.dreamlight_lookup_list("skill")
+    parts = [skill_display(character, view, oob=True) for view in SKILL_VIEWS]
+    parts.append(skill_totals(characters, skills, oob=True))
+    response = flask.make_response("".join(str(part) for part in parts))
+    # Everything is swapped out of band, so leave the submitted form to its swap
+    response.headers["HX-Reswap"] = "none"
+    return response
+
+
+def skill_totals(
+    characters: list[dict], skills: list[dict], *, oob: bool = False
+) -> h.Element:
+    counts = Counter(c["skill_id"] for c in characters)
+    return h.div(
+        "#skill-totals.d-flex.flex-wrap.gap-2.mb-4",
+        hx_swap_oob="true" if oob else None,
+    )[
+        h.a(
+            ".btn.btn-outline-secondary",
+            href=flask.url_for("dreamlight", skill="unassigned"),
+        )[f"Unassigned: {counts[None]}"],
+        [
+            h.a(
+                ".btn.btn-outline-primary",
+                href=flask.url_for("dreamlight", skill=str(s["id"])),
+            )[f"{s['name']}: {counts[s['id']]}"]
+            for s in skills
+        ],
+    ]
 
 
 def lookup_update(kind: str, action: str) -> str | tuple[str, int] | Response:
@@ -230,6 +365,18 @@ def lookup_panel(kind: str, entries: list[dict], characters: list[dict]) -> h.El
     ]
 
 
+def delete_form(character: dict) -> h.Element:
+    return h.form(
+        action=action_url(
+            "dreamlight_character_update",
+            character_id=str(character["id"]),
+            action="delete",
+        ),
+        method="post",
+        onsubmit="return confirm('Delete this character?')",
+    )[h.button(".btn.btn-sm.btn-outline-danger", type="submit")["Delete"]]
+
+
 def page(error: str = "") -> str:
     db = flask.g.db
     lists = {kind: db.dreamlight_lookup_list(kind) for kind in KINDS}
@@ -250,11 +397,15 @@ def page(error: str = "") -> str:
             for kind in KINDS
         )
     ]
-    counts = Counter(c["skill_id"] for c in characters)
     values = (
         flask.request.form
         if flask.request.endpoint == "dreamlight_character_add"
         else {}
+    )
+    empty_message = (
+        "No characters match these filters."
+        if characters
+        else "Add Areas and Universes below, then add your first character."
     )
     content = h.main[
         h.h1(".mt-3")["Disney Dreamlight Valley"],
@@ -266,19 +417,7 @@ def page(error: str = "") -> str:
         h.p(".text-body-secondary")[
             "Totals for all characters, regardless of filters."
         ],
-        h.div(".d-flex.flex-wrap.gap-2.mb-4")[
-            h.a(
-                ".btn.btn-outline-secondary",
-                href=flask.url_for("dreamlight", skill="unassigned"),
-            )[f"Unassigned: {counts[None]}"],
-            [
-                h.a(
-                    ".btn.btn-outline-primary",
-                    href=flask.url_for("dreamlight", skill=str(s["id"])),
-                )[f"{s['name']}: {counts[s['id']]}"]
-                for s in lists["skill"]
-            ],
-        ],
+        skill_totals(characters, lists["skill"]),
         h.h2(".h4")["Characters"],
         h.form(".row.g-3.mb-3", method="get", action=flask.url_for("dreamlight"))[
             h.div(".col-12.col-md-3")[
@@ -311,7 +450,26 @@ def page(error: str = "") -> str:
             ],
         ],
         h.p[f"Showing {len(filtered)} of {len(characters)} characters"],
-        h.div(".table-responsive")[
+        h.div(".d-md-none")[
+            [
+                h.div(".card.mb-3")[
+                    h.div(".card-body")[
+                        h.h3(".card-title.h5")[c["name"]],
+                        h.p(".card-subtitle.mb-2.text-body-secondary")[
+                            c["universe"], " · ", c["area"]
+                        ],
+                        h.div(".d-flex.flex-wrap.align-items-center.gap-2")[
+                            h.span(".text-body-secondary")["Skill:"],
+                            skill_display(c, "card"),
+                            h.div(".ms-auto")[delete_form(c)],
+                        ],
+                    ]
+                ]
+                for c in filtered
+            ]
+            or h.p(".text-body-secondary")[empty_message],
+        ],
+        h.div(".d-none.d-md-block.table-responsive")[
             h.table(".table.table-striped.align-middle")[
                 h.thead[
                     h.tr[
@@ -333,56 +491,12 @@ def page(error: str = "") -> str:
                             h.th(scope="row")[c["name"]],
                             h.td[c["universe"]],
                             h.td[c["area"]],
-                            h.td[
-                                h.form(
-                                    ".d-flex.gap-2.align-items-end",
-                                    action=action_url(
-                                        "dreamlight_character_update",
-                                        character_id=str(c["id"]),
-                                        action="skill",
-                                    ),
-                                    method="post",
-                                )[
-                                    select(
-                                        "skill_id",
-                                        f"Skill for {c['name']}",
-                                        lists["skill"],
-                                        str(c["skill_id"]) if c["skill_id"] else "",
-                                        "Unassigned",
-                                        control_id=f"skill-{c['id']}",
-                                        show_label=False,
-                                    ),
-                                    h.button(".btn.btn-outline-primary", type="submit")[
-                                        "Save"
-                                    ],
-                                ],
-                            ],
-                            h.td[
-                                h.form(
-                                    action=action_url(
-                                        "dreamlight_character_update",
-                                        character_id=str(c["id"]),
-                                        action="delete",
-                                    ),
-                                    method="post",
-                                    onsubmit="return confirm('Delete this character?')",
-                                )[
-                                    h.button(
-                                        ".btn.btn-sm.btn-outline-danger", type="submit"
-                                    )["Delete"]
-                                ],
-                            ],
+                            h.td[skill_display(c, "row")],
+                            h.td[delete_form(c)],
                         ]
                         for c in filtered
                     ]
-                    or h.tr[
-                        h.td(colspan=5)[
-                            "No characters match these filters."
-                            if characters
-                            else "Add Areas and Universes below, "
-                            "then add your first character."
-                        ]
-                    ],
+                    or h.tr[h.td(colspan=5)[empty_message]],
                 ],
             ],
         ],

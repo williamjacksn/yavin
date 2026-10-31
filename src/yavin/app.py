@@ -194,6 +194,20 @@ def dreamlight_character_update(
     return yavin.dreamlight.character_update(character_id, action)
 
 
+@app.get("/dreamlight/characters/<uuid:character_id>/skill")
+@permission_required("dreamlight")
+def dreamlight_character_skill(character_id: uuid.UUID) -> str:
+    character = yavin.dreamlight.find_character(character_id)
+    return str(yavin.dreamlight.skill_display(character, yavin.dreamlight.skill_view()))
+
+
+@app.get("/dreamlight/characters/<uuid:character_id>/skill-form")
+@permission_required("dreamlight")
+def dreamlight_character_skill_form(character_id: uuid.UUID) -> str:
+    character = yavin.dreamlight.find_character(character_id)
+    return str(yavin.dreamlight.skill_form(character, yavin.dreamlight.skill_view()))
+
+
 @app.post("/dreamlight/lists/<kind>/<action>")
 @permission_required("dreamlight")
 def dreamlight_lookup_update(
