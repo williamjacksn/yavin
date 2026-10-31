@@ -7,6 +7,7 @@ import htpy
 import markupsafe
 
 import yavin.db
+import yavin.jar
 import yavin.util
 import yavin.versions as v
 from yavin.db.app import BillboardRow
@@ -1167,13 +1168,9 @@ def _jar_days(days: float | None, *, approximate: bool = False) -> str:
     return f"~{text}" if approximate else text
 
 
-def _jar_legend_swatch(fill: str, label: str) -> htpy.Element:
-    return htpy.span(".d-inline-flex.align-items-center.gap-1.me-3")[
-        htpy.svg(width="10", height="10", aria_hidden="true")[
-            htpy.rect(width="10", height="10", rx="2", fill=fill)
-        ],
-        label,
-    ]
+def _jar_legend_swatch(classes: str, label: str) -> htpy.Element:
+    """A badge colored like a calendar day."""
+    return htpy.span(class_=f"badge rounded-1 fw-normal me-1 {classes}")[label]
 
 
 def _jar_history(stats: JarStats, years: list[int], year: int) -> htpy.Fragment:
@@ -1217,10 +1214,10 @@ def _jar_history(stats: JarStats, years: list[int], year: int) -> htpy.Fragment:
             ]
         ],
         htpy.div(".pt-2.row")[
-            htpy.div(".col.small.text-body-secondary")[
-                _jar_legend_swatch("var(--bs-secondary-bg)", "No entry"),
-                _jar_legend_swatch("var(--bs-success)", "1 entry"),
-                _jar_legend_swatch("var(--bs-success-text-emphasis)", "2 or more"),
+            htpy.div(".col")[
+                _jar_legend_swatch(yavin.jar.NO_ENTRY, "No entry"),
+                _jar_legend_swatch(yavin.jar.ONE_ENTRY, "1 entry"),
+                _jar_legend_swatch(yavin.jar.MORE_ENTRIES, "2 or more"),
             ]
         ],
     ]

@@ -63,41 +63,71 @@ class JarCalendarTests(unittest.TestCase):
         html = str(jar.month(year, month, Counter(dates), TODAY))
         return lxml.html.fragment_fromstring(html)
 
+    def days(self, table: lxml.html.HtmlElement) -> dict[str, lxml.html.HtmlElement]:
+        """Day cells by their date, from the cell's title."""
+        return {td.get("title").split(":")[0]: td for td in table.xpath("//td[@title]")}
+
+    def assert_classes(self, cell: lxml.html.HtmlElement, *classes: str) -> None:
+        """The day's colored box has every class in classes."""
+        (box,) = cell.xpath("div")
+        for expected in classes:
+            for name in expected.split():
+                self.assertIn(name, box.classes)
+
     def test_one_cell_per_day_shaded_by_entry_count(self) -> None:
-        figure = self.month(2026, 2, [D(2026, 2, 3), D(2026, 2, 14), D(2026, 2, 14)])
-        cells = figure.xpath("//rect")
-        self.assertEqual(len(cells), 28)
-        fills = {c.xpath("string(title)").split(":")[0]: c.get("fill") for c in cells}
-        self.assertEqual(fills["Tue Feb 3, 2026"], "var(--bs-success)")
-        self.assertEqual(fills["Sat Feb 14, 2026"], "var(--bs-success-text-emphasis)")
-        self.assertEqual(fills["Sun Feb 1, 2026"], "var(--bs-secondary-bg)")
-        titles = [c.xpath("string(title)") for c in cells]
-        self.assertIn("Sat Feb 14, 2026: 2 entries", titles)
-        self.assertIn("Sun Feb 1, 2026: no entries", titles)
+        table = self.month(2026, 2, [D(2026, 2, 3), D(2026, 2, 14), D(2026, 2, 14)])
+        self.assertEqual(table.tag, "table")
+        self.assertFalse(table.xpath("//*[@style]"))
+        days = self.days(table)
+        self.assertEqual(len(days), 28)
+        self.assert_classes(days["Tue Feb 3, 2026"], jar.ONE_ENTRY)
+        self.assert_classes(days["Sat Feb 14, 2026"], jar.MORE_ENTRIES)
+        self.assert_classes(days["Sun Feb 1, 2026"], jar.NO_ENTRY)
         self.assertEqual(
-            figure.xpath("string(//svg/@aria-label)"), "February 2026: 3 entries"
+            days["Sat Feb 14, 2026"].get("title"), "Sat Feb 14, 2026: 2 entries"
         )
-        self.assertEqual(figure.xpath("string(//figcaption/span[2])"), "3 entries")
+        self.assertEqual(
+            days["Sun Feb 1, 2026"].get("title"), "Sun Feb 1, 2026: no entries"
+        )
+        # Screen readers hear the count after the day number
+        self.assertEqual(days["Sat Feb 14, 2026"].text_content(), "14, 2 entries")
+        self.assertEqual(days["Sun Feb 1, 2026"].text_content(), "1")
+        caption = table.xpath("//caption//span/text()")
+        self.assertEqual(caption, ["February", "3 entries"])
 
     def test_weeks_start_on_sunday(self) -> None:
-        # February 1, 2026 is a Sunday, so it is in the first column
-        first = self.month(2026, 2, []).xpath("//rect")[0]
-        self.assertEqual((first.get("x"), first.get("y")), ("0", str(jar.HEADER)))
+        table = self.month(2026, 10, [])
+        self.assertEqual(
+            table.xpath("//thead//abbr/@title"),
+            [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+            ],
+        )
+        # October 1, 2026 is a Thursday, so the first week starts with four blanks
+        first_week = table.xpath("//tbody/tr[1]/td")
+        self.assertEqual(
+            [td.text_content() for td in first_week], ["", "", "", "", "1", "2", "3"]
+        )
+        self.assertEqual(len(table.xpath("//tbody/tr")), 5)
 
-    def test_today_is_outlined_and_future_days_are_empty(self) -> None:
-        cells = {
-            c.xpath("string(title)").split(":")[0]: c
-            for c in self.month(2026, 11, []).xpath("//rect")
-        } | {
-            c.xpath("string(title)").split(":")[0]: c
-            for c in self.month(2026, 10, [TODAY]).xpath("//rect")
-        }
-        today = cells["Sat Oct 31, 2026"]
-        self.assertEqual(today.get("fill"), "var(--bs-success)")
-        self.assertEqual(today.get("stroke"), "var(--bs-body-color)")
-        future = cells["Sun Nov 1, 2026"]
-        self.assertEqual(future.get("fill"), "none")
-        self.assertEqual(future.get("stroke"), "var(--bs-border-color)")
+    def test_today_is_outlined_and_future_days_are_not_shaded(self) -> None:
+        october = self.days(self.month(2026, 10, [TODAY]))
+        self.assert_classes(
+            october["Sat Oct 31, 2026"], "small", jar.ONE_ENTRY, jar.TODAY
+        )
+        self.assert_classes(october["Fri Oct 30, 2026"], jar.NO_ENTRY, jar.BORDER)
+        self.assertNotIn(jar.TODAY, october["Fri Oct 30, 2026"].xpath("div")[0].classes)
+        future = self.days(self.month(2026, 11, []))["Sun Nov 1, 2026"]
+        self.assert_classes(future, jar.FUTURE)
+        self.assertFalse(
+            [c for c in future.xpath("div")[0].classes if c.startswith("bg-")]
+        )
 
 
 class JarPageTests(unittest.TestCase):
@@ -142,7 +172,7 @@ class JarPageTests(unittest.TestCase):
         self.assertEqual(
             document.xpath("string(//h2[contains(., 'calendar')])"), "2026 calendar"
         )
-        self.assertEqual(len(document.xpath("//figure")), 12)
+        self.assertEqual(len(document.xpath("//table[caption]")), 12)
         self.assertEqual(
             document.xpath("//a[contains(@aria-label, 'Previous year')]/@href"),
             ["/jar?year=2025"],
@@ -165,7 +195,13 @@ class JarPageTests(unittest.TestCase):
 
     def test_page_has_no_date_list(self) -> None:
         document = self.page()
-        self.assertFalse(document.xpath("//table"))
+        # The only tables are the twelve months of the calendar
+        months = [
+            t.xpath("string(caption//span[1])") for t in document.xpath("//table")
+        ]
+        self.assertEqual(months[0], "January")
+        self.assertEqual(months[-1], "December")
+        self.assertEqual(len(months), 12)
         self.assertNotIn("All entries", document.text_content())
         self.assertEqual(self.client.post("/jar/rows").status_code, 404)
 

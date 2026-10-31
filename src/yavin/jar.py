@@ -47,87 +47,92 @@ def years(dates: list[dt.date], today: dt.date) -> list[int]:
     return list(range(min(first, today.year), today.year + 1))
 
 
-# Day cells in a month grid, in SVG user units
-CELL = 10
-GAP = 2
-STEP = CELL + GAP
-HEADER = 10
-WEEKDAYS = "SMTWTFS"
+WEEKDAYS = (
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+)
+
+# Bootstrap classes for a day by its number of entries, light to dark. The legend
+# uses the same classes.
+NO_ENTRY = "bg-body-secondary text-body-secondary"
+ONE_ENTRY = "bg-success bg-opacity-50 text-success-emphasis"
+MORE_ENTRIES = "bg-success text-white"
+FUTURE = "text-body-tertiary"
+# Every day has a border so the white one spaces the cells and today's dark one
+# outlines it without changing its size
+BORDER = "border-white"
+TODAY = "border-dark"
 
 
-def _fill(count: int) -> str:
+def cell_classes(count: int) -> str:
     if count >= 2:
-        return "var(--bs-success-text-emphasis)"
+        return MORE_ENTRIES
     if count == 1:
-        return "var(--bs-success)"
-    return "var(--bs-secondary-bg)"
+        return ONE_ENTRY
+    return NO_ENTRY
 
 
 def _plural(count: int) -> str:
     return "1 entry" if count == 1 else f"{count} entries"
 
 
+def _day(day: dt.date, count: int, today: dt.date) -> h.Element:
+    label = f"{day:%a %b} {day.day}, {day.year}: "
+    label += _plural(count) if count else "no entries"
+    colors = FUTURE if day > today else cell_classes(count)
+    border = TODAY if day == today else BORDER
+    return h.td(".p-0", title=label)[
+        h.div(class_=f"small border border-2 rounded-1 {border} {colors}")[
+            day.day,
+            h.span(".visually-hidden")[f", {_plural(count)}"] if count else None,
+        ]
+    ]
+
+
 def month(
     year: int, month_number: int, counts: Counter[dt.date], today: dt.date
 ) -> h.Element:
-    """One month as a grid of days, with weeks starting on Sunday."""
+    """One month as a calendar table, with weeks starting on Sunday."""
     weeks = cal.Calendar(firstweekday=6).monthdatescalendar(year, month_number)
-    width = 7 * STEP - GAP
-    height = HEADER + len(weeks) * STEP - GAP
     name = dt.date(year, month_number, 1).strftime("%B")
     total = sum(
         n for d, n in counts.items() if (d.year, d.month) == (year, month_number)
     )
-    cells = []
-    for row, week in enumerate(weeks):
-        for column, day in enumerate(week):
-            if day.month != month_number:
-                continue
-            count = counts[day]
-            label = f"{day:%a %b} {day.day}, {day.year}"
-            label += f": {_plural(count)}" if count else ": no entries"
-            future = day > today
-            cells.append(
-                h.rect(
-                    x=str(column * STEP),
-                    y=str(HEADER + row * STEP),
-                    width=str(CELL),
-                    height=str(CELL),
-                    rx="2",
-                    fill="none" if future else _fill(count),
-                    stroke=(
-                        "var(--bs-body-color)"
-                        if day == today
-                        else "var(--bs-border-color)"
-                        if future
-                        else None
-                    ),
-                    stroke_width="1.5" if day == today else "0.75" if future else None,
-                )[h.title[label]]
-            )
-    return h.figure(".mb-0")[
-        h.figcaption(".small.d-flex.justify-content-between")[
-            h.span(".fw-semibold")[name],
-            h.span(".text-body-secondary")[_plural(total) if total else None],
+    return h.table(".caption-top.w-100.mb-0.text-center.small")[
+        # A flex caption stops being a caption, so the layout is on a div inside
+        h.caption(".pt-0.pb-1.text-body")[
+            h.div(".d-flex.justify-content-between")[
+                h.span(".fw-semibold")[name],
+                h.span(".text-body-secondary")[_plural(total) if total else None],
+            ]
         ],
-        h.svg(
-            ".d-block.w-100",
-            viewBox=f"0 0 {width} {height}",
-            role="img",
-            aria_label=f"{name} {year}: {_plural(total)}",
-            xmlns="http://www.w3.org/2000/svg",
-        )[
-            [
-                h.text(
-                    x=str(i * STEP + CELL / 2),
-                    y="7",
-                    font_size="6",
-                    text_anchor="middle",
-                    fill="var(--bs-secondary-color)",
-                )[letter]
-                for i, letter in enumerate(WEEKDAYS)
-            ],
-            cells,
+        h.thead[
+            h.tr[
+                (
+                    h.th(".fw-normal.text-body-secondary", scope="col")[
+                        h.abbr(".text-decoration-none", title=weekday)[weekday[0]]
+                    ]
+                    for weekday in WEEKDAYS
+                )
+            ]
+        ],
+        h.tbody[
+            (
+                h.tr[
+                    (
+                        _day(day, counts[day], today)
+                        if day.month == month_number
+                        else h.td
+                        for day in week
+                    )
+                ]
+                for week in weeks
+            )
         ],
     ]
 
