@@ -21,6 +21,7 @@ import yavin.components
 import yavin.db
 import yavin.db.app_sqlite
 import yavin.dreamlight
+import yavin.jar
 import yavin.settings
 import yavin.tasks
 import yavin.theatre
@@ -725,11 +726,18 @@ def favicon() -> flask.Response:
 @permission_required("jar")
 def jar() -> str:
     db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.today = yavin.util.today()
-    flask.g.days_since_last = db.jar_entries_days_since_last()
-    app.logger.debug(f"Days since last jar entry: {flask.g.days_since_last}")
-    flask.g.jar_entries = db.jar_entries_list()
-    return yavin.components.jar()
+    today = yavin.util.today()
+    dates = [e["entry_date"] for e in db.jar_entries_list_all()]
+    years = yavin.jar.years(dates, today)
+    year = flask.request.args.get("year", type=int)
+    if year not in years:
+        year = today.year
+    return yavin.components.jar(
+        yavin.jar.stats(dates, today),
+        years,
+        year,
+        yavin.jar.year_calendar(dates, year, today),
+    )
 
 
 @app.post("/jar/add")
@@ -740,15 +748,6 @@ def jar_add() -> werkzeug.Response:
     log.info(f"Adding new jar entry for {entry_date}")
     db.jar_entries_insert(entry_date)
     return flask.redirect(flask.url_for("jar"))
-
-
-@app.post("/jar/rows")
-@permission_required("jar")
-def jar_rows() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.page = int(flask.request.values.get("page", 1))
-    flask.g.rows = db.jar_entries_list(flask.g.page)
-    return yavin.components.jar_rows()
 
 
 @app.get("/library")

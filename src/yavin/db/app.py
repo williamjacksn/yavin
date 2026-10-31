@@ -494,18 +494,6 @@ class YavinDatabase(fort.PostgresDatabase):
         params = {"id": last + 1, "entry_date": entry_date}
         self.u(sql, params)
 
-    def jar_entries_list(self, page: int = 1) -> list[dict]:
-        sql = """
-            select id, entry_date
-            from jar_entries
-            order by entry_date desc, id
-            limit 11 offset %(offset)s
-        """
-        params = {
-            "offset": 10 * (page - 1),
-        }
-        return self.q(sql, params)
-
     def jar_entries_list_all(self) -> list[dict]:
         sql = """
             select entry_date, id, paid

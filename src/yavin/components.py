@@ -10,6 +10,7 @@ import yavin.db
 import yavin.util
 import yavin.versions as v
 from yavin.db.app import BillboardRow
+from yavin.jar import JarStats
 
 log = logging.getLogger(__name__)
 
@@ -1146,8 +1147,87 @@ def index_signed_out() -> str:
     return str(_base())
 
 
-def jar() -> str:
-    content = [
+def _jar_stat(label: str, value: str, note: htpy.Node = None) -> htpy.Element:
+    return htpy.div(".col-6.col-md-3")[
+        htpy.div(".card.h-100")[
+            htpy.div(".card-body.py-2")[
+                htpy.div(".small.text-body-secondary")[label],
+                htpy.div(".fs-3.fw-semibold")[value],
+                note and htpy.div(".small")[note],
+            ]
+        ]
+    ]
+
+
+def _jar_days(days: float | None, *, approximate: bool = False) -> str:
+    if days is None:
+        return "—"
+    days = round(days)
+    text = "1 day" if days == 1 else f"{days:,} days"
+    return f"~{text}" if approximate else text
+
+
+def _jar_legend_swatch(fill: str, label: str) -> htpy.Element:
+    return htpy.span(".d-inline-flex.align-items-center.gap-1.me-3")[
+        htpy.svg(width="10", height="10", aria_hidden="true")[
+            htpy.rect(width="10", height="10", rx="2", fill=fill)
+        ],
+        label,
+    ]
+
+
+def _jar_history(stats: JarStats, years: list[int], year: int) -> htpy.Fragment:
+    previous = year - 1 if year - 1 in years else None
+    following = year + 1 if year + 1 in years else None
+
+    def year_link(target: int | None, icon: str, label: str) -> htpy.Element:
+        if target is None:
+            return htpy.span(
+                ".btn.btn-sm.btn-outline-secondary.disabled", aria_hidden="true"
+            )[htpy.i(class_=icon)]
+        return htpy.a(
+            ".btn.btn-sm.btn-outline-secondary",
+            href=flask.url_for("jar", year=target),
+            title=f"{label} ({target})",
+            aria_label=f"{label} ({target})",
+        )[htpy.i(class_=icon)]
+
+    return htpy.fragment[
+        htpy.div(".pt-3.row.g-2")[
+            _jar_stat(
+                "Days since last entry",
+                "—" if stats.days_since_last is None else f"{stats.days_since_last:,}",
+                htpy.span(".badge.text-bg-success")["Longest gap yet"]
+                if stats.is_record
+                else None,
+            ),
+            _jar_stat("Longest gap", _jar_days(stats.longest_gap)),
+            _jar_stat("Average gap", _jar_days(stats.average_gap, approximate=True)),
+            _jar_stat(
+                f"Entries in {yavin.util.today().year}",
+                f"{stats.entries_this_year:,}",
+                htpy.span(".text-body-secondary")[f"{stats.entries:,} all time"],
+            ),
+        ],
+        htpy.div(".pt-4.row")[
+            htpy.div(".col.d-flex.flex-wrap.align-items-center.gap-2")[
+                htpy.h2(".h4.mb-0.me-auto")[f"{year} calendar"],
+                year_link(previous, "bi-chevron-left", "Previous year"),
+                year_link(following, "bi-chevron-right", "Next year"),
+            ]
+        ],
+        htpy.div(".pt-2.row")[
+            htpy.div(".col.small.text-body-secondary")[
+                _jar_legend_swatch("var(--bs-secondary-bg)", "No entry"),
+                _jar_legend_swatch("var(--bs-success)", "1 entry"),
+                _jar_legend_swatch("var(--bs-success-text-emphasis)", "2 or more"),
+            ]
+        ],
+    ]
+
+
+def jar(stats: JarStats, years: list[int], year: int, calendar: htpy.Element) -> str:
+    content = htpy.fragment[
         _page_title("Jar"),
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
@@ -1169,53 +1249,12 @@ def jar() -> str:
                 ]
             ]
         ],
-        htpy.div(".pt-3.row")[
-            htpy.div(".col")[
-                htpy.h4["Days since last entry: ", flask.g.days_since_last]
-            ]
-        ],
-        htpy.div(".pt-3.row")[
-            htpy.div(".col")[
-                htpy.table(".d-block.table")[
-                    htpy.thead[htpy.tr[htpy.th["Date"]]],
-                    htpy.tbody(hx_post=flask.url_for("jar_rows"), hx_trigger="load")[
-                        htpy.tr[
-                            htpy.td(".py-3.text-center")[
-                                htpy.span(
-                                    ".htmx-indicator.spinner-border.spinner-border-sm"
-                                )
-                            ]
-                        ]
-                    ],
-                ]
-            ]
-        ],
+        _jar_history(stats, years, year),
+        htpy.div(".pt-2.pb-3")[calendar],
     ]
     return signed_in(
         flask.g.email, flask.g.permissions, _back_to_home(), content, "Yavin / Jar"
     )
-
-
-def jar_rows() -> str:
-    rows = []
-    for i, r in enumerate(flask.g.rows):
-        if i < 11:
-            rows.append(htpy.tr[htpy.td[r.get("entry_date").isoformat()]])
-        else:
-            rows.append(
-                htpy.tr[
-                    htpy.td(
-                        ".py-3.text-center",
-                        hx_post=flask.url_for("jar_rows", page=flask.g.page + 1),
-                        hx_swap="outerHTML",
-                        hx_target="closest tr",
-                        hx_trigger="revealed",
-                    )[htpy.span(".htmx-indicator.spinner-border.spinner-border-sm")]
-                ]
-            )
-    if not rows:
-        rows.append(htpy.tr(".text-center")[htpy.td["No entries found."]])
-    return str(htpy.fragment[rows])
 
 
 def library(library_books: list[dict]) -> str:
