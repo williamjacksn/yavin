@@ -2123,8 +2123,13 @@ def _user_permissions_edit_button(user: yavin.db.app.UserPermissions) -> htpy.El
     )
 
 
-def _permission_codes(user: yavin.db.app.UserPermissions) -> list[htpy.Element]:
-    return [htpy.code(".text-nowrap")[p, " "] for p in user.permissions]
+def _permission_codes(user: yavin.db.app.UserPermissions) -> list[htpy.Node]:
+    """Permission names that each stay on one line. The spaces between them are
+    outside the nowrap elements so the list can wrap between names."""
+    nodes: list[htpy.Node] = []
+    for p in user.permissions:
+        nodes += [htpy.code(".text-nowrap")[p], " "]
+    return nodes
 
 
 def user_permissions_modal(

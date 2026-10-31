@@ -94,10 +94,13 @@ class UserPermissionsTests(unittest.TestCase):
                     f"/user-permissions/modal?email={PLAYER}",
                 ],
             )
-        self.assertEqual(
-            [c.strip() for c in cards[1].xpath(".//code/text()")],
-            ["dreamlight", "retired-page"],
-        )
+        codes = cards[1].xpath(".//code")
+        self.assertEqual([c.text for c in codes], ["dreamlight", "retired-page"])
+        # Each name stays on one line, so the list can only wrap at the spaces
+        # between names
+        for code in codes:
+            self.assertIn("text-nowrap", code.get("class"))
+            self.assertEqual(code.tail, " ")
         for button in document.xpath(f"//button{modal}"):
             self.assertEqual(button.get("hx-target"), "#modal-user-permissions-dialog")
 
