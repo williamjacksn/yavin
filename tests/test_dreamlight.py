@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import lxml.html
 import psycopg2
+from flask.sessions import SecureCookieSessionInterface
 
 with (
     tempfile.TemporaryDirectory() as directory,
@@ -41,11 +42,31 @@ class DreamlightTests(unittest.TestCase):
             "skill": None,
         }
         self.db.dreamlight_characters_list.return_value = [self.character]
+        # Skills assigned by any user, not only the signed-in user
+        self.other_users_skills: set[uuid.UUID] = set()
+        self.db.dreamlight_skills_in_use.side_effect = lambda: (
+            self.other_users_skills
+            | {
+                c["skill_id"]
+                for c in self.db.dreamlight_characters_list.return_value
+                if c["skill_id"]
+            }
+        )
         patcher = patch("yavin.db.YavinDatabase", return_value=self.db)
         patcher.start()
         self.addCleanup(patcher.stop)
         app.config.update(TESTING=True, SECRET_KEY=uuid.uuid4().hex)
         self.client = app.test_client()
+        self.email = "player@example.com"
+        self.sign_in(self.email)
+
+    def sign_in(self, email: str) -> None:
+        serializer = SecureCookieSessionInterface().get_signing_serializer(app)
+        if serializer is None:
+            self.fail("The app has no secret key for signing sessions")
+        self.client.set_cookie(
+            app.config["SESSION_COOKIE_NAME"], serializer.dumps({"email": email})
+        )
 
     def character_path(self, action: str) -> str:
         return f"/dreamlight/characters/{self.character['id']}/{action}"
@@ -102,11 +123,11 @@ class DreamlightTests(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 302)
             self.db.dreamlight_character_skill.assert_called_with(
-                self.character["id"], skill["id"]
+                self.character["id"], self.email, skill["id"]
             )
         self.client.post(self.character_path("skill"), data={"skill_id": ""})
         self.db.dreamlight_character_skill.assert_called_with(
-            self.character["id"], None
+            self.character["id"], self.email, None
         )
         self.db.dreamlight_character_skill.reset_mock()
         for invalid in ("bad", str(uuid.uuid4())):
@@ -167,7 +188,9 @@ class DreamlightTests(unittest.TestCase):
     def test_htmx_skill_save_refreshes_every_copy_and_totals(self) -> None:
         mining = self.lists["skill"][0]
 
-        def save(character_id: uuid.UUID, skill_id: uuid.UUID | None) -> None:
+        def save(
+            character_id: uuid.UUID, user_email: str, skill_id: uuid.UUID | None
+        ) -> None:
             self.character.update(skill_id=skill_id, skill=mining["name"])
 
         self.db.dreamlight_character_skill.side_effect = save
@@ -179,7 +202,7 @@ class DreamlightTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["HX-Reswap"], "none")
         self.db.dreamlight_character_skill.assert_called_once_with(
-            self.character["id"], mining["id"]
+            self.character["id"], self.email, mining["id"]
         )
         document = lxml.html.fromstring(f"<div>{response.data.decode()}</div>")
         for view in ("card", "row"):
@@ -343,6 +366,32 @@ class DreamlightTests(unittest.TestCase):
             "skill", "Renamed", self.character["skill_id"]
         )
 
+    def test_skills_are_per_user_but_any_assignment_protects_a_skill(self) -> None:
+        self.client.get("/dreamlight")
+        self.db.dreamlight_characters_list.assert_called_with(self.email)
+        self.sign_in("someone-else@example.com")
+        self.client.get("/dreamlight")
+        self.db.dreamlight_characters_list.assert_called_with(
+            "someone-else@example.com"
+        )
+
+        # Another user assigned Fishing, so it cannot be deleted even though the
+        # signed-in user has not assigned it
+        fishing = self.lists["skill"][1]
+        self.other_users_skills.add(fishing["id"])
+        document = lxml.html.fromstring(self.client.get("/dreamlight").data)
+        delete = document.xpath(
+            "//form[contains(@action, '/lists/skill/rename')]"
+            f"[.//input[@value='{fishing['id']}']]//button[text()='Delete']"
+        )
+        self.assertTrue(delete[0].get("disabled") is not None)
+        response = self.client.post(
+            "/dreamlight/lists/skill/delete", data={"id": str(fishing["id"])}
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"while any user has it assigned", response.data)
+        self.db.dreamlight_lookup_delete.assert_not_called()
+
     def test_database_conflicts_return_validation_error(self) -> None:
         self.db.dreamlight_character_skill.side_effect = psycopg2.IntegrityError()
         self.assertEqual(
@@ -410,12 +459,23 @@ class DreamlightDatabaseTests(unittest.TestCase):
                 params,
                 {"name": "Mickey", "area_id": area_id, "universe_id": universe_id},
             )
-            db.dreamlight_character_skill(character_id, skill_id)
+            email = "player@example.com"
+            expected = {
+                "character_id": character_id,
+                "user_email": email,
+                "skill_id": skill_id,
+            }
+            db.dreamlight_character_skill(character_id, email, skill_id)
             sql, params = execute.call_args.args
-            self.assertNotIn("name=", sql)
-            self.assertNotIn("area_id=", sql)
-            self.assertNotIn("universe_id=", sql)
-            self.assertEqual(params, {"id": character_id, "skill_id": skill_id})
+            self.assertIn("insert into dreamlight_character_skill", sql)
+            self.assertIn("on conflict (character_id, user_email)", sql)
+            self.assertNotIn("dreamlight_characters ", sql)
+            self.assertEqual(params, expected)
+            db.dreamlight_character_skill(character_id, email, None)
+            sql, params = execute.call_args.args
+            self.assertIn("delete from dreamlight_character_skill", sql)
+            self.assertIn("user_email=%(user_email)s", sql)
+            self.assertEqual(params, expected | {"skill_id": None})
 
     def test_lookup_table_allowlist(self) -> None:
         with self.assertRaises(KeyError):

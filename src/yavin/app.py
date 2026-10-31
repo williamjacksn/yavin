@@ -1366,7 +1366,7 @@ def main() -> None:
         )
     else:
         db = yavin.db.YavinDatabase(settings.dsn)
-        db.migrate()
+        db.migrate(admin_email=settings.admin_email)
 
         if settings.admin_email:
             db.user_permissions_add(settings.admin_email, "admin")

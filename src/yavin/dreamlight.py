@@ -66,7 +66,7 @@ def character_add() -> str | tuple[str, int] | Response:
     db = flask.g.db
     values = flask.request.form
     try:
-        name = valid_name(values.get("name", ""), db.dreamlight_characters_list())
+        name = valid_name(values.get("name", ""), characters_list())
         area_id = selected_id(
             values.get("area_id", ""), db.dreamlight_lookup_list("area"), "Area"
         )
@@ -99,7 +99,7 @@ def character_update(
                 if value
                 else None
             )
-            db.dreamlight_character_skill(character_id, skill_id)
+            db.dreamlight_character_skill(character_id, flask.g.email, skill_id)
     except (ValueError, psycopg2.IntegrityError) as error:
         if htmx and action == "skill":
             # htmx only swaps successful responses, so report the error in the form
@@ -110,8 +110,21 @@ def character_update(
     return flask.redirect(action_url("dreamlight"))
 
 
+def characters_list() -> list[dict]:
+    """All characters, with the skills the signed-in user assigned."""
+    return flask.g.db.dreamlight_characters_list(flask.g.email)
+
+
+def used_ids(kind: str) -> set[uuid.UUID]:
+    """List entries that cannot be deleted. A Skill is in use if any user has
+    assigned it, not only the signed-in user."""
+    if kind == "skill":
+        return flask.g.db.dreamlight_skills_in_use()
+    return {c[f"{kind}_id"] for c in characters_list()}
+
+
 def find_character(character_id: uuid.UUID) -> dict:
-    for c in flask.g.db.dreamlight_characters_list():
+    for c in characters_list():
         if c["id"] == character_id:
             return c
     flask.abort(404)
@@ -203,7 +216,7 @@ def skill_form(character: dict, view: str, error: str = "") -> h.Element:
 
 def skill_saved(character_id: uuid.UUID) -> Response:
     """Refresh every copy of the character's skill and the totals out of band."""
-    characters = flask.g.db.dreamlight_characters_list()
+    characters = characters_list()
     character = next(c for c in characters if c["id"] == character_id)
     skills = flask.g.db.dreamlight_lookup_list("skill")
     parts = [skill_display(character, view, oob=True) for view in SKILL_VIEWS]
@@ -245,14 +258,12 @@ def lookup_update(kind: str, action: str) -> str | tuple[str, int] | Response:
         entry_id = None
         if action != "add":
             entry_id = selected_id(flask.request.form.get("id", ""), entries, kind)
-            used = any(
-                c[f"{kind}_id"] == entry_id for c in db.dreamlight_characters_list()
-            )
+            used = entry_id in used_ids(kind)
             if used and (action == "delete" or kind != "skill"):
                 raise ValueError(
-                    "This entry is used by a character. Clear Skill assignments "
-                    "before deleting a Skill. Areas and Universes stay fixed "
-                    "while characters reference them."
+                    "This entry is used by a character. A Skill cannot be deleted "
+                    "while any user has it assigned. Areas and Universes stay "
+                    "fixed while characters reference them."
                 )
         if action == "delete":
             db.dreamlight_lookup_delete(kind, entry_id)
@@ -296,8 +307,8 @@ def select(
     ]
 
 
-def lookup_panel(kind: str, entries: list[dict], characters: list[dict]) -> h.Element:
-    used = {c[f"{kind}_id"] for c in characters}
+def lookup_panel(kind: str, entries: list[dict]) -> h.Element:
+    used = used_ids(kind)
     values = (
         flask.request.form
         if flask.request.view_args == {"kind": kind, "action": "add"}
@@ -380,7 +391,7 @@ def delete_form(character: dict) -> h.Element:
 def page(error: str = "") -> str:
     db = flask.g.db
     lists = {kind: db.dreamlight_lookup_list(kind) for kind in KINDS}
-    characters = db.dreamlight_characters_list()
+    characters = characters_list()
     query = filters()
     filtered = [
         c
@@ -415,7 +426,7 @@ def page(error: str = "") -> str:
         h.div(".alert.alert-danger", role="alert")[error] if error else None,
         h.h2(".h4")["Skill assignments"],
         h.p(".text-body-secondary")[
-            "Totals for all characters, regardless of filters."
+            "Your assignments across all characters, regardless of filters."
         ],
         skill_totals(characters, lists["skill"]),
         h.h2(".h4")["Characters"],
@@ -542,11 +553,9 @@ def page(error: str = "") -> str:
         h.h2("#lists.h4.mt-4")["Manage lists"],
         h.p[
             "Areas and Universes in use cannot be renamed or deleted. "
-            "Clear assignments before deleting a Skill."
+            "Skills assigned by any user cannot be deleted."
         ],
-        h.div(".row.g-4.mb-4")[
-            [lookup_panel(kind, lists[kind], characters) for kind in KINDS]
-        ],
+        h.div(".row.g-4.mb-4")[[lookup_panel(kind, lists[kind]) for kind in KINDS]],
     ]
     return components.signed_in(
         flask.g.email,

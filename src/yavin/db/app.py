@@ -87,15 +87,28 @@ class YavinDatabase(fort.PostgresDatabase):
         table = self.dreamlight_table(kind)
         self.u(f"delete from {table} where id=%(id)s", {"id": entry_id})  # noqa: S608
 
-    def dreamlight_characters_list(self) -> list[dict]:
-        return self.q("""
-            select c.*, a.name as area, u.name as universe, s.name as skill
+    def dreamlight_characters_list(self, user_email: str) -> list[dict]:
+        """All characters, with the skills that user_email assigned to them."""
+        return self.q(
+            """
+            select
+                c.id, c.name, c.area_id, a.name as area, c.universe_id,
+                u.name as universe, cs.skill_id, s.name as skill
             from dreamlight_characters c
             join dreamlight_areas a on a.id=c.area_id
             join dreamlight_universes u on u.id=c.universe_id
-            left join dreamlight_skills s on s.id=c.skill_id
+            left join dreamlight_character_skill cs
+                on cs.character_id=c.id and cs.user_email=%(user_email)s
+            left join dreamlight_skills s on s.id=cs.skill_id
             order by lower(c.name), c.id
-        """)
+            """,
+            {"user_email": user_email},
+        )
+
+    def dreamlight_skills_in_use(self) -> set[uuid.UUID]:
+        """Skills that any user has assigned to a character."""
+        rows = self.q("select distinct skill_id from dreamlight_character_skill")
+        return {row["skill_id"] for row in rows}
 
     def dreamlight_character_add(
         self, name: str, area_id: uuid.UUID, universe_id: uuid.UUID
@@ -109,14 +122,34 @@ class YavinDatabase(fort.PostgresDatabase):
         )
 
     def dreamlight_character_skill(
-        self, character_id: uuid.UUID, skill_id: uuid.UUID | None
+        self, character_id: uuid.UUID, user_email: str, skill_id: uuid.UUID | None
     ) -> None:
-        self.u(
-            """
-            update dreamlight_characters set skill_id=%(skill_id)s where id=%(id)s
-            """,
-            {"id": character_id, "skill_id": skill_id},
-        )
+        """Set the skill user_email assigned to a character, or clear it if
+        skill_id is None."""
+        params = {
+            "character_id": character_id,
+            "user_email": user_email,
+            "skill_id": skill_id,
+        }
+        if skill_id is None:
+            self.u(
+                """
+                delete from dreamlight_character_skill
+                where character_id=%(character_id)s and user_email=%(user_email)s
+                """,
+                params,
+            )
+        else:
+            self.u(
+                """
+                insert into dreamlight_character_skill (
+                    character_id, user_email, skill_id
+                ) values (%(character_id)s, %(user_email)s, %(skill_id)s)
+                on conflict (character_id, user_email)
+                do update set skill_id=excluded.skill_id
+                """,
+                params,
+            )
 
     def dreamlight_character_delete(self, character_id: uuid.UUID) -> None:
         self.u(
@@ -943,7 +976,9 @@ class YavinDatabase(fort.PostgresDatabase):
 
     # migrations and metadata
 
-    def migrate(self) -> None:
+    def migrate(self, admin_email: str = "") -> None:
+        """Bring the schema up to date. admin_email receives any data that has no
+        owner yet, such as Dreamlight skills assigned before skills were per user."""
         self.log.debug(f"The database is at schema version {self.version}")
         self.log.debug("Checking for database migrations ...")
         if self.version < 23:
@@ -1227,6 +1262,44 @@ class YavinDatabase(fort.PostgresDatabase):
                 where setting_id in ('tello_password', 'tello_username')
             """)
             self._add_schema_version(28)
+
+        if self.version < 29:
+            # Each user keeps their own Dreamlight skill assignments. Existing
+            # assignments belong to the admin.
+            assigned = self.q_val("""
+                select count(*) from dreamlight_characters where skill_id is not null
+            """)
+            if assigned and not admin_email:
+                msg = (
+                    f"ADMIN_EMAIL is required to migrate {assigned} existing "
+                    "Dreamlight skill assignments"
+                )
+                raise RuntimeError(msg)
+            self.u(
+                """
+                create table dreamlight_character_skill (
+                    character_id uuid not null
+                        references dreamlight_characters(id) on delete cascade,
+                    user_email text not null check (trim(user_email) <> ''),
+                    skill_id uuid not null references dreamlight_skills(id),
+                    primary key (character_id, user_email)
+                );
+                create index dreamlight_character_skill_skill
+                    on dreamlight_character_skill (skill_id);
+                create index dreamlight_character_skill_user
+                    on dreamlight_character_skill (user_email);
+                insert into dreamlight_character_skill (
+                    character_id, user_email, skill_id
+                )
+                select id, %(admin_email)s, skill_id
+                from dreamlight_characters
+                where skill_id is not null;
+                drop index dreamlight_characters_skill;
+                alter table dreamlight_characters drop column skill_id;
+                """,
+                {"admin_email": admin_email},
+            )
+            self._add_schema_version(29)
 
     def _add_schema_version(self, schema_version: int) -> None:
         self._version = schema_version
