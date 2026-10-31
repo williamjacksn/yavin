@@ -2113,6 +2113,20 @@ def _user_permissions_modal_button(
     )[label]
 
 
+def _user_permissions_edit_button(user: yavin.db.app.UserPermissions) -> htpy.Element:
+    return _user_permissions_modal_button(
+        htpy.i(".bi-pencil"),
+        user.email,
+        class_="btn btn-sm btn-link",
+        title="Edit permissions",
+        aria_label=f"Edit permissions for {user.email}",
+    )
+
+
+def _permission_codes(user: yavin.db.app.UserPermissions) -> list[htpy.Element]:
+    return [htpy.code(".text-nowrap")[p, " "] for p in user.permissions]
+
+
 def user_permissions_modal(
     choices: list[str],
     user: yavin.db.app.UserPermissions | None = None,
@@ -2200,7 +2214,23 @@ def user_permissions(users: list[yavin.db.app.UserPermissions]) -> str:
         ],
         htpy.div(".pt-3.row")[
             htpy.div(".col-12.col-lg-10.col-xl-8")[
-                htpy.table(".table.align-middle")[
+                htpy.div(".d-md-none")[
+                    (
+                        htpy.div(".card.mb-3")[
+                            htpy.div(".card-body")[
+                                htpy.div(".d-flex.align-items-start.gap-2")[
+                                    htpy.h5(".card-title.text-break.me-auto")[
+                                        _email(u.email)
+                                    ],
+                                    _user_permissions_edit_button(u),
+                                ],
+                                htpy.p(".card-text")[_permission_codes(u)],
+                            ]
+                        ]
+                        for u in users
+                    )
+                ],
+                htpy.table(".d-none.d-md-table.table.align-middle")[
                     htpy.thead[
                         htpy.tr[
                             htpy.th["Email"],
@@ -2212,26 +2242,13 @@ def user_permissions(users: list[yavin.db.app.UserPermissions]) -> str:
                         (
                             htpy.tr[
                                 htpy.td[_email(u.email)],
-                                htpy.td[
-                                    (
-                                        htpy.code(".text-nowrap")[p, " "]
-                                        for p in u.permissions
-                                    )
-                                ],
-                                htpy.td(".text-end")[
-                                    _user_permissions_modal_button(
-                                        htpy.i(".bi-pencil"),
-                                        u.email,
-                                        class_="btn btn-sm btn-link",
-                                        title="Edit permissions",
-                                        aria_label=f"Edit permissions for {u.email}",
-                                    )
-                                ],
+                                htpy.td[_permission_codes(u)],
+                                htpy.td(".text-end")[_user_permissions_edit_button(u)],
                             ]
                             for u in users
                         )
                     ],
-                ]
+                ],
             ]
         ],
         htpy.div("#modal-user-permissions.modal")[

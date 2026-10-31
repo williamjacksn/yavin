@@ -72,22 +72,33 @@ class UserPermissionsTests(unittest.TestCase):
 
     def test_page_has_buttons_that_load_the_modal(self) -> None:
         document = lxml.html.fromstring(self.client.get("/user-permissions").data)
-        self.assertEqual(
-            [td.text_content() for td in document.xpath("//tbody/tr/td[1]")],
-            [ADMIN, PLAYER],
-        )
         self.assertTrue(document.xpath("//div[@id='modal-user-permissions']"))
-        self.assertFalse(document.xpath("//main//form | //tbody//form"))
-        buttons = document.xpath("//button[@data-bs-target='#modal-user-permissions']")
+        self.assertFalse(document.xpath("//form"))
+        modal = "[@data-bs-target='#modal-user-permissions']"
         self.assertEqual(
-            [b.get("hx-get") for b in buttons],
-            [
-                "/user-permissions/modal",
-                f"/user-permissions/modal?email={ADMIN}",
-                f"/user-permissions/modal?email={PLAYER}",
-            ],
+            document.xpath(f"//button{modal}[contains(., 'Add user')]/@hx-get"),
+            ["/user-permissions/modal"],
         )
-        for button in buttons:
+        # Users are listed as cards on small screens and as table rows on wider
+        # screens, each with its own edit button
+        cards = document.xpath("//div[contains(@class, 'card-body')]")
+        rows = document.xpath("//tbody/tr")
+        for users in (cards, rows):
+            self.assertEqual(
+                [u.xpath("string((.//h5 | ./td)[1])") for u in users], [ADMIN, PLAYER]
+            )
+            self.assertEqual(
+                [u.xpath(f"string(.//button{modal}/@hx-get)") for u in users],
+                [
+                    f"/user-permissions/modal?email={ADMIN}",
+                    f"/user-permissions/modal?email={PLAYER}",
+                ],
+            )
+        self.assertEqual(
+            [c.strip() for c in cards[1].xpath(".//code/text()")],
+            ["dreamlight", "retired-page"],
+        )
+        for button in document.xpath(f"//button{modal}"):
             self.assertEqual(button.get("hx-target"), "#modal-user-permissions-dialog")
 
     def test_edit_modal_checks_current_permissions_and_keeps_unknown_ones(
