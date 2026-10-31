@@ -466,41 +466,77 @@ def billboard(latest: BillboardRow) -> str:
 
 def callings(records: list) -> str:
     rows = []
+    cards = []
     for record in records:
         sustained_at = record.get("sustained_at")
+        set_apart_at = record.get("set_apart_at")
         released_at = record.get("released_at")
         if sustained_at:
             end_date = released_at or yavin.util.today()
             days = (end_date - sustained_at).days
         else:
             days = None
+
+        def edit_link(
+            classes: str | None = None, record: dict = record
+        ) -> htpy.Element:
+            return htpy.a(
+                class_=classes,
+                href="#callings-form",
+                hx_get=flask.url_for("callings_edit_form", calling_id=record["id"]),
+                hx_target="#callings-form",
+                hx_swap="innerHTML show:window:top",
+            )[record.get("calling")]
+
         rows.append(
             htpy.tr[
                 htpy.td[record.get("ward")],
-                htpy.td[record.get("calling")],
+                htpy.td[edit_link()],
                 htpy.td(".text-nowrap")[sustained_at and sustained_at.isoformat()],
-                htpy.td(".text-nowrap")[
-                    record.get("set_apart_at")
-                    and record.get("set_apart_at").isoformat()
-                ],
+                htpy.td(".text-nowrap")[set_apart_at and set_apart_at.isoformat()],
                 htpy.td(".text-nowrap")[released_at and released_at.isoformat()],
                 htpy.td(".text-end")[days if days is not None else ""],
             ]
         )
+        dates = [
+            ("Sustained", sustained_at),
+            ("Set apart", set_apart_at),
+            ("Released", released_at),
+        ]
+        cards.append(
+            htpy.div(".card.mb-3")[
+                htpy.div(".card-body")[
+                    htpy.h5(".card-title")[edit_link("stretched-link")],
+                    htpy.h6(".card-subtitle.mb-2.text-body-secondary")[
+                        record.get("ward")
+                    ],
+                    htpy.dl(".row.mb-0")[
+                        (
+                            [
+                                htpy.dt(".col-5.fw-normal.text-body-secondary")[label],
+                                htpy.dd(".col-7.mb-1")[d.isoformat()],
+                            ]
+                            for label, d in dates
+                            if d
+                        ),
+                        days is not None
+                        and [
+                            htpy.dt(".col-5.fw-normal.text-body-secondary")["Days"],
+                            htpy.dd(".col-7.mb-0")[
+                                f"{days:,}", not released_at and " (current)"
+                            ],
+                        ],
+                    ],
+                ]
+            ]
+        )
     content = [
         _page_title("Callings"),
+        htpy.div(".pt-3.row")[htpy.div("#callings-form.col")[_callings_add_button()]],
         htpy.div(".pt-3.row")[
             htpy.div(".col")[
-                htpy.button(
-                    ".btn.btn-success",
-                    hx_get=flask.url_for("callings_add_form"),
-                    hx_swap="outerHTML",
-                )["Add calling"]
-            ]
-        ],
-        htpy.div(".pt-3.row")[
-            htpy.div(".col")[
-                htpy.div(".table-responsive")[
+                htpy.div(".d-md-none")[cards],
+                htpy.div(".d-none.d-md-block.table-responsive")[
                     htpy.table(".table.table-striped")[
                         htpy.thead[
                             htpy.tr[
@@ -514,7 +550,7 @@ def callings(records: list) -> str:
                         ],
                         htpy.tbody[rows],
                     ]
-                ]
+                ],
             ]
         ],
     ]
@@ -527,11 +563,36 @@ def callings(records: list) -> str:
     )
 
 
-def callings_add_form() -> str:
+def _callings_date_input(name: str, label: str, value: object) -> htpy.Element:
+    return htpy.div(".col-12.col-md-auto")[
+        htpy.div(".input-group")[
+            htpy.span(".input-group-text")[label.lower()],
+            htpy.input(
+                ".form-control",
+                aria_label=label,
+                name=name,
+                required=name == "sustained_at",
+                title=f"{label} date",
+                type="date",
+                value=value.isoformat() if isinstance(value, dt.date) else None,
+            ),
+        ]
+    ]
+
+
+def callings_add_form(calling: dict | None = None) -> str:
+    """Return the form for adding a calling, or for editing one if calling is
+    given."""
+    c = calling or {}
+    if calling:
+        action = flask.url_for("callings_update", calling_id=calling["id"])
+    else:
+        action = flask.url_for("callings_add")
     return str(
-        htpy.form(action=flask.url_for("callings_add"), method="post")[
+        htpy.form(action=action, method="post")[
+            calling and htpy.p(".mb-2")["Editing ", htpy.strong[calling["calling"]]],
             htpy.div(".g-1.row")[
-                htpy.div(".col-auto")[
+                htpy.div(".col-12.col-md-auto")[
                     htpy.div(".input-group")[
                         htpy.span(".input-group-text")["ward"],
                         htpy.input(
@@ -540,10 +601,11 @@ def callings_add_form() -> str:
                             name="ward",
                             required=True,
                             type="text",
+                            value=c.get("ward"),
                         ),
                     ]
                 ],
-                htpy.div(".col-auto")[
+                htpy.div(".col-12.col-md-auto")[
                     htpy.div(".input-group")[
                         htpy.span(".input-group-text")["calling"],
                         htpy.input(
@@ -552,52 +614,41 @@ def callings_add_form() -> str:
                             name="calling",
                             required=True,
                             type="text",
+                            value=c.get("calling"),
                         ),
                     ]
                 ],
-                htpy.div(".col-auto")[
-                    htpy.div(".input-group")[
-                        htpy.span(".input-group-text")["sustained"],
-                        htpy.input(
-                            ".form-control",
-                            aria_label="Sustained",
-                            name="sustained_at",
-                            required=True,
-                            title="Sustained date",
-                            type="date",
-                        ),
-                    ]
+                _callings_date_input(
+                    "sustained_at", "Sustained", c.get("sustained_at")
+                ),
+                _callings_date_input(
+                    "set_apart_at", "Set apart", c.get("set_apart_at")
+                ),
+                _callings_date_input("released_at", "Released", c.get("released_at")),
+                htpy.div(".col-12.col-md-auto")[
+                    htpy.button(".btn.btn-success.me-1", type="submit")["Save"],
+                    htpy.button(
+                        ".btn.btn-secondary",
+                        hx_get=flask.url_for("callings_add_button"),
+                        hx_target="#callings-form",
+                        type="button",
+                    )["Cancel"],
                 ],
-                htpy.div(".col-auto")[
-                    htpy.div(".input-group")[
-                        htpy.span(".input-group-text")["set apart"],
-                        htpy.input(
-                            ".form-control",
-                            aria_label="Set apart",
-                            name="set_apart_at",
-                            title="Set apart date",
-                            type="date",
-                        ),
-                    ]
-                ],
-                htpy.div(".col-auto")[
-                    htpy.div(".input-group")[
-                        htpy.span(".input-group-text")["released"],
-                        htpy.input(
-                            ".form-control",
-                            aria_label="Released",
-                            name="released_at",
-                            title="Released date",
-                            type="date",
-                        ),
-                    ]
-                ],
-                htpy.div(".col-auto")[
-                    htpy.button(".btn.btn-success", type="submit")["Save"]
-                ],
-            ]
+            ],
         ]
     )
+
+
+def _callings_add_button() -> htpy.Element:
+    return htpy.button(
+        ".btn.btn-success",
+        hx_get=flask.url_for("callings_add_form"),
+        hx_target="#callings-form",
+    )["Add calling"]
+
+
+def callings_add_button() -> str:
+    return str(_callings_add_button())
 
 
 def captains_log() -> str:

@@ -291,11 +291,29 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         self.u(sql, params)
 
+    def callings_get(self, calling_id: uuid.UUID) -> dict | None:
+        sql = """
+            select id, ward, calling, sustained_at, set_apart_at, released_at
+            from callings
+            where id = %(id)s
+        """
+        return self.q_one(sql, {"id": calling_id})
+
+    def callings_update(self, params: dict) -> None:
+        sql = """
+            update callings
+            set ward = %(ward)s, calling = %(calling)s,
+                sustained_at = %(sustained_at)s, set_apart_at = %(set_apart_at)s,
+                released_at = %(released_at)s
+            where id = %(id)s
+        """
+        self.u(sql, params)
+
     def callings_list(self) -> list[dict]:
         sql = """
             select id, ward, calling, sustained_at, set_apart_at, released_at
             from callings
-            order by sustained_at
+            order by sustained_at desc
         """
         return self.q(sql)
 

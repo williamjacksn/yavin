@@ -374,16 +374,49 @@ def callings_add_form() -> str:
     return yavin.components.callings_add_form()
 
 
+@app.get("/callings/add-button")
+@permission_required("callings")
+def callings_add_button() -> str:
+    return yavin.components.callings_add_button()
+
+
+@app.get("/callings/<uuid:calling_id>/edit-form")
+@permission_required("callings")
+def callings_edit_form(calling_id: uuid.UUID) -> str:
+    db: yavin.db.YavinDatabase = flask.g.db
+    calling = db.callings_get(calling_id)
+    if calling is None:
+        flask.abort(404)
+    return yavin.components.callings_add_form(calling)
+
+
 @app.post("/callings/add")
 @permission_required("callings")
 def callings_add() -> werkzeug.Response:
-    response = flask.redirect(flask.url_for("callings"))
     db: yavin.db.YavinDatabase = flask.g.db
+    params = _callings_params_from_request()
+    if params:
+        db.callings_insert(params)
+    return flask.redirect(flask.url_for("callings"))
 
+
+@app.post("/callings/<uuid:calling_id>/update")
+@permission_required("callings")
+def callings_update(calling_id: uuid.UUID) -> werkzeug.Response:
+    db: yavin.db.YavinDatabase = flask.g.db
+    params = _callings_params_from_request()
+    if params:
+        db.callings_update({**params, "id": calling_id})
+    return flask.redirect(flask.url_for("callings"))
+
+
+def _callings_params_from_request() -> dict | None:
+    """Read calling fields from the submitted form. Flash a message and return None
+    if a required field is missing."""
     sustained_at = flask.request.values.get("sustained_at", "")
     if sustained_at == "":
         flask.flash("Sustained date is required", "danger")
-        return response
+        return None
     sustained_at_date = yavin.util.str_to_date(sustained_at)
 
     set_apart_at = flask.request.values.get("set_apart_at", "")
@@ -398,15 +431,13 @@ def callings_add() -> werkzeug.Response:
     else:
         released_at_date = yavin.util.str_to_date(released_at)
 
-    params = {
+    return {
         "ward": flask.request.values.get("ward"),
         "calling": flask.request.values.get("calling"),
         "sustained_at": sustained_at_date,
         "set_apart_at": set_apart_at_date,
         "released_at": released_at_date,
     }
-    db.callings_insert(params)
-    return response
 
 
 @app.get("/captains-log")
@@ -486,13 +517,13 @@ def dashboard_card_callings() -> str:
     callings = db.callings_list()
     # Find the most recent calling that hasn't been released
     current_calling = None
-    for calling in reversed(callings):
+    for calling in callings:
         if calling.get("released_at") is None:
             current_calling = calling
             break
     if current_calling is None and callings:
         # If all are released, show the most recent one
-        current_calling = callings[-1]
+        current_calling = callings[0]
 
     if current_calling:
         calling_name = current_calling["calling"]
