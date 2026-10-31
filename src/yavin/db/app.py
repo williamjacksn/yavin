@@ -898,6 +898,12 @@ class YavinDatabase(fort.PostgresDatabase):
         new_permissions = [*existing_permissions, permission]
         self.user_permissions_set(email, new_permissions)
 
+    def user_permissions_delete(self, email: str) -> None:
+        sql = """
+            delete from user_permissions where email = %(email)s
+        """
+        self.u(sql, {"email": email})
+
     def user_permissions_get(self, email: str) -> list[str]:
         sql = """
             select permissions from user_permissions where email = %(email)s

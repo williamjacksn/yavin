@@ -2069,24 +2069,173 @@ def tithing() -> str:
     )
 
 
+def _email(email: str) -> list[htpy.Node]:
+    """An email address that wraps after the @ on narrow screens."""
+    local, at, domain = email.partition("@")
+    return [local, at, htpy.wbr, domain] if at else [email]
+
+
+def _permission_checkboxes(choices: list[str], checked: list[str]) -> htpy.Element:
+    """One checkbox per permission. Permissions the user has that the app no
+    longer uses are kept so saving doesn't drop them silently."""
+    names = sorted(set(choices) | set(checked))
+    return htpy.div[
+        (
+            htpy.div(".form-check")[
+                htpy.input(
+                    ".form-check-input",
+                    id=f"permission-{name}",
+                    type="checkbox",
+                    name="permission",
+                    value=name,
+                    checked=name in checked,
+                ),
+                htpy.label(".form-check-label", for_=f"permission-{name}")[name],
+            ]
+            for name in names
+        )
+    ]
+
+
+def _user_permissions_modal_button(
+    label: htpy.Node, email: str | None = None, **attrs: str
+) -> htpy.Element:
+    """A button that loads the edit (or add, without an email) form into the
+    modal and opens it."""
+    url = flask.url_for("user_permissions_modal", email=email)
+    return htpy.button(
+        type="button",
+        data_bs_toggle="modal",
+        data_bs_target="#modal-user-permissions",
+        hx_get=url,
+        hx_target="#modal-user-permissions-dialog",
+        **attrs,
+    )[label]
+
+
+def user_permissions_modal(
+    choices: list[str],
+    user: yavin.db.app.UserPermissions | None = None,
+    *,
+    error: str = "",
+    email: str = "",
+    checked: list[str] | None = None,
+) -> str:
+    """Modal content for editing user's permissions, or for adding a user when
+    user is None. After an error, email and checked keep what was entered."""
+    if checked is None:
+        checked = user.permissions if user else []
+    action = "user_permissions_update" if user else "user_permissions_add"
+    content = htpy.form(
+        ".modal-content",
+        action=flask.url_for(action),
+        method="post",
+        hx_post=flask.url_for(action),
+        hx_target="#modal-user-permissions-dialog",
+    )[
+        htpy.div(".modal-header")[
+            htpy.h5(".modal-title.text-break")[
+                ["Edit ", _email(user.email)] if user else "Add user"
+            ],
+            htpy.button(".btn-close", data_bs_dismiss="modal", type="button"),
+        ],
+        htpy.div(".modal-body")[
+            htpy.input(type="hidden", name="email", value=user.email)
+            if user
+            else htpy.div(".mb-3")[
+                htpy.label(".form-label", for_="user-permissions-email")["Email"],
+                htpy.input(
+                    "#user-permissions-email.form-control",
+                    name="email",
+                    required=True,
+                    type="email",
+                    value=email,
+                ),
+            ],
+            htpy.div(".form-label")["Permissions"],
+            _permission_checkboxes(choices, checked),
+            htpy.div(".form-text")["Uncheck everything to remove this user."]
+            if user
+            else None,
+            htpy.div(".alert.alert-danger.mt-3.mb-0")[error] if error else None,
+        ],
+        htpy.div(".justify-content-between.modal-footer")[
+            htpy.button(".btn.btn-secondary", data_bs_dismiss="modal", type="button")[
+                "Cancel"
+            ],
+            htpy.button(".btn.btn-success", type="submit")[
+                "Save" if user else "Add user"
+            ],
+        ],
+    ]
+    return str(content)
+
+
 def user_permissions(users: list[yavin.db.app.UserPermissions]) -> str:
-    content = [
+    messages = flask.get_flashed_messages(with_categories=True)
+    content = htpy.fragment[
         _page_title("User permissions"),
         htpy.div(".pt-3.row")[
-            htpy.div(".col-12.col-sm-10.col-md-8.col-lg-7.col-xl-4")[
-                htpy.table(".table")[
-                    htpy.thead[htpy.tr[htpy.th["Email"], htpy.th["Permissions"]]],
+            htpy.div(".col")[
+                (
+                    htpy.div(class_=["alert", "alert-dismissible", category])[
+                        htpy.button(
+                            ".btn-close", data_bs_dismiss="alert", type="button"
+                        ),
+                        message,
+                    ]
+                    for category, message in messages
+                )
+            ]
+        ]
+        if messages
+        else None,
+        htpy.div(".pt-3.row")[
+            htpy.div(".col")[
+                _user_permissions_modal_button(
+                    [htpy.i(".bi-person-plus"), " Add user"],
+                    class_="btn btn-success",
+                )
+            ]
+        ],
+        htpy.div(".pt-3.row")[
+            htpy.div(".col-12.col-lg-10.col-xl-8")[
+                htpy.table(".table.align-middle")[
+                    htpy.thead[
+                        htpy.tr[
+                            htpy.th["Email"],
+                            htpy.th["Permissions"],
+                            htpy.th[htpy.span(".visually-hidden")["Actions"]],
+                        ]
+                    ],
                     htpy.tbody[
                         (
                             htpy.tr[
-                                htpy.td[u.email],
-                                htpy.td[(htpy.code[p, " "] for p in u.permissions)],
+                                htpy.td[_email(u.email)],
+                                htpy.td[
+                                    (
+                                        htpy.code(".text-nowrap")[p, " "]
+                                        for p in u.permissions
+                                    )
+                                ],
+                                htpy.td(".text-end")[
+                                    _user_permissions_modal_button(
+                                        htpy.i(".bi-pencil"),
+                                        u.email,
+                                        class_="btn btn-sm btn-link",
+                                        title="Edit permissions",
+                                        aria_label=f"Edit permissions for {u.email}",
+                                    )
+                                ],
                             ]
                             for u in users
                         )
                     ],
                 ]
             ]
+        ],
+        htpy.div("#modal-user-permissions.modal")[
+            htpy.div("#modal-user-permissions-dialog.modal-dialog")
         ],
     ]
     return signed_in(

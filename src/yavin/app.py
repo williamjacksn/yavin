@@ -48,7 +48,13 @@ if settings.scheme == "https":
     app.config["SESSION_COOKIE_SECURE"] = True
 
 
+# Every permission that some page requires, collected as routes are defined
+PERMISSIONS: set[str] = set()
+
+
 def permission_required(permission: str) -> typing.Callable:
+    PERMISSIONS.add(permission)
+
     def decorator(f: typing.Callable) -> typing.Callable:
         @functools.wraps(f)
         def decorated_function(*args, **kwargs) -> str | werkzeug.Response:  # noqa: ANN002, ANN003
@@ -1240,6 +1246,95 @@ def tithing_income_paid() -> werkzeug.Response:
 def user_permissions() -> str:
     users: list[yavin.db.app.UserPermissions] = flask.g.db.user_permissions_list()
     return yavin.components.user_permissions(users)
+
+
+def _user_permissions_find(email: str) -> yavin.db.app.UserPermissions:
+    db: yavin.db.YavinDatabase = flask.g.db
+    for u in db.user_permissions_list():
+        if u.email == email:
+            return u
+    flask.abort(404)
+
+
+def _user_permissions_submitted() -> list[str]:
+    """Checked permissions from the form. Callers drop any the app doesn't know."""
+    return sorted(set(flask.request.form.getlist("permission")))
+
+
+def _user_permissions_saved() -> str | werkzeug.Response:
+    """After a successful save, reload the page so the modal closes and the table
+    shows the change."""
+    if flask.request.headers.get("HX-Request") == "true":
+        response = flask.make_response("")
+        response.headers["HX-Redirect"] = flask.url_for("user_permissions")
+        return response
+    return flask.redirect(flask.url_for("user_permissions"))
+
+
+def _user_permissions_rejected(
+    error: str, user: yavin.db.app.UserPermissions | None, checked: list[str]
+) -> str | werkzeug.Response:
+    """Show the error in the modal, keeping what was entered, or flash it when
+    the form was posted without htmx."""
+    if flask.request.headers.get("HX-Request") == "true":
+        return yavin.components.user_permissions_modal(
+            sorted(PERMISSIONS),
+            user,
+            error=error,
+            email=flask.request.form.get("email", ""),
+            checked=checked,
+        )
+    flask.flash(error, "alert-danger")
+    return flask.redirect(flask.url_for("user_permissions"))
+
+
+@app.get("/user-permissions/modal")
+@permission_required("admin")
+def user_permissions_modal() -> str:
+    """The modal content for editing a user, or for adding one if no email is
+    given."""
+    email = flask.request.args.get("email")
+    user = None if email is None else _user_permissions_find(email)
+    return yavin.components.user_permissions_modal(sorted(PERMISSIONS), user)
+
+
+@app.post("/user-permissions/update")
+@permission_required("admin")
+def user_permissions_update() -> str | werkzeug.Response:
+    db: yavin.db.YavinDatabase = flask.g.db
+    user = _user_permissions_find(flask.request.form.get("email", ""))
+    allowed = PERMISSIONS | set(user.permissions)
+    permissions = [p for p in _user_permissions_submitted() if p in allowed]
+    if user.email == flask.g.email and "admin" not in permissions:
+        return _user_permissions_rejected(
+            "You can't remove your own admin permission.", user, permissions
+        )
+    if permissions:
+        db.user_permissions_set(user.email, permissions)
+        log.info(f"{flask.g.email} set permissions for {user.email}: {permissions}")
+    else:
+        db.user_permissions_delete(user.email)
+        log.info(f"{flask.g.email} removed all permissions for {user.email}")
+    return _user_permissions_saved()
+
+
+@app.post("/user-permissions/add")
+@permission_required("admin")
+def user_permissions_add() -> str | werkzeug.Response:
+    db: yavin.db.YavinDatabase = flask.g.db
+    email = flask.request.form.get("email", "").strip()
+    permissions = [p for p in _user_permissions_submitted() if p in PERMISSIONS]
+    if "@" not in email or any(c.isspace() for c in email):
+        error = "Enter a valid email address."
+    elif not permissions:
+        error = "Choose at least one permission."
+    elif db.user_permissions_get(email):
+        error = f"{email} already has permissions. Edit their row instead."
+    else:
+        db.user_permissions_set(email, permissions)
+        log.info(f"{flask.g.email} added {email} with permissions {permissions}")
+        return _user_permissions_saved()
+    return _user_permissions_rejected(error, None, permissions)
 
 
 @app.get("/weight")
