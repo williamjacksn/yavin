@@ -110,6 +110,19 @@ class YavinDatabase(fort.PostgresDatabase):
         rows = self.q("select distinct skill_id from dreamlight_character_skill")
         return {row["skill_id"] for row in rows}
 
+    def dreamlight_characters_list_all(self) -> list[dict]:
+        return self.q("""
+            select area_id, id, name, universe_id
+            from dreamlight_characters
+        """)
+
+    def dreamlight_character_skill_list_all(self) -> list[dict]:
+        """Every user's skill assignments."""
+        return self.q("""
+            select character_id, skill_id, user_email
+            from dreamlight_character_skill
+        """)
+
     def dreamlight_character_add(
         self, name: str, area_id: uuid.UUID, universe_id: uuid.UUID
     ) -> None:

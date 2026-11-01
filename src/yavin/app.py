@@ -808,6 +808,7 @@ def library_sync_now() -> werkzeug.Response:
 
 
 @app.get("/migrate")
+@permission_required("admin")
 def migrate() -> werkzeug.Response:
     con = yavin.db.app_sqlite.connection_get(settings.database)
     yavin.db.app_sqlite.migrate(con)
@@ -837,6 +838,17 @@ def migrate() -> werkzeug.Response:
             r["set_apart_at"],
             r["sustained_at"],
             r["ward"],
+        )
+    for kind in ("area", "universe", "skill"):
+        for r in db.dreamlight_lookup_list(kind):
+            yavin.db.app_sqlite.dreamlight_lookup_insert(con, kind, r["id"], r["name"])
+    for r in db.dreamlight_characters_list_all():
+        yavin.db.app_sqlite.dreamlight_characters_insert(
+            con, r["area_id"], r["id"], r["name"], r["universe_id"]
+        )
+    for r in db.dreamlight_character_skill_list_all():
+        yavin.db.app_sqlite.dreamlight_character_skill_insert(
+            con, r["character_id"], r["skill_id"], r["user_email"]
         )
     for r in db.electricity_list():
         yavin.db.app_sqlite.electricity_insert(

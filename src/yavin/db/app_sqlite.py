@@ -148,6 +148,61 @@ def connection_init(path: str) -> None:
     con.close()
 
 
+def dreamlight_character_skill_insert(
+    con: sqlite3.Connection,
+    character_id: uuid.UUID,
+    skill_id: uuid.UUID,
+    user_email: str,
+) -> None:
+    sql = """
+        insert into dreamlight_character_skill (
+            character_id, skill_id, user_email
+        ) values (
+            :character_id, :skill_id, :user_email
+        )
+    """
+    params = {
+        "character_id": character_id,
+        "skill_id": skill_id,
+        "user_email": user_email,
+    }
+    con.execute(sql, params)
+    con.commit()
+
+
+def dreamlight_characters_insert(
+    con: sqlite3.Connection,
+    area_id: uuid.UUID,
+    id_: uuid.UUID,
+    name: str,
+    universe_id: uuid.UUID,
+) -> None:
+    sql = """
+        insert into dreamlight_characters (
+            area_id, id, name, universe_id
+        ) values (
+            :area_id, :id, :name, :universe_id
+        )
+    """
+    params = {"area_id": area_id, "id": id_, "name": name, "universe_id": universe_id}
+    con.execute(sql, params)
+    con.commit()
+
+
+def dreamlight_lookup_insert(
+    con: sqlite3.Connection, kind: str, id_: uuid.UUID, name: str
+) -> None:
+    """Insert an area, universe, or skill."""
+    table = {
+        "area": "dreamlight_areas",
+        "universe": "dreamlight_universes",
+        "skill": "dreamlight_skills",
+    }[kind]
+    sql = f"insert into {table} (id, name) values (:id, :name)"  # noqa: S608
+    con.execute(sql, {"id": id_, "name": name})
+    con.commit()
+
+
 def electricity_insert(
     con: sqlite3.Connection,
     bill: decimal.Decimal,
@@ -341,6 +396,40 @@ def migrate(con: sqlite3.Connection) -> None:
             )
         """)
         con.execute("""
+            create table dreamlight_areas (
+                id uuid primary key,
+                name text
+            )
+        """)
+        con.execute("""
+            create table dreamlight_character_skill (
+                character_id uuid,
+                skill_id uuid,
+                user_email text,
+                primary key (character_id, user_email)
+            )
+        """)
+        con.execute("""
+            create table dreamlight_characters (
+                area_id uuid,
+                id uuid primary key,
+                name text,
+                universe_id uuid
+            )
+        """)
+        con.execute("""
+            create table dreamlight_skills (
+                id uuid primary key,
+                name text
+            )
+        """)
+        con.execute("""
+            create table dreamlight_universes (
+                id uuid primary key,
+                name text
+            )
+        """)
+        con.execute("""
             create table electricity (
                 bill decimal,
                 bill_date date primary key,
@@ -435,6 +524,18 @@ def migrate(con: sqlite3.Connection) -> None:
             )
         """)
         con.execute("""
+            create table tello_balances (
+                allowance text,
+                fetched_at timestamp,
+                id uuid primary key,
+                line text,
+                percentage_available decimal,
+                remaining text,
+                renewal_date date,
+                subscription_id text
+            )
+        """)
+        con.execute("""
             create table tithing_income (
                 amount decimal,
                 date date,
@@ -456,21 +557,6 @@ def migrate(con: sqlite3.Connection) -> None:
             )
         """)
         schema_versions_insert(con, 1)
-    if current_version < 2:
-        log.info("Migrating database to schema version 2")
-        con.execute("""
-            create table tello_balances (
-                allowance text,
-                fetched_at timestamp,
-                id uuid primary key,
-                line text,
-                percentage_available decimal,
-                remaining text,
-                renewal_date date,
-                subscription_id text
-            )
-        """)
-        schema_versions_insert(con, 2)
 
 
 def mileage_entries_insert(
@@ -558,6 +644,11 @@ def reset_data(con: sqlite3.Connection) -> None:
         "delete from balances_transactions",
         "delete from billboard_number_one",
         "delete from callings",
+        "delete from dreamlight_areas",
+        "delete from dreamlight_character_skill",
+        "delete from dreamlight_characters",
+        "delete from dreamlight_skills",
+        "delete from dreamlight_universes",
         "delete from electricity",
         "delete from hymn_history",
         "delete from hymn_tags",
