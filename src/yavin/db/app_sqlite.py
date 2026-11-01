@@ -389,13 +389,6 @@ def migrate(con: sqlite3.Connection) -> None:
             )
         """)
         con.execute("""
-            create table captains_log (
-                id uuid primary key,
-                log_text text,
-                log_timestamp timestamp
-            )
-        """)
-        con.execute("""
             create table dreamlight_areas (
                 id uuid primary key,
                 name text

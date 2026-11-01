@@ -363,66 +363,6 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         return self.q(sql)
 
-    # captain's log
-
-    def captains_log_delete(self, id_: str) -> None:
-        sql = """
-            delete from captains_log
-            where id = %(id)s
-        """
-        params = {"id": uuid.UUID(hex=id_)}
-        self.u(sql, params)
-
-    def captains_log_get(self, log_id: uuid.UUID) -> dict:
-        sql = """
-            select id, log_text, log_timestamp from captains_log
-            where id = %(id)s
-        """
-        params = {"id": log_id}
-        row = self.q_one(sql, params)
-        if row:
-            return {
-                "id": row.get("id"),
-                "log_text": row.get("log_text"),
-                "log_timestamp": row.get("log_timestamp"),
-            }
-        return {}
-
-    def captains_log_insert(
-        self, log_text: str, log_timestamp: dt.datetime | None = None
-    ) -> None:
-        sql = """
-            insert into captains_log (id, log_timestamp, log_text)
-            values (%(id)s, %(log_timestamp)s, %(log_text)s)
-        """
-        if log_timestamp is None:
-            log_timestamp = dt.datetime.now(dt.UTC)
-        params = {
-            "id": uuid.uuid4(),
-            "log_text": log_text,
-            "log_timestamp": log_timestamp,
-        }
-        self.u(sql, params)
-
-    def captains_log_list(self, limit: int = 20) -> list[dict]:
-        sql = """
-            select id, log_timestamp, log_text
-            from captains_log
-            order by log_timestamp desc
-            limit %(limit)s
-        """
-        params = {"limit": limit}
-        return self.q(sql, params)
-
-    def captains_log_update(self, id_: str, log_text: str) -> None:
-        sql = """
-            update captains_log
-            set log_text = %(log_text)s
-            where id = %(id)s
-        """
-        params = {"id": uuid.UUID(hex=id_), "log_text": log_text}
-        self.u(sql, params)
-
     # electricity
 
     def electricity_insert(
@@ -1307,6 +1247,11 @@ class YavinDatabase(fort.PostgresDatabase):
                 {"admin_email": admin_email},
             )
             self._add_schema_version(29)
+
+        if self.version < 30:
+            # The captain's log feature was removed
+            self.u("drop table if exists captains_log")
+            self._add_schema_version(30)
 
     def _add_schema_version(self, schema_version: int) -> None:
         self._version = schema_version

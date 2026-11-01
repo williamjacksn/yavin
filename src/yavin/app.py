@@ -109,11 +109,6 @@ def index() -> str:
             or "admin" in flask.g.permissions,
         },
         {
-            "url": flask.url_for("dashboard_card_captains_log"),
-            "visible": "captains-log" in flask.g.permissions
-            or "admin" in flask.g.permissions,
-        },
-        {
             "url": flask.url_for("dashboard_card_dreamlight"),
             "visible": "dreamlight" in flask.g.permissions
             or "admin" in flask.g.permissions,
@@ -461,59 +456,6 @@ def _callings_params_from_request() -> dict | None:
     }
 
 
-@app.get("/captains-log")
-@permission_required("captains-log")
-def captains_log() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
-    flask.g.records = db.captains_log_list()
-    return yavin.components.captains_log()
-
-
-@app.post("/captains-log/delete")
-@permission_required("captains-log")
-def captains_log_delete() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
-    db.captains_log_delete(flask.request.values.get("id", ""))
-    return flask.redirect(flask.url_for("captains_log"))
-
-
-@app.post("/captains-log/incoming")
-def captains_log_incoming() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
-    log.debug(f"json: {flask.request.json}")
-    auth_phrase: str = flask.request.json["auth-phrase"]
-    if auth_phrase.lower() == settings.admin_auth_phrase:
-        log.debug("Authorization accepted")
-        log_text = flask.request.json["log-text"]
-        db.captains_log_insert(log_text)
-        return "Log recorded."
-    return "Authorization failure."
-
-
-@app.post("/captains-log/modal/delete")
-def captains_log_modal_delete() -> str:
-    return yavin.components.captains_log_modal_delete(
-        flask.request.values.get("log-id", "")
-    )
-
-
-@app.post("/captains-log/modal/edit")
-def captains_log_modal_edit() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
-    log_id = uuid.UUID(flask.request.values.get("log-id"))
-    log_entry = db.captains_log_get(log_id)
-    return yavin.components.captains_log_modal_edit(log_entry)
-
-
-@app.post("/captains-log/update")
-@permission_required("captains-log")
-def captains_log_update() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
-    log_text = flask.request.values["log_text"]
-    db.captains_log_update(flask.request.values["id"], log_text)
-    return flask.redirect(flask.url_for("captains_log"))
-
-
 @app.get("/dashboard-card/balances")
 def dashboard_card_balances() -> str:
     accounts_count = flask.g.db.balances_accounts_count()
@@ -558,11 +500,6 @@ def dashboard_card_callings() -> str:
         text = "No callings"
 
     return yavin.components.dashboard_card_callings(text)
-
-
-@app.get("/dashboard-card/captains-log")
-def dashboard_card_captains_log() -> str:
-    return yavin.components.dashboard_card_captains_log()
 
 
 @app.get("/dashboard-card/electricity")

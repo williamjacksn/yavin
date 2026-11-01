@@ -653,118 +653,6 @@ def callings_add_button() -> str:
     return str(_callings_add_button())
 
 
-def captains_log() -> str:
-    tbody = htpy.tbody[
-        (
-            htpy.tr[
-                htpy.td(".text-nowrap")[
-                    yavin.util.clean_datetime(record.get("log_timestamp")),
-                    " UTC",
-                ],
-                htpy.td[record.get("log_text")],
-                htpy.td(".text-nowrap")[
-                    htpy.button(
-                        ".btn.btn-primary.btn-sm.me-1",
-                        data_bs_target="#modal-edit",
-                        data_bs_toggle="modal",
-                        hx_post=flask.url_for("captains_log_modal_edit"),
-                        hx_target="#modal-edit-dialog",
-                        name="log-id",
-                        value=str(record.get("id")),
-                    )[htpy.i(".bi-pencil-fill")],
-                    htpy.button(
-                        ".btn.btn-danger.btn-sm",
-                        data_bs_target="#modal-delete",
-                        data_bs_toggle="modal",
-                        hx_post=flask.url_for("captains_log_modal_delete"),
-                        hx_target="#modal-delete-dialog",
-                        name="log-id",
-                        value=str(record.get("id")),
-                    )[htpy.i(".bi-trash-fill")],
-                ],
-            ]
-            for record in flask.g.records
-        )
-    ]
-    content = [
-        _page_title(markupsafe.Markup("Captain&#x02bc;s log")),
-        htpy.div(".pt-3.row")[
-            htpy.div(".col")[
-                htpy.table(".d-block.table")[
-                    htpy.thead[
-                        htpy.tr[
-                            htpy.th["Log date"], htpy.th["Log text"], htpy.th["Actions"]
-                        ]
-                    ],
-                    tbody,
-                ]
-            ]
-        ],
-        htpy.div("#modal-edit.modal")[htpy.div("#modal-edit-dialog.modal-dialog")],
-        htpy.div("#modal-delete.modal")[htpy.div("#modal-delete-dialog.modal-dialog")],
-    ]
-    return signed_in(
-        flask.g.email,
-        flask.g.permissions,
-        _back_to_home(),
-        content,
-        "Yavin / Captain&#x02bc;s log",
-    )
-
-
-def captains_log_modal_delete(log_id: str) -> str:
-    content = htpy.div(".modal-content")[
-        htpy.div(".modal-header")[
-            htpy.h5(".modal-title")["Delete this log"],
-            htpy.button(".btn-close", data_bs_dismiss="modal", type="button"),
-        ],
-        htpy.div(".modal-body")["Are you sure you want to delete this log entry?"],
-        htpy.div(".justify-content-between.modal-footer")[
-            htpy.button(".btn.btn-secondary", data_bs_dismiss="modal", type="button")[
-                "Cancel"
-            ],
-            htpy.form(action=flask.url_for("captains_log_delete"), method="post")[
-                htpy.input(name="id", type="hidden", value=log_id),
-                htpy.button(".btn.btn-danger", type="submit")["Delete"],
-            ],
-        ],
-    ]
-    return str(content)
-
-
-def captains_log_modal_edit(log_entry: dict) -> str:
-    content = htpy.div(".modal-content")[
-        htpy.div(".modal-header")[
-            htpy.h5(".modal-title")[
-                yavin.util.clean_datetime(log_entry["log_timestamp"]), " UTC"
-            ],
-            htpy.button(".btn-close", data_bs_dismiss="modal", type="button"),
-        ],
-        htpy.div(".modal-body")[
-            htpy.form(
-                "#form-edit",
-                action=flask.url_for("captains_log_update"),
-                method="post",
-            )[
-                htpy.input(name="id", type="hidden", value=str(log_entry.get("id"))),
-                htpy.div(".mb-3")[
-                    htpy.label(".form-label", for_="log-text"),
-                    htpy.textarea("#log-text.form-control", name="log_text", rows=5)[
-                        log_entry.get("log_text")
-                    ],
-                ],
-            ],
-        ],
-        htpy.div(".justify-content-between.modal-footer")[
-            htpy.button(".btn.btn-secondary", data_bs_dismiss="modal", type="button")[
-                "Cancel"
-            ],
-            htpy.button(".btn.btn-success", form="form-edit", type="submit")["Save"],
-        ],
-    ]
-    return str(content)
-
-
 def dashboard_card(
     card_title: str | markupsafe.Markup,
     card_href: str | None = None,
@@ -793,12 +681,6 @@ def dashboard_card_billboard(latest: str) -> str:
 
 def dashboard_card_callings(text: str) -> str:
     return dashboard_card("Callings", flask.url_for("callings"), text)
-
-
-def dashboard_card_captains_log() -> str:
-    return dashboard_card(
-        markupsafe.Markup("Captain&#x02bc;s log"), flask.url_for("captains_log"), "Go"
-    )
 
 
 def dashboard_card_electricity() -> str:
