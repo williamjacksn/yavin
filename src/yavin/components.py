@@ -7,6 +7,7 @@ import htpy
 import markupsafe
 
 import yavin.db
+import yavin.db.app
 import yavin.jar
 import yavin.util
 import yavin.versions as v

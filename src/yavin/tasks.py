@@ -12,6 +12,7 @@ import httpx
 import yavin.billboard
 import yavin.components
 import yavin.db
+import yavin.db.app
 import yavin.settings
 import yavin.util
 

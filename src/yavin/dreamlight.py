@@ -1,11 +1,11 @@
 """Disney Dreamlight Valley character roster and editable lookup lists."""
 
+import sqlite3
 import uuid
 from collections import Counter
 
 import flask
 import htpy as h
-import psycopg2
 from werkzeug import Response
 
 from yavin import components
@@ -53,7 +53,7 @@ def mutation_message(error: Exception) -> str:
         "The list changed or this name is already used. Review the current lists "
         "and try again. Referenced Areas and Universes cannot be changed; "
         "assigned Skills cannot be deleted."
-        if isinstance(error, psycopg2.IntegrityError)
+        if isinstance(error, sqlite3.IntegrityError)
         else str(error)
     )
 
@@ -76,7 +76,7 @@ def character_add() -> str | tuple[str, int] | Response:
             "Universe",
         )
         db.dreamlight_character_add(name, area_id, universe_id)
-    except (ValueError, psycopg2.IntegrityError) as error:
+    except (ValueError, sqlite3.IntegrityError) as error:
         return mutation_error(error)
     return flask.redirect(action_url("dreamlight"))
 
@@ -100,7 +100,7 @@ def character_update(
                 else None
             )
             db.dreamlight_character_skill(character_id, flask.g.email, skill_id)
-    except (ValueError, psycopg2.IntegrityError) as error:
+    except (ValueError, sqlite3.IntegrityError) as error:
         if htmx and action == "skill":
             # htmx only swaps successful responses, so report the error in the form
             return str(skill_form(character, skill_view(), mutation_message(error)))
@@ -270,7 +270,7 @@ def lookup_update(kind: str, action: str) -> str | tuple[str, int] | Response:
         else:
             name = valid_name(flask.request.form.get("name", ""), entries, entry_id)
             db.dreamlight_lookup_save(kind, name, entry_id)
-    except (ValueError, psycopg2.IntegrityError) as error:
+    except (ValueError, sqlite3.IntegrityError) as error:
         return mutation_error(error)
     return flask.redirect(action_url("dreamlight") + "#lists")
 

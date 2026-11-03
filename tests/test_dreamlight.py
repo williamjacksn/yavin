@@ -1,11 +1,11 @@
 import os
+import sqlite3
 import tempfile
 import unittest
 import uuid
 from unittest.mock import MagicMock, patch
 
 import lxml.html
-import psycopg2
 from flask.sessions import SecureCookieSessionInterface
 
 with (
@@ -14,7 +14,7 @@ with (
 ):
     from yavin.app import app
 
-from yavin.db.app import YavinDatabase
+from yavin.db.app_sqlite import YavinSqliteDatabase
 
 
 class DreamlightTests(unittest.TestCase):
@@ -393,7 +393,7 @@ class DreamlightTests(unittest.TestCase):
         self.db.dreamlight_lookup_delete.assert_not_called()
 
     def test_database_conflicts_return_validation_error(self) -> None:
-        self.db.dreamlight_character_skill.side_effect = psycopg2.IntegrityError()
+        self.db.dreamlight_character_skill.side_effect = sqlite3.IntegrityError()
         self.assertEqual(
             self.client.post(
                 self.character_path("skill"), data={"skill_id": ""}
@@ -447,7 +447,7 @@ class DreamlightDatabaseTests(unittest.TestCase):
     def test_database_writes_only_skill_on_update_and_omits_skill_on_creation(
         self,
     ) -> None:
-        db = object.__new__(YavinDatabase)
+        db = object.__new__(YavinSqliteDatabase)
         with patch.object(db, "u") as execute:
             character_id, area_id, universe_id, skill_id = (
                 uuid.uuid4() for _ in range(4)
@@ -455,6 +455,7 @@ class DreamlightDatabaseTests(unittest.TestCase):
             db.dreamlight_character_add("Mickey", area_id, universe_id)
             sql, params = execute.call_args.args
             self.assertNotIn("skill_id", sql)
+            self.assertIsInstance(params.pop("id"), uuid.UUID)
             self.assertEqual(
                 params,
                 {"name": "Mickey", "area_id": area_id, "universe_id": universe_id},
@@ -474,12 +475,12 @@ class DreamlightDatabaseTests(unittest.TestCase):
             db.dreamlight_character_skill(character_id, email, None)
             sql, params = execute.call_args.args
             self.assertIn("delete from dreamlight_character_skill", sql)
-            self.assertIn("user_email=%(user_email)s", sql)
+            self.assertIn("user_email = :user_email", sql)
             self.assertEqual(params, expected | {"skill_id": None})
 
     def test_lookup_table_allowlist(self) -> None:
         with self.assertRaises(KeyError):
-            YavinDatabase.dreamlight_table("area; drop table users")
+            YavinSqliteDatabase.dreamlight_table("area; drop table users")
 
 
 if __name__ == "__main__":

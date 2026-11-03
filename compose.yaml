@@ -2,7 +2,6 @@ services:
   app:
     environment:
       ADMIN_EMAIL: (set in compose.override.yaml)
-      DSN: postgres://postgres:postgres@postgres/postgres
       OPENID_CLIENT_ID: (set in compose.override.yaml)
       OPENID_CLIENT_SECRET: (set in compose.override.yaml)
       PORT: 8080
@@ -13,16 +12,6 @@ services:
     ports:
       - "8080:8080"
 
-  postgres:
-    environment:
-      PGDATA: /var/lib/postgresql/data/16
-      POSTGRES_PASSWORD: postgres
-    image: postgres:18
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
   shell:
     entrypoint:
       - /bin/bash
@@ -30,6 +19,3 @@ services:
     init: true
     volumes:
       - ./src:/app/src
-
-volumes:
-  postgres-data:

@@ -1,6 +1,5 @@
 import datetime as dt
 import decimal
-import inspect
 import json
 import os
 import tempfile
@@ -9,29 +8,11 @@ import uuid
 from unittest.mock import patch
 
 from yavin.db import app_sqlite
-from yavin.db.app import BillboardRow, UserPermissions, YavinDatabase
+from yavin.db.app import BillboardRow, UserPermissions
 from yavin.db.app_sqlite import YavinSqliteDatabase
 
 D = dt.date
 Dec = decimal.Decimal
-
-
-class InterfaceTests(unittest.TestCase):
-    def test_every_postgres_query_has_a_sqlite_version_with_the_same_arguments(
-        self,
-    ) -> None:
-        def public(cls: type) -> dict[str, list[str]]:
-            return {
-                name: list(inspect.signature(f).parameters)
-                for name, f in inspect.getmembers(cls, inspect.isfunction)
-                if not name.startswith("_") and name != "migrate"
-            }
-
-        postgres = public(YavinDatabase)
-        sqlite = public(YavinSqliteDatabase)
-        self.assertEqual(sorted(set(postgres) - set(sqlite)), [])
-        for name, parameters in postgres.items():
-            self.assertEqual(sqlite[name], parameters, name)
 
 
 class SqliteDatabaseTests(unittest.TestCase):
@@ -76,7 +57,7 @@ class SqliteDatabaseTests(unittest.TestCase):
             self.db.weight_entries_insert(D(2026, 10, day), Dec(weight))
         weights = [str(w["weight"]) for w in self.db.weight_entries_list()]
         self.assertEqual(weights, ["184.20", "185.0"])
-        # A second entry for the same day is ignored, like Postgres
+        # A second entry for the same day is ignored
         self.db.weight_entries_insert(D(2026, 10, 2), Dec("150"))
         self.assertEqual(
             self.db.weight_entries_get_most_recent(),
@@ -116,7 +97,7 @@ class SqliteDatabaseTests(unittest.TestCase):
         self.assertEqual(row["account_balance"], Dec(0))
         self.assertEqual(self.db.balances_accounts_count(), 2)
 
-    def test_tithing_owed_rounds_like_postgres(self) -> None:
+    def test_tithing_owed_rounds_half_up_to_cents(self) -> None:
         self.db.tithing_income_insert(D(2026, 9, 1), Dec("1000.00"), "Paid")
         self.db.tithing_income_mark_paid()
         self.db.tithing_income_insert(D(2026, 10, 1), Dec("100.05"), "Pay")
@@ -237,7 +218,7 @@ class SqliteDatabaseTests(unittest.TestCase):
         self.db.user_permissions_delete("A@example.com")
         self.assertEqual(self.db.user_permissions_get("A@example.com"), [])
 
-    def test_text_sorts_ignore_case_like_postgres(self) -> None:
+    def test_text_sorts_ignore_case(self) -> None:
         for person in ("Will", "ann", "Ben"):
             self.db.movie_people_insert({"person": person})
         people = [p["person"] for p in self.db.movie_people_list()]

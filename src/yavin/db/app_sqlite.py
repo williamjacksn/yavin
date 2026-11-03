@@ -2,7 +2,6 @@ import datetime as dt
 import decimal
 import json
 import logging
-import os
 import sqlite3
 import typing
 import uuid
@@ -12,7 +11,6 @@ from yavin.db.app import (
     BillboardRow,
     LibraryCredential,
     UserPermissions,
-    YavinDatabase,
 )
 
 log = logging.getLogger(__name__)
@@ -53,99 +51,6 @@ def _register_adapters_and_converters() -> None:
 _register_adapters_and_converters()
 
 
-def balances_accounts_insert(
-    con: sqlite3.Connection, account_name: str, id_: uuid.UUID
-) -> None:
-    sql = """
-        insert into balances_accounts (account_name, id)
-        values (:account_name, :id)
-    """
-    params = {
-        "account_name": account_name,
-        "id": id_,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-def balances_transactions_insert(
-    con: sqlite3.Connection,
-    account_id: uuid.UUID,
-    tx_date: dt.date,
-    tx_description: str,
-    tx_id: uuid.UUID,
-    tx_value: decimal.Decimal,
-) -> None:
-    sql = """
-        insert into balances_transactions (
-            account_id, tx_date, tx_description, tx_id, tx_value
-        ) values (
-            :account_id, :tx_date, :tx_description, :tx_id, :tx_value
-        )
-    """
-    params = {
-        "account_id": account_id,
-        "tx_date": tx_date,
-        "tx_description": tx_description,
-        "tx_id": tx_id,
-        "tx_value": tx_value,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-def billboard_insert(
-    con: sqlite3.Connection,
-    artist: str,
-    fetched_at: dt.datetime,
-    id_: uuid.UUID,
-    title: str,
-) -> None:
-    sql = """
-        insert into billboard_number_one (
-            artist, fetched_at, id, title
-        ) values (
-            :artist, :fetched_at, :id, :title
-        )
-    """
-    params = {
-        "artist": artist,
-        "fetched_at": fetched_at,
-        "id": id_,
-        "title": title,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-def callings_insert(
-    con: sqlite3.Connection,
-    calling: str,
-    id_: uuid.UUID,
-    released_at: dt.date,
-    set_apart_at: dt.date,
-    sustained_at: dt.date,
-    ward: str,
-) -> None:
-    sql = """
-        insert into callings (
-            calling, id, released_at, set_apart_at, sustained_at, ward
-        ) values (
-            :calling, :id, :released_at, :set_apart_at, :sustained_at, :ward
-        )
-    """
-    params = {
-        "calling": calling,
-        "id": id_,
-        "released_at": released_at,
-        "set_apart_at": set_apart_at,
-        "sustained_at": sustained_at,
-        "ward": ward,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
 def connection_get(path: str) -> sqlite3.Connection:
     # Declared column types (date, decimal, uuid, ...) pick the converters above
     con = sqlite3.connect(path, autocommit=False, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -160,85 +65,6 @@ def connection_init(path: str) -> None:
     con.close()
 
 
-def dreamlight_character_skill_insert(
-    con: sqlite3.Connection,
-    character_id: uuid.UUID,
-    skill_id: uuid.UUID,
-    user_email: str,
-) -> None:
-    sql = """
-        insert into dreamlight_character_skill (
-            character_id, skill_id, user_email
-        ) values (
-            :character_id, :skill_id, :user_email
-        )
-    """
-    params = {
-        "character_id": character_id,
-        "skill_id": skill_id,
-        "user_email": user_email,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-def dreamlight_characters_insert(
-    con: sqlite3.Connection,
-    area_id: uuid.UUID,
-    id_: uuid.UUID,
-    name: str,
-    universe_id: uuid.UUID,
-) -> None:
-    sql = """
-        insert into dreamlight_characters (
-            area_id, id, name, universe_id
-        ) values (
-            :area_id, :id, :name, :universe_id
-        )
-    """
-    params = {"area_id": area_id, "id": id_, "name": name, "universe_id": universe_id}
-    con.execute(sql, params)
-    con.commit()
-
-
-def dreamlight_lookup_insert(
-    con: sqlite3.Connection, kind: str, id_: uuid.UUID, name: str
-) -> None:
-    """Insert an area, universe, or skill."""
-    table = {
-        "area": "dreamlight_areas",
-        "universe": "dreamlight_universes",
-        "skill": "dreamlight_skills",
-    }[kind]
-    sql = f"insert into {table} (id, name) values (:id, :name)"  # noqa: S608
-    con.execute(sql, {"id": id_, "name": name})
-    con.commit()
-
-
-def electricity_insert(
-    con: sqlite3.Connection,
-    bill: decimal.Decimal,
-    bill_date: dt.date,
-    charge: decimal.Decimal,
-    kwh: int,
-) -> None:
-    sql = """
-        insert into electricity (
-            bill, bill_date, charge, kwh
-        ) values (
-            :bill, :bill_date, :charge, :kwh
-        )
-    """
-    params = {
-        "bill": bill,
-        "bill_date": bill_date,
-        "charge": charge,
-        "kwh": kwh,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
 def get_schema_version(con: sqlite3.Connection) -> int:
     if table_exists(con, "schema_versions"):
         sql = """
@@ -249,112 +75,6 @@ def get_schema_version(con: sqlite3.Connection) -> int:
             if row["current_version"] is not None:
                 return int(row["current_version"])
     return 0
-
-
-def hymn_history_insert(
-    con: sqlite3.Connection, date: dt.date, hymn_number: int
-) -> None:
-    sql = """
-        insert into hymn_history (date, hymn_number) values (:date, :hymn_number)
-    """
-    params = {"date": date, "hymn_number": hymn_number}
-    con.execute(sql, params)
-    con.commit()
-
-
-def hymn_tags_insert(con: sqlite3.Connection, hymn_number: int, tag: str) -> None:
-    sql = """
-        insert into hymn_tags (hymn_number, tag) values (:hymn_number, :tag)
-    """
-    params = {"hymn_number": hymn_number, "tag": tag}
-    con.execute(sql, params)
-    con.commit()
-
-
-def hymns_insert(
-    con: sqlite3.Connection, first_line: str, hymn_number: int, title: str
-) -> None:
-    sql = """
-        insert into hymns (
-            first_line, hymn_number, title
-        ) values (
-            :first_line, :hymn_number, :title
-        )
-    """
-    params = {"first_line": first_line, "hymn_number": hymn_number, "title": title}
-    con.execute(sql, params)
-    con.commit()
-
-
-def jar_entries_insert(
-    con: sqlite3.Connection, entry_date: dt.date, id_: int, paid: bool
-) -> None:
-    sql = """
-        insert into jar_entries (entry_date, id, paid) values (:entry_date, :id, :paid)
-    """
-    params = {"entry_date": entry_date, "id": id_, "paid": paid}
-    con.execute(sql, params)
-    con.commit()
-
-
-def library_books_insert(
-    con: sqlite3.Connection,
-    credential_id: uuid.UUID,
-    due: dt.date,
-    id_: uuid.UUID,
-    item_id: str,
-    medium: str,
-    renewable: bool,
-    title: str,
-) -> None:
-    sql = """
-        insert into library_books (
-            credential_id, due, id, item_id, medium, renewable, title
-        ) values (
-            :credential_id, :due, :id, :item_id, :medium, :renewable, :title
-        )
-    """
-    params = {
-        "credential_id": credential_id,
-        "due": due,
-        "id": id_,
-        "item_id": item_id,
-        "medium": medium,
-        "renewable": renewable,
-        "title": title,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-def library_credentials_insert(
-    con: sqlite3.Connection,
-    balance: int,
-    display_name: str,
-    id_: uuid.UUID,
-    library: str,
-    library_type: str,
-    password: str,
-    username: str,
-) -> None:
-    sql = """
-        insert into library_credentials (
-            balance, display_name, id, library, library_type, password, username
-        ) values (
-            :balance, :display_name, :id, :library, :library_type, :password, :username
-        )
-    """
-    params = {
-        "balance": balance,
-        "display_name": display_name,
-        "id": id_,
-        "library": library,
-        "library_type": library_type,
-        "password": password,
-        "username": username,
-    }
-    con.execute(sql, params)
-    con.commit()
 
 
 def migrate(con: sqlite3.Connection) -> None:
@@ -580,267 +300,12 @@ def migrate(con: sqlite3.Connection) -> None:
         schema_versions_insert(con, 1)
 
 
-def migrate_from_postgres(path: str, dsn: str, admin_email: str = "") -> None:
-    """Create the SQLite database at path with a copy of every row in the Postgres
-    database. The copy is built in a temporary file and moved into place when it is
-    complete, so a copy that fails leaves nothing behind and is tried again at the
-    next start."""
-    log.info("Copying data from Postgres to SQLite")
-    pg = YavinDatabase(dsn)
-    tmp_path = f"{path}.tmp"
-    if os.path.exists(tmp_path):
-        os.remove(tmp_path)
-    connection_init(tmp_path)
-    con = connection_get(tmp_path)
-    try:
-        pg.migrate(admin_email=admin_email)
-        migrate(con)
-        copy_from_postgres(con, pg)
-    finally:
-        con.close()
-        pg.p.closeall()
-    os.replace(tmp_path, path)
-    log.info("Finished copying data from Postgres to SQLite")
-
-
-def copy_from_postgres(con: sqlite3.Connection, pg: YavinDatabase) -> None:
-    for r in pg.balances_accounts_list():
-        balances_accounts_insert(con, r["account_name"], r["account_id"])
-    for r in pg.balances_transactions_list_all():
-        balances_transactions_insert(
-            con,
-            r["account_id"],
-            r["tx_date"],
-            r["tx_description"],
-            r["tx_id"],
-            r["tx_value"],
-        )
-    for r in pg.billboard_list_all():
-        billboard_insert(con, r.artist, r.fetched_at, r.id, r.title)
-    for r in pg.callings_list():
-        callings_insert(
-            con,
-            r["calling"],
-            r["id"],
-            r["released_at"],
-            r["set_apart_at"],
-            r["sustained_at"],
-            r["ward"],
-        )
-    for kind in ("area", "universe", "skill"):
-        for r in pg.dreamlight_lookup_list(kind):
-            dreamlight_lookup_insert(con, kind, r["id"], r["name"])
-    for r in pg.dreamlight_characters_list_all():
-        dreamlight_characters_insert(
-            con, r["area_id"], r["id"], r["name"], r["universe_id"]
-        )
-    for r in pg.dreamlight_character_skill_list_all():
-        dreamlight_character_skill_insert(
-            con, r["character_id"], r["skill_id"], r["user_email"]
-        )
-    for r in pg.electricity_list():
-        electricity_insert(con, r["bill"], r["bill_date"], r["charge"], r["kwh"])
-    for r in pg.hymn_history_list():
-        hymn_history_insert(con, r["date"], r["hymn_number"])
-    for r in pg.hymn_tags_list():
-        hymn_tags_insert(con, r["hymn_number"], r["tag"])
-    for r in pg.hymns_list():
-        hymns_insert(con, r["first_line"], r["hymn_number"], r["title"])
-    for r in pg.jar_entries_list_all():
-        jar_entries_insert(con, r["entry_date"], r["id"], r["paid"])
-    for r in pg.library_books_list_all():
-        library_books_insert(
-            con,
-            r["credential_id"],
-            r["due"],
-            r["id"],
-            r["item_id"],
-            r["medium"],
-            r["renewable"],
-            r["title"],
-        )
-    for r in pg.library_credentials_list():
-        library_credentials_insert(
-            con,
-            r["balance"],
-            r["display_name"],
-            r["id"],
-            r["library"],
-            r["library_type"],
-            r["password"],
-            r["username"],
-        )
-    for r in pg.mileage_entries_list_all():
-        mileage_entries_insert(con, r["entry_date"], r["mileage"])
-    for r in pg.movie_people_list():
-        movie_people_insert(con, r["id"], r["person"])
-    for r in pg.movie_picks_list():
-        movie_picks_insert(
-            con, r["id"], r["person_id"], r["pick_date"], r["pick_text"], r["pick_url"]
-        )
-    for r in pg.phone_usage_list():
-        phone_usage_insert(
-            con,
-            r["end_date"],
-            r["id"],
-            r["megabytes"],
-            r["messages"],
-            r["minutes"],
-            r["start_date"],
-        )
-    for k, v in pg.settings_list().items():
-        settings_insert(con, k, v)
-    for r in pg.tello_balances_list_all():
-        tello_balances_insert(
-            con,
-            r["allowance"],
-            r["fetched_at"],
-            r["id"],
-            r["line"],
-            r["percentage_available"],
-            r["remaining"],
-            r["renewal_date"],
-            r["subscription_id"],
-        )
-    for r in pg.theatre_list():
-        theatre_entries_insert(con, dict(r))
-    for r in pg.tithing_income_list_all():
-        tithing_income_insert(
-            con, r["amount"], r["date"], r["description"], r["id"], r["tithing_paid"]
-        )
-    for r in pg.user_permissions_list():
-        user_permissions_insert(con, r.email, r.permissions_db)
-    for r in pg.weight_entries_list_all():
-        weight_entries_insert(con, r["entry_date"], r["weight"])
-
-
-def init(path: str, dsn: str = "", admin_email: str = "") -> None:
-    """Get the SQLite database ready at startup. The first time, while the SQLite
-    database is still empty, copy everything from the Postgres database at dsn.
-    After that the SQLite database is the only one in use and Postgres is not read
-    again."""
+def init(path: str) -> None:
+    """Get the database ready at startup by bringing its schema up to date."""
     connection_init(path)
-    con = connection_get(path)
-    schema_version = get_schema_version(con)
-    con.close()
-    if schema_version == 0 and dsn:
-        migrate_from_postgres(path, dsn, admin_email)
     con = connection_get(path)
     migrate(con)
     con.close()
-
-
-def mileage_entries_insert(
-    con: sqlite3.Connection, entry_date: dt.date, mileage: int
-) -> None:
-    sql = """
-        insert into mileage_entries (
-            entry_date, mileage
-        ) values (
-            :entry_date, :mileage
-        )
-    """
-    params = {"entry_date": entry_date, "mileage": mileage}
-    con.execute(sql, params)
-    con.commit()
-
-
-def movie_people_insert(con: sqlite3.Connection, id_: uuid.UUID, person: str) -> None:
-    sql = """
-        insert into movie_people (id, person) values (:id, :person)
-    """
-    params = {"id": id_, "person": person}
-    con.execute(sql, params)
-    con.commit()
-
-
-def movie_picks_insert(
-    con: sqlite3.Connection,
-    id_: uuid.UUID,
-    person_id: uuid.UUID,
-    pick_date: dt.date,
-    pick_text: str,
-    pick_url: str,
-) -> None:
-    sql = """
-        insert into movie_picks (
-            id, person_id, pick_date, pick_text, pick_url
-        ) values (
-            :id, :person_id, :pick_date, :pick_text, :pick_url
-        )
-    """
-    params = {
-        "id": id_,
-        "person_id": person_id,
-        "pick_date": pick_date,
-        "pick_text": pick_text,
-        "pick_url": pick_url,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-def phone_usage_insert(
-    con: sqlite3.Connection,
-    end_date: dt.date,
-    id_: uuid.UUID,
-    megabytes: int,
-    messages: int,
-    minutes: int,
-    start_date: dt.date,
-) -> None:
-    sql = """
-        insert into phone_usage (
-            end_date, id, megabytes, messages, minutes, start_date
-        ) values (
-            :end_date, :id, :megabytes, :messages, :minutes, :start_date
-        )
-    """
-    params = {
-        "end_date": end_date,
-        "id": id_,
-        "megabytes": megabytes,
-        "messages": messages,
-        "minutes": minutes,
-        "start_date": start_date,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-# noinspection SqlWithoutWhere
-def reset_data(con: sqlite3.Connection) -> None:
-    sql = [
-        "delete from balances_accounts",
-        "delete from balances_transactions",
-        "delete from billboard_number_one",
-        "delete from callings",
-        "delete from dreamlight_areas",
-        "delete from dreamlight_character_skill",
-        "delete from dreamlight_characters",
-        "delete from dreamlight_skills",
-        "delete from dreamlight_universes",
-        "delete from electricity",
-        "delete from hymn_history",
-        "delete from hymn_tags",
-        "delete from hymns",
-        "delete from jar_entries",
-        "delete from library_books",
-        "delete from library_credentials",
-        "delete from mileage_entries",
-        "delete from movie_people",
-        "delete from movie_picks",
-        "delete from phone_usage",
-        "delete from settings",
-        "delete from tello_balances",
-        "delete from theatre_entries",
-        "delete from tithing_income",
-        "delete from user_permissions",
-        "delete from weight_entries",
-    ]
-    for s in sql:
-        con.execute(s)
-    con.commit()
 
 
 def schema_versions_insert(con: sqlite3.Connection, schema_version: int) -> None:
@@ -852,21 +317,6 @@ def schema_versions_insert(con: sqlite3.Connection, schema_version: int) -> None
         "schema_version": schema_version,
         "migration_timestamp": dt.datetime.now(dt.UTC),
     }
-    con.execute(sql, params)
-    con.commit()
-
-
-def settings_insert(
-    con: sqlite3.Connection, setting_id: str, setting_value: str
-) -> None:
-    sql = """
-        insert into settings (
-            setting_id, setting_value
-        ) values (
-            :setting_id, :setting_value
-        )
-    """
-    params = {"setting_id": setting_id, "setting_value": setting_value}
     con.execute(sql, params)
     con.commit()
 
@@ -884,112 +334,9 @@ def table_exists(con: sqlite3.Connection, table_name: str) -> bool:
     return True
 
 
-def tello_balances_insert(
-    con: sqlite3.Connection,
-    allowance: str,
-    fetched_at: dt.datetime,
-    id_: uuid.UUID,
-    line: str,
-    percentage_available: decimal.Decimal | None,
-    remaining: str,
-    renewal_date: dt.date | None,
-    subscription_id: str,
-) -> None:
-    sql = """
-        insert into tello_balances (
-            allowance, fetched_at, id, line, percentage_available, remaining,
-            renewal_date, subscription_id
-        ) values (
-            :allowance, :fetched_at, :id, :line, :percentage_available, :remaining,
-            :renewal_date, :subscription_id
-        )
-    """
-    params = {
-        "allowance": allowance,
-        "fetched_at": fetched_at,
-        "id": id_,
-        "line": line,
-        "percentage_available": percentage_available,
-        "remaining": remaining,
-        "renewal_date": renewal_date,
-        "subscription_id": subscription_id,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-def theatre_entries_insert(con: sqlite3.Connection, entry: dict) -> None:
-    """Insert a theatre entry with every column, including its id."""
-    sql = """
-        insert into theatre_entries (
-            company, director, first_show, id, last_show, performances,
-            performer, role, show
-        ) values (
-            :company, :director, :first_show, :id, :last_show, :performances,
-            :performer, :role, :show
-        )
-    """
-    con.execute(sql, entry)
-    con.commit()
-
-
-def tithing_income_insert(
-    con: sqlite3.Connection,
-    amount: decimal.Decimal,
-    date: dt.date,
-    description: str,
-    id_: uuid.UUID,
-    tithing_paid: dt.date,
-) -> None:
-    sql = """
-        insert into tithing_income (
-            amount, date, description, id, tithing_paid
-        ) values (
-            :amount, :date, :description, :id, :tithing_paid
-        )
-    """
-    params = {
-        "amount": amount,
-        "date": date,
-        "description": description,
-        "id": id_,
-        "tithing_paid": tithing_paid,
-    }
-    con.execute(sql, params)
-    con.commit()
-
-
-def user_permissions_insert(
-    con: sqlite3.Connection, email: str, permissions: str
-) -> None:
-    sql = """
-        insert into user_permissions (email, permissions) values (:email, :permissions)
-    """
-    params = {"email": email, "permissions": permissions}
-    con.execute(sql, params)
-    con.commit()
-
-
-def weight_entries_insert(
-    con: sqlite3.Connection, entry_date: dt.date, weight: decimal.Decimal
-) -> None:
-    sql = """
-        insert into weight_entries (
-            entry_date, weight
-        ) values (
-            :entry_date, :weight
-        )
-    """
-    params = {"entry_date": entry_date, "weight": weight}
-    con.execute(sql, params)
-    con.commit()
-
-
 class YavinSqliteDatabase:
-    """The app's queries against the SQLite copy of the database. Methods have the
-    same names, arguments, and return types as yavin.db.YavinDatabase, so the app
-    can use either one. Text is sorted with "collate nocase" to match the
-    case-insensitive ordering of the Postgres database."""
+    """The app's queries. Text is sorted with "collate nocase" so the ordering
+    ignores case."""
 
     log = log
 
@@ -999,7 +346,7 @@ class YavinSqliteDatabase:
     def close(self) -> None:
         self.con.close()
 
-    # query helpers, like fort.PostgresDatabase
+    # query helpers
 
     def b(self, sql: str, records: list[dict]) -> None:
         """Batch execute a query"""
@@ -1138,7 +485,7 @@ class YavinSqliteDatabase:
             )
 
     def dreamlight_character_delete(self, character_id: uuid.UUID) -> None:
-        # Postgres removes the skill assignments with a cascading foreign key
+        # Remove the skill assignments too, so none point at a missing character
         params = {"id": character_id}
         self.u(
             "delete from dreamlight_character_skill where character_id = :id", params
@@ -1370,7 +717,7 @@ class YavinSqliteDatabase:
         """
         rows = self.q(sql)
         for r in rows:
-            # Postgres returns the rounded average as a whole decimal number
+            # Return the rounded average as a whole decimal number
             r["avg_12_months"] = decimal.Decimal(int(r["avg_12_months"]))
         return rows
 
@@ -1707,8 +1054,8 @@ class YavinSqliteDatabase:
     # tithing
 
     def tithing_get_current_owed(self) -> decimal.Decimal:
-        # Added up here so the decimal amounts stay exact, then rounded like the
-        # Postgres round(..., 2)
+        # Added up here so the decimal amounts stay exact, then rounded half up to
+        # cents
         unpaid = self.q("select amount from tithing_income where tithing_paid is null")
         total = sum((r["amount"] for r in unpaid), decimal.Decimal(0))
         return (total * decimal.Decimal("0.1")).quantize(
@@ -1795,7 +1142,7 @@ class YavinSqliteDatabase:
     def weight_entries_get_for_date(
         self, entry_date: dt.date
     ) -> decimal.Decimal | None:
-        # Like the Postgres query, this returns the first column
+        # This returns the first column, the date, not the weight
         sql = """
             select entry_date, weight
             from weight_entries

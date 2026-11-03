@@ -10,7 +10,6 @@ class Settings:
     admin_email: str
     backdoor_enabled: bool
     database: str
-    dsn: str
     openid_client_id: str
     openid_client_secret: str
     openid_discovery_document: str
@@ -24,7 +23,7 @@ class Settings:
         """Instantiating a Settings object will automatically read the following
         environment variables:
 
-        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, BACKDOOR_ENABLED, DATABASE, DSN,
+        ADMIN_AUTH_PHRASE, ADMIN_EMAIL, BACKDOOR_ENABLED, DATABASE,
         OPENID_CLIENT_ID, OPENID_CLIENT_SECRET, OPENID_DISCOVERY_DOCUMENT, PORT, SCHEME,
         SECRET_KEY, SERVER_NAME, WEB_SERVER_THREADS
 
@@ -42,7 +41,6 @@ class Settings:
         self.admin_email = os.getenv("ADMIN_EMAIL", "")
         self.backdoor_enabled = _as_bool(os.getenv("BACKDOOR_ENABLED", "false"))
         self.database = os.getenv("DATABASE", "/etc/yavin/yavin.db")
-        self.dsn = os.getenv("DSN", "")
         self.openid_client_id = os.getenv("OPENID_CLIENT_ID", "")
         self.openid_client_secret = os.getenv("OPENID_CLIENT_SECRET", "")
         self.openid_discovery_document = os.getenv("OPENID_DISCOVERY_DOCUMENT", "")
