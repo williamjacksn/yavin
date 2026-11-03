@@ -52,7 +52,7 @@ class DreamlightTests(unittest.TestCase):
                 if c["skill_id"]
             }
         )
-        patcher = patch("yavin.db.YavinDatabase", return_value=self.db)
+        patcher = patch("yavin.db.YavinSqliteDatabase", return_value=self.db)
         patcher.start()
         self.addCleanup(patcher.stop)
         app.config.update(TESTING=True, SECRET_KEY=uuid.uuid4().hex)

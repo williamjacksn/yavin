@@ -22,7 +22,7 @@ class TheatreTests(unittest.TestCase):
         self.db.settings_list.return_value = {}
         self.db.user_permissions_get.return_value = ["theatre"]
         self.db.theatre_list.return_value = []
-        self.patcher = patch("yavin.db.YavinDatabase", return_value=self.db)
+        self.patcher = patch("yavin.db.YavinSqliteDatabase", return_value=self.db)
         self.patcher.start()
         self.addCleanup(self.patcher.stop)
         app.config.update(TESTING=True, SECRET_KEY=uuid.uuid4().hex)

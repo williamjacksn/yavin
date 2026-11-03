@@ -75,7 +75,7 @@ def permission_required(permission: str) -> typing.Callable:
 def before_request() -> None:
     log.debug(f"{flask.request.method} {flask.request.path}")
     flask.session.permanent = True
-    flask.g.db = yavin.db.YavinDatabase(settings.dsn)
+    flask.g.db = yavin.db.YavinSqliteDatabase(settings.database)
     flask.g.settings = settings
     flask.g.app_settings = flask.g.db.settings_list()
     flask.g.email = flask.session.get("email", "")
@@ -84,7 +84,7 @@ def before_request() -> None:
 
 @app.teardown_request
 def teardown_request(_: BaseException | None) -> None:
-    flask.g.db.p.closeall()
+    flask.g.db.close()
 
 
 @app.get("/")
@@ -292,7 +292,7 @@ def dashboard_card_theatre() -> str:
 @app.post("/app-settings/update")
 @permission_required("admin")
 def app_settings_update() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
 
     text_settings = [
         "expenses_db",
@@ -369,7 +369,7 @@ def balances_add_tx() -> werkzeug.Response:
 @app.get("/billboard")
 @permission_required("billboard")
 def billboard() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     latest = db.billboard_get_latest()
     if not latest:
         yavin.tasks.billboard_number_one_fetch()
@@ -380,7 +380,7 @@ def billboard() -> str:
 @app.get("/callings")
 @permission_required("callings")
 def callings() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     return yavin.components.callings(db.callings_list())
 
 
@@ -399,7 +399,7 @@ def callings_add_button() -> str:
 @app.get("/callings/<uuid:calling_id>/edit-form")
 @permission_required("callings")
 def callings_edit_form(calling_id: uuid.UUID) -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     calling = db.callings_get(calling_id)
     if calling is None:
         flask.abort(404)
@@ -409,7 +409,7 @@ def callings_edit_form(calling_id: uuid.UUID) -> str:
 @app.post("/callings/add")
 @permission_required("callings")
 def callings_add() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     params = _callings_params_from_request()
     if params:
         db.callings_insert(params)
@@ -419,7 +419,7 @@ def callings_add() -> werkzeug.Response:
 @app.post("/callings/<uuid:calling_id>/update")
 @permission_required("callings")
 def callings_update(calling_id: uuid.UUID) -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     params = _callings_params_from_request()
     if params:
         db.callings_update({**params, "id": calling_id})
@@ -465,7 +465,7 @@ def dashboard_card_balances() -> str:
 
 @app.get("/dashboard-card/billboard")
 def dashboard_card_billboard() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     latest = db.billboard_get_latest()
     if latest:
         text = f"{latest.title} by {latest.artist}"
@@ -476,7 +476,7 @@ def dashboard_card_billboard() -> str:
 
 @app.get("/dashboard-card/callings")
 def dashboard_card_callings() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     callings = db.callings_list()
     # Find the most recent calling that hasn't been released
     current_calling = None
@@ -514,14 +514,14 @@ def dashboard_card_expenses() -> str:
 
 @app.get("/dashboard-card/jar")
 def dashboard_card_jar() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     days_since_last = db.jar_entries_days_since_last()
     return yavin.components.dashboard_card_jar(days_since_last)
 
 
 @app.get("/dashboard-card/library")
 def dashboard_card_library() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     counts = db.library_books_count()
     return yavin.components.dashboard_card_library(
         counts["books_count"], counts["overdue_count"]
@@ -535,7 +535,7 @@ def dashboard_card_mileage() -> str:
 
 @app.get("/dashboard-card/movie-night")
 def dashboard_card_movie_night() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     next_pick = db.movie_people_next_pick()
     if next_pick is None:
         next_pick_person = "Unknown"
@@ -551,7 +551,7 @@ def dashboard_card_phone() -> str:
 
 @app.get("/dashboard-card/tello")
 def dashboard_card_tello() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     balances = db.tello_balances_list_latest()
     if balances:
         parts = []
@@ -567,14 +567,14 @@ def dashboard_card_tello() -> str:
 
 @app.get("/dashboard-card/tithing")
 def dashboard_card_tithing() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     tithing_owed = db.tithing_get_current_owed()
     return yavin.components.dashboard_card_tithing(tithing_owed)
 
 
 @app.get("/dashboard-card/weight")
 def dashboard_card_weight() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     most_recent = db.weight_entries_get_most_recent()
     if most_recent is None:
         text = "No weight entries"
@@ -586,7 +586,7 @@ def dashboard_card_weight() -> str:
 @app.get("/electricity")
 @permission_required("electricity")
 def electricity() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     flask.g.records = db.electricity_list()
     return yavin.components.electricity()
 
@@ -594,7 +594,7 @@ def electricity() -> str:
 @app.post("/electricity/add")
 @permission_required("electricity")
 def electricity_add() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     bill_date = yavin.util.str_to_date(flask.request.values["bill_date"])
     kwh = int(flask.request.values["kwh"])
     charge = decimal.Decimal(flask.request.values["charge"])
@@ -662,7 +662,7 @@ def favicon() -> flask.Response:
 @app.get("/jar")
 @permission_required("jar")
 def jar() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     today = yavin.util.today()
     dates = [e["entry_date"] for e in db.jar_entries_list_all()]
     years = yavin.jar.years(dates, today)
@@ -680,7 +680,7 @@ def jar() -> str:
 @app.post("/jar/add")
 @permission_required("jar")
 def jar_add() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.values["entry_date"])
     log.info(f"Adding new jar entry for {entry_date}")
     db.jar_entries_insert(entry_date)
@@ -690,7 +690,7 @@ def jar_add() -> werkzeug.Response:
 @app.get("/library")
 @permission_required("library")
 def library() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     library_books = db.library_books_list()
     return yavin.components.library(library_books)
 
@@ -698,7 +698,7 @@ def library() -> str:
 @app.get("/library/accounts")
 @permission_required("library")
 def library_accounts() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     flask.g.library_credentials = db.library_credentials_list()
     return yavin.components.library_accounts()
 
@@ -706,7 +706,7 @@ def library_accounts() -> str:
 @app.post("/library/accounts/add")
 @permission_required("library")
 def library_accounts_add() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     params = {
         "display_name": flask.request.form.get("display_name"),
         "library": flask.request.form.get("library"),
@@ -722,7 +722,7 @@ def library_accounts_add() -> werkzeug.Response:
 @app.post("/library/accounts/delete")
 @permission_required("library")
 def library_accounts_delete() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     db.library_credentials_delete(flask.request.form)
     yavin.tasks.scheduler.add_job(yavin.tasks.library_sync)
     return flask.redirect(flask.url_for("library_accounts"))
@@ -744,133 +744,10 @@ def library_sync_now() -> werkzeug.Response:
     return flask.redirect(flask.url_for("library"))
 
 
-@app.get("/migrate")
-@permission_required("admin")
-def migrate() -> werkzeug.Response:
-    con = yavin.db.app_sqlite.connection_get(settings.database)
-    yavin.db.app_sqlite.migrate(con)
-    yavin.db.app_sqlite.reset_data(con)
-    db: yavin.db.YavinDatabase = flask.g.db
-    for r in db.balances_accounts_list():
-        yavin.db.app_sqlite.balances_accounts_insert(
-            con, r["account_name"], r["account_id"]
-        )
-    for r in db.balances_transactions_list_all():
-        yavin.db.app_sqlite.balances_transactions_insert(
-            con,
-            r["account_id"],
-            r["tx_date"],
-            r["tx_description"],
-            r["tx_id"],
-            r["tx_value"],
-        )
-    for r in db.billboard_list_all():
-        yavin.db.app_sqlite.billboard_insert(con, r.artist, r.fetched_at, r.id, r.title)
-    for r in db.callings_list():
-        yavin.db.app_sqlite.callings_insert(
-            con,
-            r["calling"],
-            r["id"],
-            r["released_at"],
-            r["set_apart_at"],
-            r["sustained_at"],
-            r["ward"],
-        )
-    for kind in ("area", "universe", "skill"):
-        for r in db.dreamlight_lookup_list(kind):
-            yavin.db.app_sqlite.dreamlight_lookup_insert(con, kind, r["id"], r["name"])
-    for r in db.dreamlight_characters_list_all():
-        yavin.db.app_sqlite.dreamlight_characters_insert(
-            con, r["area_id"], r["id"], r["name"], r["universe_id"]
-        )
-    for r in db.dreamlight_character_skill_list_all():
-        yavin.db.app_sqlite.dreamlight_character_skill_insert(
-            con, r["character_id"], r["skill_id"], r["user_email"]
-        )
-    for r in db.electricity_list():
-        yavin.db.app_sqlite.electricity_insert(
-            con, r["bill"], r["bill_date"], r["charge"], r["kwh"]
-        )
-    for r in db.hymn_history_list():
-        yavin.db.app_sqlite.hymn_history_insert(con, r["date"], r["hymn_number"])
-    for r in db.hymn_tags_list():
-        yavin.db.app_sqlite.hymn_tags_insert(con, r["hymn_number"], r["tag"])
-    for r in db.hymns_list():
-        yavin.db.app_sqlite.hymns_insert(
-            con, r["first_line"], r["hymn_number"], r["title"]
-        )
-    for r in db.jar_entries_list_all():
-        yavin.db.app_sqlite.jar_entries_insert(con, r["entry_date"], r["id"], r["paid"])
-    for r in db.library_books_list_all():
-        yavin.db.app_sqlite.library_books_insert(
-            con,
-            r["credential_id"],
-            r["due"],
-            r["id"],
-            r["item_id"],
-            r["medium"],
-            r["renewable"],
-            r["title"],
-        )
-    for r in db.library_credentials_list():
-        yavin.db.app_sqlite.library_credentials_insert(
-            con,
-            r["balance"],
-            r["display_name"],
-            r["id"],
-            r["library"],
-            r["library_type"],
-            r["password"],
-            r["username"],
-        )
-    for r in db.mileage_entries_list_all():
-        yavin.db.app_sqlite.mileage_entries_insert(con, r["entry_date"], r["mileage"])
-    for r in db.movie_people_list():
-        yavin.db.app_sqlite.movie_people_insert(con, r["id"], r["person"])
-    for r in db.movie_picks_list():
-        yavin.db.app_sqlite.movie_picks_insert(
-            con, r["id"], r["person_id"], r["pick_date"], r["pick_text"], r["pick_url"]
-        )
-    for r in db.phone_usage_list():
-        yavin.db.app_sqlite.phone_usage_insert(
-            con,
-            r["end_date"],
-            r["id"],
-            r["megabytes"],
-            r["messages"],
-            r["minutes"],
-            r["start_date"],
-        )
-    for k, v in db.settings_list().items():
-        yavin.db.app_sqlite.settings_insert(con, k, v)
-    for r in db.tello_balances_list_all():
-        yavin.db.app_sqlite.tello_balances_insert(
-            con,
-            r["allowance"],
-            r["fetched_at"],
-            r["id"],
-            r["line"],
-            r["percentage_available"],
-            r["remaining"],
-            r["renewal_date"],
-            r["subscription_id"],
-        )
-    for r in db.tithing_income_list_all():
-        yavin.db.app_sqlite.tithing_income_insert(
-            con, r["amount"], r["date"], r["description"], r["id"], r["tithing_paid"]
-        )
-    for r in db.user_permissions_list():
-        yavin.db.app_sqlite.user_permissions_insert(con, r.email, r.permissions_db)
-    for r in db.weight_entries_list(limit=300):
-        yavin.db.app_sqlite.weight_entries_insert(con, r["entry_date"], r["weight"])
-    con.close()
-    return flask.redirect(flask.url_for("index"))
-
-
 @app.get("/mileage")
 @permission_required("mileage")
 def mileage() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     mileage_entries = db.mileage_entries_list()
     default_mileage = 0
     if mileage_entries:
@@ -881,7 +758,7 @@ def mileage() -> str:
 @app.post("/mileage/add")
 @permission_required("mileage")
 def mileage_add() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.values["entry-date"])
     current = db.mileage_entries_get_for_date(entry_date)
     if current is None:
@@ -898,7 +775,7 @@ def mileage_add() -> werkzeug.Response:
 @app.post("/mileage/delete")
 @permission_required("mileage")
 def mileage_delete() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.values["entry-date"])
     db.mileage_entries_delete(entry_date)
     return flask.redirect(flask.url_for("mileage"))
@@ -907,7 +784,7 @@ def mileage_delete() -> werkzeug.Response:
 @app.get("/mileage/svg")
 @permission_required("mileage")
 def mileage_svg() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     entries = [(e["entry_date"], e["mileage"]) for e in db.mileage_entries_list_all()]
 
     start_date_str = flask.g.app_settings.get("mileage_start_date")
@@ -941,7 +818,7 @@ def mileage_svg() -> werkzeug.Response:
 @app.get("/movie-night")
 @permission_required("movie-night")
 def movie_night() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     people = db.movie_people_list() or []
     picks = db.movie_picks_list() or []
     return yavin.components.movie_night(picks, people)
@@ -950,7 +827,7 @@ def movie_night() -> str:
 @app.post("/movie-night/add-person")
 @permission_required("movie-night")
 def movie_night_add_person() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     params = {"person": flask.request.form.get("person")}
     db.movie_people_insert(params)
     return flask.redirect(flask.url_for("movie_night"))
@@ -959,7 +836,7 @@ def movie_night_add_person() -> werkzeug.Response:
 @app.post("/movie-night/add-pick")
 @permission_required("movie-night")
 def movie_night_add_pick() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     params = {
         "pick_date": flask.request.form.get("pick_date"),
         "person_id": flask.request.form.get("person_id"),
@@ -974,7 +851,7 @@ def movie_night_add_pick() -> werkzeug.Response:
 @app.post("/movie-night/delete-pick")
 @permission_required("movie-night")
 def movie_night_delete_pick() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     params = {"id": flask.request.form.get("id")}
     db.movie_picks_delete(params)
     return flask.redirect(flask.url_for("movie_night"))
@@ -983,7 +860,7 @@ def movie_night_delete_pick() -> werkzeug.Response:
 @app.post("/movie-night/edit-pick")
 @permission_required("movie-night")
 def movie_night_edit_pick() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     params = {
         "id": flask.request.form.get("id"),
         "pick_date": flask.request.form.get("pick_date"),
@@ -997,7 +874,7 @@ def movie_night_edit_pick() -> werkzeug.Response:
 
 @app.post("/movie-night/modal/pick")
 def movie_night_modal_pick() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     people = db.movie_people_list()
     if "pick-id" in flask.request.values:
         pick_id = uuid.UUID(flask.request.values.get("pick-id"))
@@ -1011,7 +888,7 @@ def movie_night_modal_pick() -> str:
 @app.get("/phone")
 @permission_required("phone")
 def phone() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     flask.g.records = db.phone_usage_list()
     return yavin.components.phone()
 
@@ -1019,7 +896,7 @@ def phone() -> str:
 @app.post("/phone/add")
 @permission_required("phone")
 def phone_add() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     kwargs = {
         "start_date": dt.date.fromisoformat(flask.request.values["start-date"]),
         "end_date": dt.date.fromisoformat(flask.request.values["end-date"]),
@@ -1034,7 +911,7 @@ def phone_add() -> werkzeug.Response:
 @app.get("/tello")
 @permission_required("tello")
 def tello() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     return yavin.components.tello(db.tello_balances_list_latest())
 
 
@@ -1101,7 +978,7 @@ def tello_incoming() -> tuple[dict, int]:
 @app.get("/tello/<subscription_id>")
 @permission_required("tello")
 def tello_line(subscription_id: str) -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     history = db.tello_balances_list_for_subscription(subscription_id)
     if not history:
         flask.abort(404)
@@ -1111,7 +988,7 @@ def tello_line(subscription_id: str) -> str:
 @app.get("/tello/<subscription_id>/svg")
 @permission_required("tello")
 def tello_line_svg(subscription_id: str) -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     history = db.tello_balances_list_for_subscription(subscription_id)
     points = []
     for b in history:
@@ -1157,7 +1034,7 @@ def tello_line_svg(subscription_id: str) -> werkzeug.Response:
 @app.get("/tithing")
 @permission_required("tithing")
 def tithing() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     flask.g.tithing_owed = db.tithing_get_current_owed()
     flask.g.transactions = db.tithing_income_list_unpaid()
     income_by_month = {}
@@ -1173,7 +1050,7 @@ def tithing() -> str:
 @app.post("/tithing/income/add")
 @permission_required("tithing")
 def tithing_income_add() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     date = yavin.util.str_to_date(flask.request.values["tx-date"])
     amount = decimal.Decimal(flask.request.values["tx-value"])
     description = flask.request.values["tx-description"]
@@ -1184,7 +1061,7 @@ def tithing_income_add() -> werkzeug.Response:
 @app.post("/tithing/income/paid")
 @permission_required("tithing")
 def tithing_income_paid() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     db.tithing_income_mark_paid()
     return flask.redirect(flask.url_for("tithing"))
 
@@ -1197,7 +1074,7 @@ def user_permissions() -> str:
 
 
 def _user_permissions_find(email: str) -> yavin.db.app.UserPermissions:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     for u in db.user_permissions_list():
         if u.email == email:
             return u
@@ -1249,7 +1126,7 @@ def user_permissions_modal() -> str:
 @app.post("/user-permissions/update")
 @permission_required("admin")
 def user_permissions_update() -> str | werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     user = _user_permissions_find(flask.request.form.get("email", ""))
     allowed = PERMISSIONS | set(user.permissions)
     permissions = [p for p in _user_permissions_submitted() if p in allowed]
@@ -1269,7 +1146,7 @@ def user_permissions_update() -> str | werkzeug.Response:
 @app.post("/user-permissions/add")
 @permission_required("admin")
 def user_permissions_add() -> str | werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     email = flask.request.form.get("email", "").strip()
     permissions = [p for p in _user_permissions_submitted() if p in PERMISSIONS]
     if "@" not in email or any(c.isspace() for c in email):
@@ -1288,7 +1165,7 @@ def user_permissions_add() -> str | werkzeug.Response:
 @app.get("/weight")
 @permission_required("weight")
 def weight() -> str:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     weight_entries = db.weight_entries_list()
     default_weight = (
         weight_entries[0]["weight"] if weight_entries else yavin.components.DECIMAL_ZERO
@@ -1299,7 +1176,7 @@ def weight() -> str:
 @app.post("/weight/add")
 @permission_required("weight")
 def weight_add() -> werkzeug.Response:
-    db: yavin.db.YavinDatabase = flask.g.db
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
     entry_date = yavin.util.str_to_date(flask.request.values["entry_date"])
     current = db.weight_entries_get_for_date(entry_date)
     if current is None:
@@ -1403,26 +1280,22 @@ def _manage_scheduled_tasks(enabled: bool) -> None:
 
 def main() -> None:
     log.info(f"Welcome to Yavin {yavin.versions.app_version}")
-    if settings.dsn == "":
-        log.critical(
-            "Missing environment variable DSN; I cannot start without a database"
-        )
-    else:
-        db = yavin.db.YavinDatabase(settings.dsn)
-        db.migrate(admin_email=settings.admin_email)
+    yavin.db.app_sqlite.init(settings.database, settings.dsn, settings.admin_email)
+    db = yavin.db.YavinSqliteDatabase(settings.database)
 
-        if settings.admin_email:
-            db.user_permissions_add(settings.admin_email, "admin")
+    if settings.admin_email:
+        db.user_permissions_add(settings.admin_email, "admin")
 
-        yavin.tasks.scheduler.start()
-        _app_settings = db.settings_list()
-        scheduled_tasks_enabled = _app_settings.get("scheduled_tasks_enabled") == "true"
-        _manage_scheduled_tasks(scheduled_tasks_enabled)
+    yavin.tasks.scheduler.start()
+    _app_settings = db.settings_list()
+    db.close()
+    scheduled_tasks_enabled = _app_settings.get("scheduled_tasks_enabled") == "true"
+    _manage_scheduled_tasks(scheduled_tasks_enabled)
 
-        waitress.serve(
-            app,
-            port=settings.port,
-            threads=settings.web_server_threads,
-            url_scheme=settings.scheme,
-            ident=None,
-        )
+    waitress.serve(
+        app,
+        port=settings.port,
+        threads=settings.web_server_threads,
+        url_scheme=settings.scheme,
+        ident=None,
+    )

@@ -140,7 +140,7 @@ class JarPageTests(unittest.TestCase):
             for i, d in enumerate([D(2025, 3, 1), D(2026, 1, 1), D(2026, 1, 21)])
         ]
         for patcher in (
-            patch("yavin.db.YavinDatabase", return_value=self.db),
+            patch("yavin.db.YavinSqliteDatabase", return_value=self.db),
             patch("yavin.util.today", return_value=TODAY),
         ):
             patcher.start()

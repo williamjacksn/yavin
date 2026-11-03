@@ -600,7 +600,9 @@ class YavinDatabase(fort.PostgresDatabase):
             select
                 movie_people.id,
                 person,
-                row_number() over (order by max(pick_date) nulls first) pick_order
+                row_number() over (
+                    order by max(pick_date) nulls first, movie_people.id
+                ) pick_order
             from movie_people
             left join movie_picks on movie_people.id = movie_picks.person_id
             group by person, movie_people.id
@@ -920,6 +922,9 @@ class YavinDatabase(fort.PostgresDatabase):
         """
         params = {"limit": limit}
         return self.q(sql, params)
+
+    def weight_entries_list_all(self) -> list[dict]:
+        return self.q("select entry_date, weight from weight_entries")
 
     # migrations and metadata
 

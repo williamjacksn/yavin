@@ -22,7 +22,7 @@ TELLO_LOW_DATA_PERCENTAGE = 10
 
 def _notify(subject: str, body: str) -> None:
     settings = yavin.settings.Settings()
-    db = yavin.db.YavinDatabase(settings.dsn)
+    db = yavin.db.YavinSqliteDatabase(settings.database)
     app_settings = db.settings_list()
     msg = email.message.EmailMessage()
     msg["Message-ID"] = email.utils.make_msgid()
@@ -46,7 +46,7 @@ def billboard_number_one_fetch() -> None:
     song = yavin.billboard.fetch_number_one()
 
     settings = yavin.settings.Settings()
-    db = yavin.db.YavinDatabase(settings.dsn)
+    db = yavin.db.YavinSqliteDatabase(settings.database)
     latest = db.billboard_get_latest()
     if latest and song == (latest.artist, latest.title):
         db.billboard_update_fetched_at(latest.id)
@@ -59,7 +59,7 @@ def billboard_number_one_fetch() -> None:
 def library_notify() -> None:
     log.info("Checking for due library items")
     settings = yavin.settings.Settings()
-    db = yavin.db.YavinDatabase(settings.dsn)
+    db = yavin.db.YavinSqliteDatabase(settings.database)
     due_books = db.library_books_list_due()
     if due_books:
         log.info("Sending notification email")
@@ -72,7 +72,7 @@ def library_notify() -> None:
 def library_sync() -> None:
     log.info("Syncing library data")
     settings = yavin.settings.Settings()
-    db = yavin.db.YavinDatabase(settings.dsn)
+    db = yavin.db.YavinSqliteDatabase(settings.database)
     db.library_books_truncate()
     for lib_cred in db.library_credentials_list():
         lib_type = lib_cred.get("library_type")
@@ -90,7 +90,7 @@ def library_sync() -> None:
 
 
 def library_sync_bibliocommons(
-    lib_data: yavin.db.app.LibraryCredential, db: yavin.db.YavinDatabase
+    lib_data: yavin.db.app.LibraryCredential, db: yavin.db.YavinSqliteDatabase
 ) -> None:
     lib_url = lib_data.get("library")
     bc = bibliocommons.BiblioCommonsClient(lib_url)
@@ -112,7 +112,7 @@ def library_sync_bibliocommons(
 
 
 def library_sync_biblionix(
-    lib_data: yavin.db.app.LibraryCredential, db: yavin.db.YavinDatabase
+    lib_data: yavin.db.app.LibraryCredential, db: yavin.db.YavinSqliteDatabase
 ) -> None:
     lib_url = lib_data.get("library")
     bc = biblionix.BiblionixClient(lib_url)
@@ -135,7 +135,7 @@ def tello_store(balances: list[dict]) -> None:
     percentage_available, remaining, renewal_date, and subscription_id."""
     log.info(f"Storing {len(balances)} Tello balances")
     settings = yavin.settings.Settings()
-    db = yavin.db.YavinDatabase(settings.dsn)
+    db = yavin.db.YavinSqliteDatabase(settings.database)
     fetched_at = dt.datetime.now(tz=dt.UTC)
     for b in balances:
         db.tello_balances_insert({**b, "fetched_at": fetched_at})
