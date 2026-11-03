@@ -141,6 +141,9 @@ def _user_menu(email: str, is_admin: bool) -> htpy.Element:
                 htpy.a(".dropdown-item", href=flask.url_for("user_permissions"))[
                     "User permissions"
                 ],
+                htpy.a(".dropdown-item", href=flask.url_for("download_database"))[
+                    "Download database"
+                ],
             ],
             htpy.a(".dropdown-item", href=flask.url_for("sign_out"))["Sign out"],
         ],

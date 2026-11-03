@@ -346,6 +346,11 @@ class YavinSqliteDatabase:
     def close(self) -> None:
         self.con.close()
 
+    def serialize(self) -> bytes:
+        """A consistent copy of the whole database file, including changes that are
+        still in the write-ahead log."""
+        return self.con.serialize()
+
     # query helpers
 
     def b(self, sql: str, records: list[dict]) -> None:

@@ -2,6 +2,7 @@ import datetime as dt
 import decimal
 import functools
 import hmac
+import io
 import logging
 import typing
 import urllib.parse
@@ -287,6 +288,18 @@ def theatre_import() -> tuple[str, int] | werkzeug.Response:
 def dashboard_card_theatre() -> str:
     return yavin.components.dashboard_card(
         "Musical theatre", flask.url_for("theatre"), "Record performances"
+    )
+
+
+@app.get("/download-database")
+@permission_required("admin")
+def download_database() -> werkzeug.Response:
+    db: yavin.db.YavinSqliteDatabase = flask.g.db
+    return flask.send_file(
+        io.BytesIO(db.serialize()),
+        mimetype="application/vnd.sqlite3",
+        as_attachment=True,
+        download_name=f"yavin-{yavin.util.today()}.db",
     )
 
 
