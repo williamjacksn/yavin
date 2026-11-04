@@ -14,8 +14,8 @@ with (
 ):
     from yavin.app import app
 
-from yavin.db import app_sqlite
-from yavin.db.app_sqlite import YavinSqliteDatabase
+from yavin.db import app as db_app
+from yavin.db.app import YavinSqliteDatabase
 
 ADMIN = "admin@example.com"
 PLAYER = "player@example.com"
@@ -28,7 +28,7 @@ class DownloadDatabaseTests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.directory = directory.name
         path = os.path.join(self.directory, "yavin.db")
-        app_sqlite.init(path)
+        db_app.init(path)
         db = YavinSqliteDatabase(path)
         self.addCleanup(db.close)
         db.user_permissions_set(ADMIN, ["admin"])

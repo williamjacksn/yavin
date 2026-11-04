@@ -7,9 +7,8 @@ import unittest
 import uuid
 from unittest.mock import patch
 
-from yavin.db import app_sqlite
-from yavin.db.app import BillboardRow, UserPermissions
-from yavin.db.app_sqlite import YavinSqliteDatabase
+from yavin.db import app as db_app
+from yavin.db.app import BillboardRow, UserPermissions, YavinSqliteDatabase
 
 D = dt.date
 Dec = decimal.Decimal
@@ -20,9 +19,9 @@ class SqliteDatabaseTests(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         path = os.path.join(directory.name, "yavin.db")
-        app_sqlite.connection_init(path)
-        con = app_sqlite.connection_get(path)
-        app_sqlite.migrate(con)
+        db_app.connection_init(path)
+        con = db_app.connection_get(path)
+        db_app.migrate(con)
         con.close()
         self.db = YavinSqliteDatabase(path)
         self.addCleanup(self.db.close)

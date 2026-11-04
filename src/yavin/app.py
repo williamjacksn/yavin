@@ -21,7 +21,6 @@ import werkzeug.utils
 import yavin.components
 import yavin.db
 import yavin.db.app
-import yavin.db.app_sqlite
 import yavin.dreamlight
 import yavin.jar
 import yavin.settings
@@ -33,7 +32,7 @@ import yavin.versions
 log = logging.getLogger(__name__)
 
 settings = yavin.settings.Settings()
-yavin.db.app_sqlite.connection_init(settings.database)
+yavin.db.app.connection_init(settings.database)
 
 app = flask.Flask(__name__)
 app.wsgi_app = werkzeug.middleware.proxy_fix.ProxyFix(  # ty:ignore[invalid-assignment]
@@ -1309,7 +1308,7 @@ def _manage_scheduled_tasks(enabled: bool) -> None:
 
 def main() -> None:
     log.info(f"Welcome to Yavin {yavin.versions.app_version}")
-    yavin.db.app_sqlite.init(settings.database)
+    yavin.db.app.init(settings.database)
     db = yavin.db.YavinSqliteDatabase(settings.database)
 
     if settings.admin_email:

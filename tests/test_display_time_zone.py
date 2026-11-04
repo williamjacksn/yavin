@@ -17,8 +17,8 @@ with (
     from yavin.app import app
 
 from yavin import util
-from yavin.db import app_sqlite
-from yavin.db.app_sqlite import YavinSqliteDatabase
+from yavin.db import app as db_app
+from yavin.db.app import YavinSqliteDatabase
 
 ADMIN = "admin@example.com"
 MOMENT = dt.datetime(2026, 7, 4, 17, 30, tzinfo=dt.UTC)
@@ -74,7 +74,7 @@ class SignedInAdminTestCase(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.path = os.path.join(directory.name, "yavin.db")
-        app_sqlite.init(self.path)
+        db_app.init(self.path)
         db = YavinSqliteDatabase(self.path)
         self.addCleanup(db.close)
         db.user_permissions_set(ADMIN, ["admin", "billboard", "tello"])
@@ -173,7 +173,7 @@ class DatabaseTimeZoneTests(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         path = os.path.join(directory.name, "yavin.db")
-        app_sqlite.init(path)
+        db_app.init(path)
         self.db = YavinSqliteDatabase(path)
         self.addCleanup(self.db.close)
 

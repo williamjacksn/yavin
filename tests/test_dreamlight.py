@@ -14,7 +14,7 @@ with (
 ):
     from yavin.app import app
 
-from yavin.db.app_sqlite import YavinSqliteDatabase
+from yavin.db.app import YavinSqliteDatabase
 
 
 class DreamlightTests(unittest.TestCase):

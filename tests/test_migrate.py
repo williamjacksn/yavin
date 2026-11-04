@@ -4,8 +4,8 @@ import os
 import tempfile
 import unittest
 
-from yavin.db import app_sqlite
-from yavin.db.app_sqlite import YavinSqliteDatabase
+from yavin.db import app as db_app
+from yavin.db.app import YavinSqliteDatabase
 
 D = dt.date
 Dec = decimal.Decimal
@@ -23,18 +23,18 @@ class StartupTests(unittest.TestCase):
         return db
 
     def test_first_start_creates_an_empty_database(self) -> None:
-        app_sqlite.init(self.path)
-        con = app_sqlite.connection_get(self.path)
+        db_app.init(self.path)
+        con = db_app.connection_get(self.path)
         self.addCleanup(con.close)
-        self.assertEqual(app_sqlite.get_schema_version(con), 1)
+        self.assertEqual(db_app.get_schema_version(con), 1)
         self.assertEqual(self.open().settings_list(), {})
 
     def test_later_starts_keep_the_data(self) -> None:
-        app_sqlite.init(self.path)
+        db_app.init(self.path)
         db = self.open()
         db.weight_entries_insert(D(2026, 10, 2), Dec("179.9"))
         db.close()
-        app_sqlite.init(self.path)
+        db_app.init(self.path)
         self.assertEqual(
             self.open().weight_entries_list_all(),
             [{"entry_date": D(2026, 10, 2), "weight": Dec("179.9")}],
