@@ -5,6 +5,7 @@ import logging
 import sqlite3
 import typing
 import uuid
+import zoneinfo
 
 import yavin.util
 from yavin.db.app import (
@@ -747,7 +748,7 @@ class YavinSqliteDatabase:
             return -1
         # An aggregate has no declared type, so the date comes back as text
         last_entry = dt.date.fromisoformat(last_entry)
-        today = yavin.util.today()
+        today = self.today()
         if last_entry > today:
             return 0
         return (today - last_entry).days
@@ -797,7 +798,7 @@ class YavinSqliteDatabase:
                 coalesce(sum(due < :today), 0) overdue_count
             from library_books
         """
-        return self.q_one(sql, {"today": yavin.util.today()}) or {}
+        return self.q_one(sql, {"today": self.today()}) or {}
 
     def library_books_insert(self, params: dict) -> None:
         sql = """
@@ -834,7 +835,7 @@ class YavinSqliteDatabase:
             where b.due <= :today
             order by c.display_name collate nocase, b.title collate nocase
         """
-        return self.q(sql, {"today": yavin.util.today()})
+        return self.q(sql, {"today": self.today()})
 
     def library_books_truncate(self) -> None:
         self.u("delete from library_books")
@@ -995,6 +996,19 @@ class YavinSqliteDatabase:
 
     # settings
 
+    def display_time_zone(self) -> zoneinfo.ZoneInfo:
+        """Return the display time zone from the settings table, or the default if
+        the setting is missing or invalid."""
+        sql = """
+            select setting_value from settings
+            where setting_id = 'display_time_zone'
+        """
+        return zoneinfo.ZoneInfo(yavin.util.valid_time_zone_name(self.q_val(sql)))
+
+    def today(self) -> dt.date:
+        """Return the current date in the display time zone."""
+        return yavin.util.today(self.display_time_zone())
+
     def settings_delete(self, setting_id: str) -> None:
         sql = "delete from settings where setting_id = :setting_id"
         self.u(sql, {"setting_id": setting_id})
@@ -1104,7 +1118,7 @@ class YavinSqliteDatabase:
             set tithing_paid = :today
             where tithing_paid is null
         """
-        self.u(sql, {"today": yavin.util.today()})
+        self.u(sql, {"today": self.today()})
 
     # user permissions
 

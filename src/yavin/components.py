@@ -1,6 +1,7 @@
 import datetime as dt
 import decimal
 import logging
+import zoneinfo
 
 import flask
 import htpy
@@ -243,6 +244,19 @@ def app_settings() -> str:
             ),
         ],
     ]
+    current_tz = yavin.util.display_time_zone_name()
+    fs_display = htpy.fieldset(".border-bottom.pb-3.mb-3")[
+        htpy.legend["Display"],
+        htpy.div(".mb-3")[
+            htpy.label(".form-label", for_="display_time_zone")["Display time zone"],
+            htpy.select("#display_time_zone.form-select", name="display_time_zone")[
+                (
+                    htpy.option(selected=(tz == current_tz), value=tz)[tz]
+                    for tz in sorted(zoneinfo.available_timezones())
+                )
+            ],
+        ],
+    ]
     fs_other = htpy.fieldset[
         htpy.legend["Other settings"],
         htpy.div(".form-check")[
@@ -273,6 +287,7 @@ def app_settings() -> str:
         htpy.div(".pt-3.row")[
             htpy.div(".col-12.col-sm-10.col-md-8.col-lg-7.col-xl-4")[
                 htpy.form(action=flask.url_for("app_settings_update"), method="post")[
+                    fs_display,
                     fs_expenses,
                     fs_mileage,
                     fs_smtp,
@@ -449,8 +464,7 @@ def billboard(latest: BillboardRow) -> str:
                 htpy.p[htpy.strong[latest.title], " by ", latest.artist],
                 htpy.p[
                     "Last fetched: ",
-                    yavin.util.clean_datetime(latest.fetched_at),
-                    " UTC",
+                    yavin.util.format_datetime(latest.fetched_at, "%Y-%m-%d %H:%M %Z"),
                 ],
                 htpy.p[
                     htpy.a(
@@ -1707,8 +1721,7 @@ def tello(balances: list[dict]) -> str:
     if balances:
         last_fetched = [
             "Last fetched: ",
-            yavin.util.clean_datetime(balances[0]["fetched_at"].astimezone(dt.UTC)),
-            " UTC",
+            yavin.util.format_datetime(balances[0]["fetched_at"], "%Y-%m-%d %H:%M %Z"),
         ]
     else:
         last_fetched = [
@@ -1747,12 +1760,14 @@ def tello_line(subscription_id: str, history: list[dict]) -> str:
     wide = ".d-none.d-md-table-cell"
     rows = []
     for b in reversed(history):
-        fetched_at = b["fetched_at"].astimezone(dt.UTC)
+        fetched_at = b["fetched_at"]
         rows.append(
             htpy.tr[
                 htpy.td(".text-nowrap")[
-                    fetched_at.date().isoformat(),
-                    htpy.span(".d-none.d-md-inline")[f" {fetched_at:%H:%M} UTC"],
+                    yavin.util.format_datetime(fetched_at, "%Y-%m-%d"),
+                    htpy.span(".d-none.d-md-inline")[
+                        yavin.util.format_datetime(fetched_at, " %H:%M %Z")
+                    ],
                 ],
                 htpy.td(".text-nowrap")[
                     b["remaining"],

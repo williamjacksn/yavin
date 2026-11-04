@@ -327,6 +327,14 @@ def app_settings_update() -> werkzeug.Response:
             else:
                 db.settings_update(k, v)
 
+    display_time_zone = flask.request.values.get("display_time_zone", "")
+    if display_time_zone == "":
+        db.settings_delete("display_time_zone")
+    elif yavin.util.is_valid_time_zone(display_time_zone):
+        db.settings_update("display_time_zone", display_time_zone)
+    else:
+        log.warning(f"Ignoring invalid display time zone {display_time_zone!r}")
+
     bool_settings = [
         "debug_layout",
         "scheduled_tasks_enabled",
@@ -1035,12 +1043,18 @@ def tello_line_svg(subscription_id: str) -> werkzeug.Response:
         x_label_rotation=45,
     )
     chart.value_formatter = lambda x: f"{x:g} GB"
-    chart.x_value_formatter = lambda d: d.strftime("%b %d" if small else "%Y-%m-%d")
+    # pygal passes x-axis values as naive UTC datetimes
+    chart.x_value_formatter = lambda d: yavin.util.format_datetime(
+        d.replace(tzinfo=dt.UTC), "%b %d" if small else "%Y-%m-%d"
+    )
     chart.add(
         "Remaining",
         points,
         formatter=lambda p: (
-            f"{dt.datetime.fromtimestamp(p[0], tz=dt.UTC):%Y-%m-%d}: {p[1]:,.2f} GB"
+            yavin.util.format_datetime(
+                dt.datetime.fromtimestamp(p[0], tz=dt.UTC), "%Y-%m-%d"
+            )
+            + f": {p[1]:,.2f} GB"
         ),
     )
     return chart.render_response()
