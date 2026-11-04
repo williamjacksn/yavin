@@ -1032,6 +1032,7 @@ def tello_line_svg(subscription_id: str) -> werkzeug.Response:
         x_labels_major_count=3 if small else 5,
         show_minor_x_labels=False,
         truncate_label=-1,
+        x_label_rotation=45,
     )
     chart.value_formatter = lambda x: f"{x:g} GB"
     chart.x_value_formatter = lambda d: d.strftime("%b %d" if small else "%Y-%m-%d")
