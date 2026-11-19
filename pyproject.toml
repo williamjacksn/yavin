@@ -36,7 +36,7 @@ requires = ["uv-build>=0.13.7,<0.14.0"]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.17.4",
+    "ruff>=0.17.5",
     "ty>=0.0.100",
     "uv-build>=0.13.7",
 ]
